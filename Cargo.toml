@@ -1,2 +1,3 @@
 [workspace]
 members = ["bin/*", "lib/*"]
+default-members = ["bin/kismet_cli"]
