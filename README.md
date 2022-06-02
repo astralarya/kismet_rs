@@ -1,2 +1,2 @@
-# kismet_rust
+# kismet_rs
 Kismet implementation in Rust
