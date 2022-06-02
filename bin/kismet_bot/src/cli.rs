@@ -1,31 +1,37 @@
-use std::io;
-use std::io::Write;
+use rustyline::error::ReadlineError;
+use rustyline::Editor;
 
 pub fn run() {
     println!(
         "\
         Hello, I am Kismet <3\n\
         Input a roll and press ENTER.\n\
-        Exit with 'exit'.\n\
+        Exit with 'exit' or CTRL-D.\
         "
     );
 
+    let mut rl = Editor::<()>::new();
     loop {
-        print!("> ");
-        if let Err(error) = io::stdout().flush() {
-            panic!("{}", error)
-        }
-
-        let mut raw_input = String::new();
-        io::stdin()
-            .read_line(&mut raw_input)
-            .expect("Failed to read line");
-        let input = raw_input.trim();
-        if input == "exit" {
-            println!("Goodbye <3");
-            break;
-        } else {
-            println!("{}", input)
+        let readline = rl.readline("> ");
+        match readline {
+            Ok(line) => {
+                rl.add_history_entry(line.as_str());
+                if line == "exit" {
+                    println!("Goodbye <3");
+                    break;
+                } else {
+                    println!("{}", line);
+                }
+            }
+            Err(ReadlineError::Eof) => {
+                break;
+            }
+            Err(ReadlineError::Interrupted) => {
+                break;
+            }
+            Err(err) => {
+                eprintln!("{}", err)
+            }
         }
     }
 }
