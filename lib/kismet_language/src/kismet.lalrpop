@@ -4,7 +4,7 @@ use super::ast::{Expr, Op};
 grammar;
 
 pub Kismet: Expr = {
-  <Expr>
+  Expr
 }
 
 Expr: Expr = {
@@ -14,11 +14,11 @@ Expr: Expr = {
 
 Factor: Expr = {
   "(" <e:Expr> ")" => e,
-  <n:Num> => Expr::Number(n),
+  Num,
 }
 
-Num: i32 = {
-  <s:r"[0-9]+"> => i32::from_str(s).unwrap()
+Num: Expr = {
+  <s:r"[0-9]+"> => Expr::Number(i32::from_str(s).unwrap())
 }
 
 OpAdd: Op = {
