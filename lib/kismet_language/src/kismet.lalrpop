@@ -46,13 +46,17 @@ Unary: Node = {
 }
 
 Die: Node = {
-  <l:Die> <o:OpDie> <r:Term> => Node::Op(Box::new(l), o, Box::new(r)),
-  <o:OpDie> <r:Term> => Node::Unary(o, Box::new(r)),
-  Term,
+  <l:Die> <o:OpDie> <r:Atom> => Node::Op(Box::new(l), o, Box::new(r)),
+  <o:OpDie> <r:Atom> => Node::Unary(o, Box::new(r)),
+  Atom,
 }
 
-Term: Node = {
+Atom: Node = {
   "(" <e:Expr> ")" => Node::Paren(Box::new(e)),
+  Literal,
+}
+
+Literal: Node = {
   Num,
 }
 
