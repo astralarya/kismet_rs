@@ -21,6 +21,12 @@ pub enum Sym {
     Div,
     Add,
     Sub,
+    Eq,
+    NotEq,
+    Less,
+    LessEq,
+    Greater,
+    GreaterEq,
 }
 
 impl fmt::Display for Node {
@@ -50,6 +56,12 @@ impl fmt::Display for Sym {
             Sym::Div => write!(f, "/"),
             Sym::Add => write!(f, "+"),
             Sym::Sub => write!(f, "-"),
+            Sym::Eq => write!(f, "=="),
+            Sym::NotEq => write!(f, "!="),
+            Sym::Less => write!(f, "<"),
+            Sym::LessEq => write!(f, "<="),
+            Sym::Greater => write!(f, ">"),
+            Sym::GreaterEq => write!(f, ">="),
         }
     }
 }

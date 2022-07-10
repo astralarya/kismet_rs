@@ -11,7 +11,12 @@ pub Kismet: Node = {
 }
 
 Expr: Node = {
-  Addition
+  Comparison,
+}
+
+Comparison: Node = {
+  <l:Comparison> <o:OpEq> <r:Addition> => Node::Op(Box::new(l), o, Box::new(r)),
+  Addition,
 }
 
 Addition: Node = {
@@ -46,7 +51,16 @@ Term: Node = {
 Num: Node = {
   <s:r"[0-9]+"> =>? i32::from_str(s)
     .map(|r| Node::Int(r))
-    .map_err(|_| ParseError::User{error: "Integer out of range"})
+    .map_err(|_| ParseError::User{error: "Integer out of range"}),
+}
+
+OpEq: Sym = {
+  "==" => Sym::Eq,
+  "!=" => Sym::NotEq,
+  "<" => Sym::Less,
+  "<=" => Sym::LessEq,
+  ">" => Sym::Greater,
+  ">=" => Sym::GreaterEq,
 }
 
 OpAdd: Sym = {
