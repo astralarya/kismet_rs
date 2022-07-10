@@ -2,7 +2,11 @@ use kismet_language::parse;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-pub fn run() {
+pub struct State {
+    pub verbose: bool,
+}
+
+pub fn run(state: &mut State) {
     println!(
         "\
         Hello, I am Kismet <3\n\
@@ -22,7 +26,13 @@ pub fn run() {
                     break;
                 } else {
                     match parse(&line) {
-                        Ok(x) => println!("{:?}\n{}", x, x),
+                        Ok(x) => {
+                            if state.verbose {
+                                println!("{:?}\n{}", x, x)
+                            } else {
+                                println!("{}", x)
+                            }
+                        }
                         Err(e) => eprintln!("{}", e),
                     }
                 }
