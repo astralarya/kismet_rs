@@ -27,6 +27,8 @@ pub enum Sym {
     LessEq,
     Greater,
     GreaterEq,
+    And,
+    Or,
 }
 
 impl fmt::Display for Node {
@@ -62,6 +64,8 @@ impl fmt::Display for Sym {
             Sym::LessEq => write!(f, "<="),
             Sym::Greater => write!(f, ">"),
             Sym::GreaterEq => write!(f, ">="),
+            Sym::And => write!(f, "AND"),
+            Sym::Or => write!(f, "OR"),
         }
     }
 }

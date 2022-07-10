@@ -11,6 +11,16 @@ pub Kismet: Node = {
 }
 
 Expr: Node = {
+  Disjunction,
+}
+
+Disjunction: Node = {
+  <l:Disjunction> <o:OpOr> <r:Conjunction> => Node::Op(Box::new(l), o, Box::new(r)),
+  Conjunction,
+}
+
+Conjunction: Node = {
+  <l:Conjunction> <o:OpAnd> <r:Comparison> => Node::Op(Box::new(l), o, Box::new(r)),
   Comparison,
 }
 
@@ -48,10 +58,12 @@ Term: Node = {
 
 //
 
-Num: Node = {
-  <s:r"[0-9]+"> =>? i32::from_str(s)
-    .map(|r| Node::Int(r))
-    .map_err(|_| ParseError::User{error: "Integer out of range"}),
+OpOr: Sym = {
+  r"(?i)or" => Sym::Or,
+}
+
+OpAnd: Sym = {
+  r"(?i)and" => Sym::And,
 }
 
 OpEq: Sym = {
@@ -80,4 +92,10 @@ OpPow: Sym = {
 
 OpDie: Sym = {
   "d" => Sym::Die,
+}
+
+Num: Node = {
+  <s:r"[0-9]+"> =>? i32::from_str(s)
+    .map(|r| Node::Int(r))
+    .map_err(|_| ParseError::User{error: "Integer out of range"}),
 }
