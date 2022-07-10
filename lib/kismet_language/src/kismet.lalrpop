@@ -21,7 +21,13 @@ Factor: Node = {
 }
 
 Atom: Node = {
-  <l:Atom> <o:OpDie> <r:Term> => Node::Op(Box::new(l), o, Box::new(r)),
+  <l:Atom> <o:OpPow> <r:Die> => Node::Op(Box::new(l), o, Box::new(r)),
+  <o:OpAdd> <r:Die> => Node::Unary(o, Box::new(r)),
+  Die,
+}
+
+Die: Node = {
+  <l:Die> <o:OpDie> <r:Term> => Node::Op(Box::new(l), o, Box::new(r)),
   <o:OpDie> <r:Term> => Node::Unary(o, Box::new(r)),
   Term,
 }
@@ -48,6 +54,10 @@ OpMul: Sym = {
   "%" => Sym::Mod,
   "*" => Sym::Mul,
   "/" => Sym::Sub,
+}
+
+OpPow: Sym = {
+  "^" => Sym::Pow,
 }
 
 OpDie: Sym = {

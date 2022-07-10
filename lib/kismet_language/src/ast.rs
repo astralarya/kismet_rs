@@ -15,6 +15,7 @@ pub enum Node {
 
 pub enum Sym {
     Die,
+    Pow,
     Mod,
     Mul,
     Div,
@@ -28,7 +29,7 @@ impl fmt::Display for Node {
             Node::Int(n) => write!(f, "{}", n),
             Node::Paren(e) => write!(f, "({})", e),
             Node::Op(l, o, r) => match o {
-                Sym::Die | Sym::Mul => write!(f, "{}{}{}", l, o, r),
+                Sym::Die | Sym::Pow | Sym::Mul => write!(f, "{}{}{}", l, o, r),
                 _ => write!(f, "{} {} {}", l, o, r),
             },
             Node::Unary(o, r) => match o {
@@ -43,6 +44,7 @@ impl fmt::Display for Sym {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Sym::Die => write!(f, "d"),
+            Sym::Pow => write!(f, "^"),
             Sym::Mod => write!(f, "%"),
             Sym::Mul => write!(f, "*"),
             Sym::Div => write!(f, "/"),
