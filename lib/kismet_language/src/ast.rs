@@ -7,6 +7,7 @@ pub type ParseError<'life> = LalrpopError<usize, Token<'life>, &'life str>;
 
 pub enum Node {
     Op(Box<Node>, Sym, Box<Node>),
+    Unary(Sym, Box<Node>),
     Paren(Box<Node>),
     Int(i32),
     Error(Box<dyn Error>),
@@ -27,8 +28,11 @@ impl fmt::Display for Node {
             Node::Int(n) => write!(f, "{}", n),
             Node::Paren(e) => write!(f, "({})", e),
             Node::Op(l, o, r) => match o {
-                Sym::Die => write!(f, "{}{}{}", l, o, r),
-                o => write!(f, "{} {} {}", l, o, r),
+                Sym::Die | Sym::Mul => write!(f, "{}{}{}", l, o, r),
+                _ => write!(f, "{} {} {}", l, o, r),
+            },
+            Node::Unary(o, r) => match o {
+                _ => write!(f, "{}{}", o, r),
             },
             Node::Error(e) => write!(f, "{}", e),
         }
