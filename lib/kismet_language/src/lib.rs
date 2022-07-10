@@ -7,8 +7,8 @@ extern crate lalrpop_util;
 
 lalrpop_mod!(pub kismet);
 
-pub fn parse<'input>(
-    input: &'input String,
-) -> Result<ast::Expr, ParseError<usize, Token<'input>, &'input str>> {
+type ParseResult<'life> = Result<ast::Expr, ParseError<usize, Token<'life>, &'life str>>;
+
+pub fn parse<'input>(input: &'input String) -> ParseResult<'input> {
     kismet::KismetParser::new().parse(&input)
 }
