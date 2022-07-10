@@ -3,7 +3,8 @@ use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
 pub struct State {
-    pub verbose: bool,
+    pub print_display: bool,
+    pub print_debug: bool,
 }
 
 pub fn run(state: &mut State) {
@@ -27,9 +28,10 @@ pub fn run(state: &mut State) {
                 } else {
                     match parse(&line) {
                         Ok(x) => {
-                            if state.verbose {
-                                println!("{:?}\n{}", x, x)
-                            } else {
+                            if state.print_debug {
+                                println!("{:?}", x)
+                            }
+                            if state.print_display {
                                 println!("{}", x)
                             }
                         }
