@@ -1,25 +1,13 @@
-use std::fmt;
+use std::{error::Error, fmt};
 
-pub enum Expr {
-    Number(i32),
-    Paren(Box<Expr>),
-    Op(Box<Expr>, Op, Box<Expr>),
+pub enum Node {
+    Op(Box<Node>, Sym, Box<Node>),
+    Paren(Box<Node>),
+    Int(i32),
+    Error(Box<dyn Error>),
 }
 
-impl fmt::Display for Expr {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Expr::Number(n) => write!(f, "{}", n),
-            Expr::Paren(e) => write!(f, "({})", e),
-            Expr::Op(l, o, r) => match o {
-                Op::Die => write!(f, "{}{}{}", l, o, r),
-                o => write!(f, "{} {} {}", l, o, r),
-            },
-        }
-    }
-}
-
-pub enum Op {
+pub enum Sym {
     Die,
     Mod,
     Mul,
@@ -28,15 +16,29 @@ pub enum Op {
     Sub,
 }
 
-impl fmt::Display for Op {
+impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Op::Die => write!(f, "d"),
-            Op::Mod => write!(f, "%"),
-            Op::Mul => write!(f, "*"),
-            Op::Div => write!(f, "/"),
-            Op::Add => write!(f, "+"),
-            Op::Sub => write!(f, "-"),
+            Node::Int(n) => write!(f, "{}", n),
+            Node::Paren(e) => write!(f, "({})", e),
+            Node::Op(l, o, r) => match o {
+                Sym::Die => write!(f, "{}{}{}", l, o, r),
+                o => write!(f, "{} {} {}", l, o, r),
+            },
+            Node::Error(e) => write!(f, "{}", e),
+        }
+    }
+}
+
+impl fmt::Display for Sym {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Sym::Die => write!(f, "d"),
+            Sym::Mod => write!(f, "%"),
+            Sym::Mul => write!(f, "*"),
+            Sym::Div => write!(f, "/"),
+            Sym::Add => write!(f, "+"),
+            Sym::Sub => write!(f, "-"),
         }
     }
 }

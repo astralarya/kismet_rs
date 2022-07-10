@@ -1,41 +1,44 @@
 use std::str::FromStr;
-use super::ast::{Expr, Op};
+use super::ast::{Node, Sym};
 
 grammar;
 
-pub Kismet: Expr = {
-  Expr
+pub Kismet: Node = {
+  Node
 }
 
-Expr: Expr = {
-  <l:Expr> <o:OpAdd> <r:Factor> => Expr::Op(Box::new(l), o, Box::new(r)),
+Node: Node = {
+  <l:Node> <o:OpAdd> <r:Factor> => Node::Op(Box::new(l), o, Box::new(r)),
   Factor,
 }
 
-Factor: Expr = {
-  <l:Factor> <o:OpMul> <r:Term> => Expr::Op(Box::new(l), o, Box::new(r)),
+Factor: Node = {
+  <l:Factor> <o:OpMul> <r:Term> => Node::Op(Box::new(l), o, Box::new(r)),
   Term,
 }
 
-Term: Expr = {
-  "(" <e:Expr> ")" => Expr::Paren(Box::new(e)),
+Term: Node = {
+  "(" <e:Node> ")" => Node::Paren(Box::new(e)),
   Num,
 }
 
 //
 
-Num: Expr = {
-  <s:r"[0-9]+"> => Expr::Number(i32::from_str(s).unwrap())
+Num: Node = {
+  <s:r"[0-9]+"> => match i32::from_str(s) {
+    Ok(r) => Node::Int(r),
+    Err(e) => Node::Error(Box::new(e))
+  }
 }
 
-OpAdd: Op = {
-  "+" => Op::Add,
-  "-" => Op::Sub,
+OpAdd: Sym = {
+  "+" => Sym::Add,
+  "-" => Sym::Sub,
 }
 
-OpMul: Op = {
-  "d" => Op::Die,
-  "%" => Op::Mod,
-  "*" => Op::Mul,
-  "/" => Op::Sub,
+OpMul: Sym = {
+  "d" => Sym::Die,
+  "%" => Sym::Mod,
+  "*" => Sym::Mul,
+  "/" => Sym::Sub,
 }
