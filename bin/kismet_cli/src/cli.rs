@@ -22,7 +22,7 @@ pub fn run() {
                     break;
                 } else {
                     match parse(&line) {
-                        Ok(x) => println!("{}", x),
+                        Ok(x) => println!("{:?}\n{}", x, x),
                         Err(e) => eprintln!("{}", e),
                     }
                 }

@@ -5,6 +5,7 @@ use lalrpop_util::{lexer::Token, ParseError as LalrpopError};
 pub type ParseResult<'life> = Result<Node, ParseError<'life>>;
 pub type ParseError<'life> = LalrpopError<usize, Token<'life>, &'life str>;
 
+#[derive(Debug)]
 pub enum Node {
     Op(Box<Node>, Sym, Box<Node>),
     Unary(Sym, Box<Node>),
@@ -13,6 +14,7 @@ pub enum Node {
     Error(Box<dyn Error>),
 }
 
+#[derive(Debug)]
 pub enum Sym {
     Die,
     Pow,
