@@ -1,14 +1,17 @@
 use std::str::FromStr;
+
+use lalrpop_util::ParseError;
+
 use super::ast::{Node, Sym};
 
 grammar;
 
 pub Kismet: Node = {
-  Node
+  Expr
 }
 
-Node: Node = {
-  <l:Node> <o:OpAdd> <r:Factor> => Node::Op(Box::new(l), o, Box::new(r)),
+Expr: Node = {
+  <l:Expr> <o:OpAdd> <r:Factor> => Node::Op(Box::new(l), o, Box::new(r)),
   Factor,
 }
 
@@ -18,17 +21,16 @@ Factor: Node = {
 }
 
 Term: Node = {
-  "(" <e:Node> ")" => Node::Paren(Box::new(e)),
+  "(" <e:Expr> ")" => Node::Paren(Box::new(e)),
   Num,
 }
 
 //
 
 Num: Node = {
-  <s:r"[0-9]+"> => match i32::from_str(s) {
-    Ok(r) => Node::Int(r),
-    Err(e) => Node::Error(Box::new(e))
-  }
+  <s:r"[0-9]+"> =>? i32::from_str(s)
+    .map(|r| Node::Int(r))
+    .map_err(|_| ParseError::User{error: "Integer out of range"})
 }
 
 OpAdd: Sym = {

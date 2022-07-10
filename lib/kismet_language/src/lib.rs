@@ -1,4 +1,3 @@
-use lalrpop_util::{lexer::Token, ParseError};
 mod ast;
 pub use ast::*;
 
@@ -7,8 +6,6 @@ extern crate lalrpop_util;
 
 lalrpop_mod!(pub kismet);
 
-type ParseResult<'life> = Result<ast::Node, ParseError<usize, Token<'life>, &'life str>>;
-
-pub fn parse<'input>(input: &'input String) -> ParseResult<'input> {
+pub fn parse<'input>(input: &'input String) -> ast::ParseResult<'input> {
     kismet::KismetParser::new().parse(&input)
 }

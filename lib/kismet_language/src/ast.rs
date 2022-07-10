@@ -1,5 +1,10 @@
 use std::{error::Error, fmt};
 
+use lalrpop_util::{lexer::Token, ParseError as LalrpopError};
+
+pub type ParseResult<'life> = Result<Node, ParseError<'life>>;
+pub type ParseError<'life> = LalrpopError<usize, Token<'life>, &'life str>;
+
 pub enum Node {
     Op(Box<Node>, Sym, Box<Node>),
     Paren(Box<Node>),
