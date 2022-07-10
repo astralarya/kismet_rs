@@ -2,12 +2,34 @@ use std::fmt;
 
 pub enum Expr {
     Number(i32),
+    Op(Box<Expr>, Op, Box<Expr>),
 }
 
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Expr::Number(n) => write!(f, "{}", n),
+            Expr::Op(l, o, r) => {
+                write!(f, "{} {} {}", l, o, r)
+            }
+        }
+    }
+}
+
+pub enum Op {
+    Mul,
+    Div,
+    Add,
+    Sub,
+}
+
+impl fmt::Display for Op {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Op::Mul => write!(f, "*"),
+            Op::Div => write!(f, "/"),
+            Op::Add => write!(f, "+"),
+            Op::Sub => write!(f, "-"),
         }
     }
 }

@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use super::ast::{Expr};
+use super::ast::{Expr, Op};
 
 grammar;
 
@@ -8,10 +8,20 @@ pub Kismet: Expr = {
 }
 
 Expr: Expr = {
+  <l:Expr> <o:OpAdd> <r:Factor> => Expr::Op(Box::new(l), o, Box::new(r)),
+  Factor,
+}
+
+Factor: Expr = {
   "(" <e:Expr> ")" => e,
   <n:Num> => Expr::Number(n),
 }
 
 Num: i32 = {
   <s:r"[0-9]+"> => i32::from_str(s).unwrap()
+}
+
+OpAdd: Op = {
+  "+" => Op::Add,
+  "-" => Op::Sub,
 }
