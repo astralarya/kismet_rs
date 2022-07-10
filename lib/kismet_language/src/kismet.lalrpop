@@ -15,39 +15,39 @@ Expr: Node = {
 }
 
 Disjunction: Node = {
-  <l:Disjunction> <o:OpOr> <r:Conjunction> => Node::Op(Box::new(l), o, Box::new(r)),
+  <l:Disjunction> <o:OP_OR> <r:Conjunction> => Node::Op(Box::new(l), o, Box::new(r)),
   Conjunction,
 }
 
 Conjunction: Node = {
-  <l:Conjunction> <o:OpAnd> <r:Comparison> => Node::Op(Box::new(l), o, Box::new(r)),
+  <l:Conjunction> <o:OP_AND> <r:Comparison> => Node::Op(Box::new(l), o, Box::new(r)),
   Comparison,
 }
 
 Comparison: Node = {
-  <l:Comparison> <o:OpEq> <r:Addition> => Node::Op(Box::new(l), o, Box::new(r)),
+  <l:Comparison> <o:OP_EQ> <r:Addition> => Node::Op(Box::new(l), o, Box::new(r)),
   Addition,
 }
 
 Addition: Node = {
-  <l:Addition> <o:OpAdd> <r:Multiply> => Node::Op(Box::new(l), o, Box::new(r)),
+  <l:Addition> <o:OP_ADD> <r:Multiply> => Node::Op(Box::new(l), o, Box::new(r)),
   Multiply,
 }
 
 Multiply: Node = {
-  <l:Multiply> <o:OpMul> <r:Unary> => Node::Op(Box::new(l), o, Box::new(r)),
+  <l:Multiply> <o:OP_MUL> <r:Unary> => Node::Op(Box::new(l), o, Box::new(r)),
   Unary,
 }
 
 Unary: Node = {
-  <l:Unary> <o:OpPow> <r:Die> => Node::Op(Box::new(l), o, Box::new(r)),
-  <o:OpAdd> <r:Die> => Node::Unary(o, Box::new(r)),
+  <l:Unary> <o:OP_POW> <r:Die> => Node::Op(Box::new(l), o, Box::new(r)),
+  <o:OP_ADD> <r:Die> => Node::Unary(o, Box::new(r)),
   Die,
 }
 
 Die: Node = {
-  <l:Die> <o:OpDie> <r:Atom> => Node::Op(Box::new(l), o, Box::new(r)),
-  <o:OpDie> <r:Atom> => Node::Unary(o, Box::new(r)),
+  <l:Die> <o:OP_DIE> <r:Atom> => Node::Op(Box::new(l), o, Box::new(r)),
+  <o:OP_DIE> <r:Atom> => Node::Unary(o, Box::new(r)),
   Atom,
 }
 
@@ -57,20 +57,20 @@ Atom: Node = {
 }
 
 Literal: Node = {
-  Num,
+  INT,
 }
 
 //
 
-OpOr: Sym = {
+OP_OR: Sym = {
   r"(?i)or" => Sym::Or,
 }
 
-OpAnd: Sym = {
+OP_AND: Sym = {
   r"(?i)and" => Sym::And,
 }
 
-OpEq: Sym = {
+OP_EQ: Sym = {
   "==" => Sym::Eq,
   "!=" => Sym::NotEq,
   "<" => Sym::Less,
@@ -79,26 +79,26 @@ OpEq: Sym = {
   ">=" => Sym::GreaterEq,
 }
 
-OpAdd: Sym = {
+OP_ADD: Sym = {
   "+" => Sym::Add,
   "-" => Sym::Sub,
 }
 
-OpMul: Sym = {
+OP_MUL: Sym = {
   "%" => Sym::Mod,
   "*" => Sym::Mul,
   "/" => Sym::Sub,
 }
 
-OpPow: Sym = {
+OP_POW: Sym = {
   "^" => Sym::Pow,
 }
 
-OpDie: Sym = {
+OP_DIE: Sym = {
   "d" => Sym::Die,
 }
 
-Num: Node = {
+INT: Node = {
   <s:r"[0-9]+"> =>? i32::from_str(s)
     .map(|r| Node::Int(r))
     .map_err(|_| ParseError::User{error: "Integer out of range"}),
