@@ -1,10 +1,17 @@
 use std::str::FromStr;
+use super::ast::{Expr};
 
 grammar;
 
-pub Term: i32 = {
-  <n:Num> => n,
-  "(" <t:Term> ")" => t,
+pub Kismet: Expr = {
+  <Expr>
 }
 
-Num: i32 = <s:r"[0-9]+"> => i32::from_str(s).unwrap();
+Expr: Expr = {
+  "(" <e:Expr> ")" => e,
+  <n:Num> => Expr::Number(n),
+}
+
+Num: i32 = {
+  <s:r"[0-9]+"> => i32::from_str(s).unwrap()
+}
