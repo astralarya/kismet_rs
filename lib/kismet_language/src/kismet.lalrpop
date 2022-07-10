@@ -11,17 +11,21 @@ pub Kismet: Node = {
 }
 
 Expr: Node = {
-  <l:Expr> <o:OpAdd> <r:Factor> => Node::Op(Box::new(l), o, Box::new(r)),
-  Factor,
+  Addition
 }
 
-Factor: Node = {
-  <l:Factor> <o:OpMul> <r:Atom> => Node::Op(Box::new(l), o, Box::new(r)),
-  Atom,
+Addition: Node = {
+  <l:Addition> <o:OpAdd> <r:Multiply> => Node::Op(Box::new(l), o, Box::new(r)),
+  Multiply,
 }
 
-Atom: Node = {
-  <l:Atom> <o:OpPow> <r:Die> => Node::Op(Box::new(l), o, Box::new(r)),
+Multiply: Node = {
+  <l:Multiply> <o:OpMul> <r:Unary> => Node::Op(Box::new(l), o, Box::new(r)),
+  Unary,
+}
+
+Unary: Node = {
+  <l:Unary> <o:OpPow> <r:Die> => Node::Op(Box::new(l), o, Box::new(r)),
   <o:OpAdd> <r:Die> => Node::Unary(o, Box::new(r)),
   Die,
 }
