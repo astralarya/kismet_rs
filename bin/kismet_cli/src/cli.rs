@@ -21,8 +21,10 @@ pub fn run() {
                     println!("Goodbye <3");
                     break;
                 } else {
-                    let parsed = parse(line);
-                    println!("{}", parsed);
+                    match parse(&line) {
+                        Ok(x) => println!("{}", x),
+                        Err(e) => eprintln!("{}", e),
+                    }
                 }
             }
             Err(ReadlineError::Eof) => {
