@@ -29,12 +29,13 @@ Num: Expr = {
 }
 
 OpAdd: Op = {
-  "%" => Op::Mod,
   "+" => Op::Add,
   "-" => Op::Sub,
 }
 
 OpMul: Op = {
+  "d" => Op::Die,
+  "%" => Op::Mod,
   "*" => Op::Mul,
   "/" => Op::Sub,
 }

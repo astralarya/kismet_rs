@@ -11,14 +11,16 @@ impl fmt::Display for Expr {
         match self {
             Expr::Number(n) => write!(f, "{}", n),
             Expr::Paren(e) => write!(f, "({})", e),
-            Expr::Op(l, o, r) => {
-                write!(f, "{} {} {}", l, o, r)
-            }
+            Expr::Op(l, o, r) => match o {
+                Op::Die => write!(f, "{}{}{}", l, o, r),
+                o => write!(f, "{} {} {}", l, o, r),
+            },
         }
     }
 }
 
 pub enum Op {
+    Die,
     Mod,
     Mul,
     Div,
@@ -29,6 +31,7 @@ pub enum Op {
 impl fmt::Display for Op {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Op::Die => write!(f, "d"),
             Op::Mod => write!(f, "%"),
             Op::Mul => write!(f, "*"),
             Op::Div => write!(f, "/"),
