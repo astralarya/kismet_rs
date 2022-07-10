@@ -19,6 +19,7 @@ impl fmt::Display for Expr {
 }
 
 pub enum Op {
+    Mod,
     Mul,
     Div,
     Add,
@@ -28,6 +29,7 @@ pub enum Op {
 impl fmt::Display for Op {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Op::Mod => write!(f, "%"),
             Op::Mul => write!(f, "*"),
             Op::Div => write!(f, "/"),
             Op::Add => write!(f, "+"),

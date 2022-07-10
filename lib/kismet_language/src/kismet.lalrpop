@@ -29,6 +29,7 @@ Num: Expr = {
 }
 
 OpAdd: Op = {
+  "%" => Op::Mod,
   "+" => Op::Add,
   "-" => Op::Sub,
 }
