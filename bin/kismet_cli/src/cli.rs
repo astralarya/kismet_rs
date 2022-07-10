@@ -1,3 +1,4 @@
+use kismet_language::parse;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
@@ -20,7 +21,8 @@ pub fn run() {
                     println!("Goodbye <3");
                     break;
                 } else {
-                    println!("{}", line);
+                    let parsed = parse(line);
+                    println!("{}", parsed);
                 }
             }
             Err(ReadlineError::Eof) => {
