@@ -13,9 +13,16 @@ Expr: Expr = {
 }
 
 Factor: Expr = {
-  "(" <e:Expr> ")" => e,
+  <l:Factor> <o:OpMul> <r:Term> => Expr::Op(Box::new(l), o, Box::new(r)),
+  Term,
+}
+
+Term: Expr = {
+  "(" <e:Expr> ")" => Expr::Paren(Box::new(e)),
   Num,
 }
+
+//
 
 Num: Expr = {
   <s:r"[0-9]+"> => Expr::Number(i32::from_str(s).unwrap())
@@ -24,4 +31,9 @@ Num: Expr = {
 OpAdd: Op = {
   "+" => Op::Add,
   "-" => Op::Sub,
+}
+
+OpMul: Op = {
+  "*" => Op::Mul,
+  "/" => Op::Sub,
 }
