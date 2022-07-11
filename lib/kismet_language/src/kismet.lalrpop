@@ -8,6 +8,7 @@ extern {
   type Error = LexerError;
 
   enum Token<'input> {
+    DELIM => Token::DELIM,
     OR => Token::OR,
     AND => Token::AND,
     EQ => Token::EQ,
@@ -32,7 +33,23 @@ extern {
 
 
 pub Kismet: Node<'input> = {
-  Expr
+  Stmts
+}
+
+Delim<T>: Node<'input> = {
+  <mut v:(<T> DELIM)*> <e:T?> => match e {
+    None => Node::Stmts(v),
+    Some(e) => {
+      v.push(e);
+      Node::Stmts(v)
+    }
+  }
+}
+
+Stmts = Delim<Stmt>;
+
+Stmt: Node<'input> = {
+  Expr,
 }
 
 Expr: Node<'input> = {

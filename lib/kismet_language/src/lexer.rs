@@ -4,6 +4,9 @@ use logos::{Lexer, Logos, SpannedIter};
 
 #[derive(Logos, Copy, Clone, Debug, PartialEq)]
 pub enum Token<'input> {
+    #[regex(r"[;\n]")]
+    DELIM,
+
     #[regex(r"(?i)or")]
     OR,
 
@@ -61,7 +64,7 @@ pub enum Token<'input> {
     #[regex(r"([_a-ce-zA-CE-Z]|d[_a-zA-Z])[_a-zA-Z0-9]*")]
     Id(&'input str),
 
-    #[regex(r"[ \t\n\f]+", logos::skip)]
+    #[regex(r"[ \t\f]+", logos::skip)]
     SKIP,
 
     #[error]

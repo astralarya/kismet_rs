@@ -9,6 +9,7 @@ pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 
 #[derive(Debug)]
 pub enum Node<'input> {
+    Stmts(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
     Unary(Token<'input>, Box<Node<'input>>),
     Paren(Box<Node<'input>>),
@@ -41,20 +42,37 @@ impl fmt::Display for Node<'_> {
                 _ => None,
             }
         }
+        fn close_op(op: &Token) -> bool {
+            match op {
+                Token::DIE | Token::POW | Token::MUL => true,
+                _ => false,
+            }
+        }
         match self {
             Node::Int(n) => write!(f, "{}", n),
             Node::Id(s) => write!(f, "{}", s),
             Node::Paren(e) => write!(f, "({})", e),
-            Node::Op(l, o, r) => match op_str(o) {
-                Some(s) => match o {
-                    Token::DIE | Token::POW | Token::MUL => write!(f, "{}{}{}", l, s, r),
-                    _ => write!(f, "{} {} {}", l, s, r),
-                },
-                None => write!(f, "{} {} {}", l, o, r),
+            Node::Unary(o, r) => match (op_str(o), close_op(o)) {
+                (Some(s), true) => write!(f, "{}{}", s, r),
+                (Some(s), false) => write!(f, "{} {}", s, r),
+                (None, true) => write!(f, "{}{}", o, r),
+                (None, false) => write!(f, "{} {}", o, r),
             },
-            Node::Unary(o, r) => match o {
-                _ => write!(f, "{}{}", o, r),
+            Node::Op(l, o, r) => match (op_str(o), close_op(o)) {
+                (Some(s), true) => write!(f, "{}{}{}", l, s, r),
+                (Some(s), false) => write!(f, "{} {} {}", l, s, r),
+                (None, true) => write!(f, "{}{}{}", l, o, r),
+                (None, false) => write!(f, "{} {} {}", l, o, r),
             },
+            Node::Stmts(v) => {
+                for (idx, n) in v.iter().enumerate() {
+                    match idx {
+                        0 => write!(f, "{}", n)?,
+                        _ => write!(f, "\n{}", n)?,
+                    }
+                }
+                Ok(())
+            }
             Node::Error(e) => write!(f, "{}", e),
         }
     }
