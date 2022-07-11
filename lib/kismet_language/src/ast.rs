@@ -49,21 +49,6 @@ impl fmt::Display for Node<'_> {
             }
         }
         match self {
-            Node::Int(n) => write!(f, "{}", n),
-            Node::Id(s) => write!(f, "{}", s),
-            Node::Paren(e) => write!(f, "({})", e),
-            Node::Unary(o, r) => match (op_str(o), close_op(o)) {
-                (Some(s), true) => write!(f, "{}{}", s, r),
-                (Some(s), false) => write!(f, "{} {}", s, r),
-                (None, true) => write!(f, "{}{}", o, r),
-                (None, false) => write!(f, "{} {}", o, r),
-            },
-            Node::Op(l, o, r) => match (op_str(o), close_op(o)) {
-                (Some(s), true) => write!(f, "{}{}{}", l, s, r),
-                (Some(s), false) => write!(f, "{} {} {}", l, s, r),
-                (None, true) => write!(f, "{}{}{}", l, o, r),
-                (None, false) => write!(f, "{} {} {}", l, o, r),
-            },
             Node::Stmts(v) => {
                 for (idx, n) in v.iter().enumerate() {
                     match idx {
@@ -73,6 +58,21 @@ impl fmt::Display for Node<'_> {
                 }
                 Ok(())
             }
+            Node::Op(l, o, r) => match (op_str(o), close_op(o)) {
+                (Some(s), true) => write!(f, "{}{}{}", l, s, r),
+                (Some(s), false) => write!(f, "{} {} {}", l, s, r),
+                (None, true) => write!(f, "{}{}{}", l, o, r),
+                (None, false) => write!(f, "{} {} {}", l, o, r),
+            },
+            Node::Unary(o, r) => match (op_str(o), close_op(o)) {
+                (Some(s), true) => write!(f, "{}{}", s, r),
+                (Some(s), false) => write!(f, "{} {}", s, r),
+                (None, true) => write!(f, "{}{}", o, r),
+                (None, false) => write!(f, "{} {}", o, r),
+            },
+            Node::Paren(e) => write!(f, "({})", e),
+            Node::Int(n) => write!(f, "{}", n),
+            Node::Id(s) => write!(f, "{}", s),
             Node::Error(e) => write!(f, "{}", e),
         }
     }
