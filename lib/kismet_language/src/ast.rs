@@ -19,13 +19,38 @@ pub enum Node<'input> {
 
 impl fmt::Display for Node<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fn op_str(op: &Token) -> Option<&'static str> {
+            match op {
+                Token::OR => Some("OR"),
+                Token::AND => Some("AND"),
+                Token::EQ => Some("=="),
+                Token::NE => Some("!="),
+                Token::LT => Some("<"),
+                Token::LE => Some("<="),
+                Token::GT => Some(">"),
+                Token::GE => Some(">="),
+                Token::ADD => Some("+"),
+                Token::SUB => Some("-"),
+                Token::MOD => Some("%"),
+                Token::MUL => Some("*"),
+                Token::DIV => Some("/"),
+                Token::POW => Some("^"),
+                Token::DIE => Some("d"),
+                Token::LPAREN => Some("("),
+                Token::RPAREN => Some(")"),
+                _ => None,
+            }
+        }
         match self {
             Node::Int(n) => write!(f, "{}", n),
             Node::Id(s) => write!(f, "{}", s),
             Node::Paren(e) => write!(f, "({})", e),
-            Node::Op(l, o, r) => match o {
-                Token::DIE | Token::POW | Token::MUL => write!(f, "{}{}{}", l, o, r),
-                _ => write!(f, "{} {} {}", l, o, r),
+            Node::Op(l, o, r) => match op_str(o) {
+                Some(s) => match o {
+                    Token::DIE | Token::POW | Token::MUL => write!(f, "{}{}{}", l, s, r),
+                    _ => write!(f, "{} {} {}", l, s, r),
+                },
+                None => write!(f, "{} {} {}", l, o, r),
             },
             Node::Unary(o, r) => match o {
                 _ => write!(f, "{}{}", o, r),
@@ -37,25 +62,6 @@ impl fmt::Display for Node<'_> {
 
 impl fmt::Display for Token<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Token::LPAREN => write!(f, "("),
-            Token::RPAREN => write!(f, ")"),
-            Token::DIE => write!(f, "d"),
-            Token::POW => write!(f, "^"),
-            Token::MOD => write!(f, "%"),
-            Token::MUL => write!(f, "*"),
-            Token::DIV => write!(f, "/"),
-            Token::ADD => write!(f, "+"),
-            Token::SUB => write!(f, "-"),
-            Token::EQ => write!(f, "=="),
-            Token::NE => write!(f, "!="),
-            Token::LT => write!(f, "<"),
-            Token::LE => write!(f, "<="),
-            Token::GT => write!(f, ">"),
-            Token::GE => write!(f, ">="),
-            Token::AND => write!(f, "AND"),
-            Token::OR => write!(f, "OR"),
-            _ => write!(f, "{:?}", self),
-        }
+        write!(f, "{:?}", self)
     }
 }

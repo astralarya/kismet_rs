@@ -4,38 +4,11 @@ use logos::{Lexer, Logos, SpannedIter};
 
 #[derive(Logos, Copy, Clone, Debug, PartialEq)]
 pub enum Token<'input> {
-    #[error]
-    ERROR,
+    #[regex(r"(?i)or")]
+    OR,
 
-    #[regex(r"[ \t\n\f]+", logos::skip)]
-    SKIP,
-
-    #[regex(r"(?i)d")]
-    DIE,
-
-    #[token("(")]
-    LPAREN,
-
-    #[token(")")]
-    RPAREN,
-
-    #[token("^")]
-    POW,
-
-    #[token("%")]
-    MOD,
-
-    #[token("*")]
-    MUL,
-
-    #[token("/")]
-    DIV,
-
-    #[token("+")]
-    ADD,
-
-    #[token("-")]
-    SUB,
+    #[regex(r"(?i)and")]
+    AND,
 
     #[token("==")]
     EQ,
@@ -55,17 +28,44 @@ pub enum Token<'input> {
     #[token(">=")]
     GE,
 
-    #[regex(r"(?i)and")]
-    AND,
+    #[token("+")]
+    ADD,
 
-    #[regex(r"(?i)or")]
-    OR,
+    #[token("-")]
+    SUB,
+
+    #[token("%")]
+    MOD,
+
+    #[token("*")]
+    MUL,
+
+    #[token("/")]
+    DIV,
+
+    #[token("^")]
+    POW,
+
+    #[regex(r"(?i)d")]
+    DIE,
+
+    #[token("(")]
+    LPAREN,
+
+    #[token(")")]
+    RPAREN,
 
     #[regex(r"[0-9]+", parse_int)]
     Int(i32),
 
     #[regex(r"([_a-ce-zA-CE-Z]|d[_a-zA-Z])[_a-zA-Z0-9]*")]
     Id(&'input str),
+
+    #[regex(r"[ \t\n\f]+", logos::skip)]
+    SKIP,
+
+    #[error]
+    ERROR,
 }
 
 pub struct LexerError {
