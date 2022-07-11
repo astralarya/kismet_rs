@@ -71,6 +71,40 @@ pub enum Token<'input> {
     ERROR,
 }
 
+impl<'input> Token<'input> {
+    pub fn space(&self) -> &'static str {
+        match self {
+            Token::DIE | Token::POW | Token::MUL => "",
+            _ => " ",
+        }
+    }
+}
+
+impl fmt::Display for Token<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Token::OR => write!(f, "OR"),
+            Token::AND => write!(f, "AND"),
+            Token::EQ => write!(f, "=="),
+            Token::NE => write!(f, "!="),
+            Token::LT => write!(f, "<"),
+            Token::LE => write!(f, "<="),
+            Token::GT => write!(f, ">"),
+            Token::GE => write!(f, ">="),
+            Token::ADD => write!(f, "+"),
+            Token::SUB => write!(f, "-"),
+            Token::MOD => write!(f, "%"),
+            Token::MUL => write!(f, "*"),
+            Token::DIV => write!(f, "/"),
+            Token::POW => write!(f, "^"),
+            Token::DIE => write!(f, "d"),
+            Token::LPAREN => write!(f, "("),
+            Token::RPAREN => write!(f, ")"),
+            _ => write!(f, "{:?}", self),
+        }
+    }
+}
+
 pub struct LexerError {
     loc: Range<usize>,
 }
