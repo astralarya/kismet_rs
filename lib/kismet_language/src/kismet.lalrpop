@@ -94,7 +94,7 @@ Die: Node<'input> = {
 }
 
 Atom: Node<'input> = {
-  LPAREN <e:Expr> RPAREN => Node::Paren(Box::new(e)),
+  <l:LPAREN> <e:Expr> <r:RPAREN> => Node::Group(l, Box::new(e), r),
   Identifier,
   Literal,
 }

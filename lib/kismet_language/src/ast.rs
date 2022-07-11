@@ -12,42 +12,44 @@ pub enum Node<'input> {
     Stmts(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
     Unary(Token<'input>, Box<Node<'input>>),
-    Paren(Box<Node<'input>>),
+    Group(Token<'input>, Box<Node<'input>>, Token<'input>),
     Id(&'input str),
     Int(i32),
     Error(Box<dyn Error>),
 }
 
+fn to_str(op: &Token) -> Option<&'static str> {
+    match op {
+        Token::OR => Some("OR"),
+        Token::AND => Some("AND"),
+        Token::EQ => Some("=="),
+        Token::NE => Some("!="),
+        Token::LT => Some("<"),
+        Token::LE => Some("<="),
+        Token::GT => Some(">"),
+        Token::GE => Some(">="),
+        Token::ADD => Some("+"),
+        Token::SUB => Some("-"),
+        Token::MOD => Some("%"),
+        Token::MUL => Some("*"),
+        Token::DIV => Some("/"),
+        Token::POW => Some("^"),
+        Token::DIE => Some("d"),
+        Token::LPAREN => Some("("),
+        Token::RPAREN => Some(")"),
+        _ => None,
+    }
+}
+
+fn get_token_space(op: &Token) -> &'static str {
+    match op {
+        Token::DIE | Token::POW | Token::MUL => "",
+        _ => " ",
+    }
+}
+
 impl fmt::Display for Node<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn op_str(op: &Token) -> Option<&'static str> {
-            match op {
-                Token::OR => Some("OR"),
-                Token::AND => Some("AND"),
-                Token::EQ => Some("=="),
-                Token::NE => Some("!="),
-                Token::LT => Some("<"),
-                Token::LE => Some("<="),
-                Token::GT => Some(">"),
-                Token::GE => Some(">="),
-                Token::ADD => Some("+"),
-                Token::SUB => Some("-"),
-                Token::MOD => Some("%"),
-                Token::MUL => Some("*"),
-                Token::DIV => Some("/"),
-                Token::POW => Some("^"),
-                Token::DIE => Some("d"),
-                Token::LPAREN => Some("("),
-                Token::RPAREN => Some(")"),
-                _ => None,
-            }
-        }
-        fn close_op(op: &Token) -> bool {
-            match op {
-                Token::DIE | Token::POW | Token::MUL => true,
-                _ => false,
-            }
-        }
         match self {
             Node::Stmts(v) => {
                 for (idx, n) in v.iter().enumerate() {
@@ -58,19 +60,24 @@ impl fmt::Display for Node<'_> {
                 }
                 Ok(())
             }
-            Node::Op(l, o, r) => match (op_str(o), close_op(o)) {
-                (Some(s), true) => write!(f, "{}{}{}", l, s, r),
-                (Some(s), false) => write!(f, "{} {} {}", l, s, r),
-                (None, true) => write!(f, "{}{}{}", l, o, r),
-                (None, false) => write!(f, "{} {} {}", l, o, r),
+            Node::Op(left, op, right) => {
+                let space = get_token_space(op);
+                match to_str(op) {
+                    Some(op_str) => write!(f, "{}{}{}{}{}", left, space, op_str, space, right),
+                    None => write!(f, "{}{}{}{}{}", left, space, op, space, right),
+                }
+            }
+            Node::Unary(op, right) => {
+                let space = get_token_space(op);
+                match to_str(op) {
+                    Some(op_str) => write!(f, "{}{}{}", op_str, space, right),
+                    None => write!(f, "{}{}{}", op, space, right),
+                }
+            }
+            Node::Group(left, node, right) => match (to_str(left), to_str(right)) {
+                (Some(lefts), Some(rights)) => write!(f, "{}{}{}", lefts, node, rights),
+                _ => write!(f, "<{}>({})<{}>", left, node, right),
             },
-            Node::Unary(o, r) => match (op_str(o), close_op(o)) {
-                (Some(s), true) => write!(f, "{}{}", s, r),
-                (Some(s), false) => write!(f, "{} {}", s, r),
-                (None, true) => write!(f, "{}{}", o, r),
-                (None, false) => write!(f, "{} {}", o, r),
-            },
-            Node::Paren(e) => write!(f, "({})", e),
             Node::Int(n) => write!(f, "{}", n),
             Node::Id(s) => write!(f, "{}", s),
             Node::Error(e) => write!(f, "{}", e),
