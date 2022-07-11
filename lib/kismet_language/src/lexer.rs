@@ -100,7 +100,11 @@ impl<'input> Iterator for KismetLexer<'input> {
 
 impl fmt::Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Lexer Error at ({},{})", self.loc.start, self.loc.end)
+        write!(
+            f,
+            "Lexer error found at {}:{}",
+            self.loc.start, self.loc.end
+        )
     }
 }
 

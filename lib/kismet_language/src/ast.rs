@@ -55,10 +55,7 @@ impl fmt::Display for Token<'_> {
             Token::GE => write!(f, ">="),
             Token::AND => write!(f, "AND"),
             Token::OR => write!(f, "OR"),
-            Token::Int(i) => write!(f, "{}", i),
-            Token::Id(s) => write!(f, "{}", s),
-            Token::ERROR => write!(f, "(Lexer Error)"),
-            Token::SKIP => Ok(()),
+            _ => write!(f, "{:?}", self),
         }
     }
 }
