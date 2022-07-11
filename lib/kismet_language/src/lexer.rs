@@ -1,18 +1,14 @@
-use std::str::FromStr;
+use std::{fmt, ops::Range, str::FromStr};
 
-use lalrpop_util::ParseError as LalrpopError;
 use logos::{Lexer, Logos, SpannedIter};
-
-use crate::kismet::__ToTriple;
-
-pub enum LexerError {
-    RANGE,
-}
 
 #[derive(Logos, Copy, Clone, Debug, PartialEq)]
 pub enum Token<'input> {
     #[error]
     ERROR,
+
+    #[regex(r"[ \t\n\f]+", logos::skip)]
+    SKIP,
 
     #[regex(r"(?i)d")]
     DIE,
@@ -72,10 +68,14 @@ pub enum Token<'input> {
     Id(&'input str),
 }
 
-fn parse_int<'input>(t: &mut Lexer<'input, Token<'input>>) -> Option<i32> {
+pub struct LexerError {
+    loc: Range<usize>,
+}
+
+fn parse_int<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<i32, ()> {
     match i32::from_str(t.slice()) {
-        Ok(i) => Some(i),
-        Err(_) => None,
+        Ok(i) => Ok(i),
+        Err(_) => Err(()),
     }
 }
 
@@ -84,28 +84,23 @@ pub struct KismetLexer<'input> {
 }
 
 type Span<'input> = (usize, Token<'input>, usize);
-type ParseError<'input> = LalrpopError<usize, Token<'input>, &'static str>;
 
 impl<'input> Iterator for KismetLexer<'input> {
-    type Item = Result<Span<'input>, ParseError<'input>>;
+    type Item = Result<Span<'input>, LexerError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let next = self.curr.next();
         match next {
-            Some((Token::ERROR, _)) => Some(Err(ParseError::<'input>::User {
-                error: "Lexer error",
-            })),
-            Some((t, r)) => match t {
-                _ => Some(Ok((r.start, t, r.end))),
-            },
+            Some((Token::ERROR, r)) => Some(Err(LexerError { loc: r })),
+            Some((t, r)) => Some(Ok((r.start, t, r.end))),
             None => None,
         }
     }
 }
 
-impl<'input> __ToTriple<'input> for Result<Span<'input>, ParseError<'input>> {
-    fn to_triple(value: Self) -> Result<(usize, Token<'input>, usize), ParseError<'input>> {
-        value
+impl fmt::Display for LexerError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Lexer Error at ({},{})", self.loc.start, self.loc.end)
     }
 }
 

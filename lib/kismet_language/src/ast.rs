@@ -2,10 +2,10 @@ use std::{error::Error, fmt};
 
 use lalrpop_util::ParseError as LalrpopError;
 
-use super::lexer::Token;
+use super::lexer::{LexerError, Token};
 
 pub type ParseResult<'input> = Result<Node<'input>, ParseError<'input>>;
-pub type ParseError<'input> = LalrpopError<usize, Token<'input>, &'input str>;
+pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 
 #[derive(Debug)]
 pub enum Node<'input> {
@@ -55,7 +55,10 @@ impl fmt::Display for Token<'_> {
             Token::GE => write!(f, ">="),
             Token::AND => write!(f, "AND"),
             Token::OR => write!(f, "OR"),
-            t => write!(f, "{}", t),
+            Token::Int(i) => write!(f, "{}", i),
+            Token::Id(s) => write!(f, "{}", s),
+            Token::ERROR => write!(f, "(Lexer Error)"),
+            Token::SKIP => Ok(()),
         }
     }
 }

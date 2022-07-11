@@ -1,10 +1,11 @@
 use super::ast::Node;
-use super::lexer::Token;
+use super::lexer::{Token, LexerError};
 
 grammar<'input>;
 
 extern {
   type Location = usize;
+  type Error = LexerError;
 
   enum Token<'input> {
     OP_OR => Token::OR,
