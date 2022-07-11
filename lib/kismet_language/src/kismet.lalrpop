@@ -92,7 +92,7 @@ OP_ADD: Sym = {
 OP_MUL: Sym = {
   "%" => Sym::Mod,
   "*" => Sym::Mul,
-  "/" => Sym::Sub,
+  "/" => Sym::Div,
 }
 
 OP_POW: Sym = {
