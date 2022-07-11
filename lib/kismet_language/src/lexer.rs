@@ -1,10 +1,13 @@
-use std::ops::Range;
 use std::str::FromStr;
 
-use lalrpop_util::ParseError;
-use logos::{Logos, SpannedIter};
+use lalrpop_util::ParseError as LalrpopError;
+use logos::{Lexer, Logos, SpannedIter};
 
 use crate::kismet::__ToTriple;
+
+pub enum LexerError {
+    RANGE,
+}
 
 #[derive(Logos, Copy, Clone, Debug, PartialEq)]
 pub enum Token<'input> {
@@ -62,56 +65,53 @@ pub enum Token<'input> {
     #[regex(r"(?i)or")]
     OR,
 
-    #[regex(r"[0-9]+", |s| i32::from_str(s.slice()))]
+    #[regex(r"[0-9]+", parse_int)]
     Int(i32),
 
     #[regex(r"\$[_a-zA-Z][_a-zA-Z0-9]*")]
     Id(&'input str),
 }
 
-pub struct Lexer<'input> {
+fn parse_int<'input>(t: &mut Lexer<'input, Token<'input>>) -> Option<i32> {
+    match i32::from_str(t.slice()) {
+        Ok(i) => Some(i),
+        Err(_) => None,
+    }
+}
+
+pub struct KismetLexer<'input> {
     curr: SpannedIter<'input, Token<'input>>,
 }
 
-pub enum LexerError {}
+type Span<'input> = (usize, Token<'input>, usize);
+type ParseError<'input> = LalrpopError<usize, Token<'input>, &'static str>;
 
-type Span<'input> = (Token<'input>, Range<usize>);
-type ErrorSpan = (LexerError, Range<usize>);
-
-impl<'input> Iterator for Lexer<'input> {
-    type Item = Result<Span<'input>, ErrorSpan>;
+impl<'input> Iterator for KismetLexer<'input> {
+    type Item = Result<Span<'input>, ParseError<'input>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let next = self.curr.next();
         match next {
-            Some(t) => Some(Ok(t)),
+            Some((Token::ERROR, _)) => Some(Err(ParseError::<'input>::User {
+                error: "Lexer error",
+            })),
+            Some((t, r)) => match t {
+                _ => Some(Ok((r.start, t, r.end))),
+            },
             None => None,
         }
     }
 }
 
-impl<'input> __ToTriple<'input> for Result<Span<'input>, ErrorSpan> {
-    fn to_triple(
-        value: Self,
-    ) -> Result<(usize, Token<'input>, usize), ParseError<usize, Token<'input>, &'static str>> {
-        match value {
-            Ok((t, r)) => Ok((r.start, t, r.end)),
-            Err(_) => Err(ParseError::User { error: "" }),
-        }
+impl<'input> __ToTriple<'input> for Result<Span<'input>, ParseError<'input>> {
+    fn to_triple(value: Self) -> Result<(usize, Token<'input>, usize), ParseError<'input>> {
+        value
     }
 }
 
-pub fn lex<'input>(input: &'input str) -> Lexer<'input> {
+pub fn lex<'input>(input: &'input str) -> KismetLexer<'input> {
     let lex = Token::lexer(input);
-    Lexer {
+    KismetLexer {
         curr: lex.spanned(),
     }
 }
-
-/*
-INT: Node<'input> = {
-  <s:r"[0-9]+"> =>? i32::from_str(s)
-    .map(|r| Node::Int(r))
-    .map_err(|_| ParseError::User{error: "Integer out of range"}),
-}
-*/
