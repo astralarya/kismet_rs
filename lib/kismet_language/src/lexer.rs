@@ -64,7 +64,7 @@ pub enum Token<'input> {
     #[regex(r"[0-9]+", parse_int)]
     Int(i32),
 
-    #[regex(r"\$[_a-zA-Z][_a-zA-Z0-9]*")]
+    #[regex(r"([_a-ce-zA-CE-Z]|d[_a-zA-Z])[_a-zA-Z0-9]*", priority = 0)]
     Id(&'input str),
 }
 
