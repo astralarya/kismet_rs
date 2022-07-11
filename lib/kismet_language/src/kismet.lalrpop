@@ -1,5 +1,6 @@
 use super::ast::Node;
-use super::lexer::{Token, LexerError};
+use super::lexer::LexerError;
+use super::token::Token;
 
 grammar<'input>;
 

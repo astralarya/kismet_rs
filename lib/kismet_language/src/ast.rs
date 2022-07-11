@@ -2,7 +2,8 @@ use std::{error::Error, fmt};
 
 use lalrpop_util::ParseError as LalrpopError;
 
-use super::lexer::{LexerError, Token};
+use super::lexer::LexerError;
+use super::token::Token;
 
 pub type ParseResult<'input> = Result<Node<'input>, ParseError<'input>>;
 pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
