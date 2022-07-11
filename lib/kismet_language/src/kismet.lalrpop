@@ -1,10 +1,34 @@
-use std::str::FromStr;
+use super::ast::Node;
+use super::lexer::Token;
 
-use lalrpop_util::ParseError;
+grammar<'input>;
 
-use super::ast::{Node, Sym};
+extern {
+  type Location = usize;
 
-grammar;
+  enum Token<'input> {
+    OP_OR => Token::OR,
+    OP_AND => Token::AND,
+    OP_EQ => Token::EQ,
+    OP_NE => Token::NE,
+    OP_LT => Token::LT,
+    OP_LE => Token::LE,
+    OP_GT => Token::GT,
+    OP_GE => Token::GE,
+    OP_ADD => Token::ADD,
+    OP_SUB => Token::SUB,
+    OP_MOD => Token::MOD,
+    OP_MUL => Token::MUL,
+    OP_DIV => Token::DIV,
+    OP_POW => Token::POW,
+    OP_DIE => Token::DIE,
+    LPAREN => Token::LPAREN,
+    RPAREN => Token::RPAREN,
+    INT => Token::Int(<i32>),
+    ID => Token::Id(<&'input str>),
+  }
+}
+
 
 pub Kismet: Node<'input> = {
   Expr
@@ -25,23 +49,23 @@ Conjunction: Node<'input> = {
 }
 
 Comparison: Node<'input> = {
-  <l:Comparison> <o:OP_EQ> <r:Addition> => Node::Op(Box::new(l), o, Box::new(r)),
+  <l:Comparison> <o:OP_EQS> <r:Addition> => Node::Op(Box::new(l), o, Box::new(r)),
   Addition,
 }
 
 Addition: Node<'input> = {
-  <l:Addition> <o:OP_ADD> <r:Multiply> => Node::Op(Box::new(l), o, Box::new(r)),
+  <l:Addition> <o:OP_ADDS> <r:Multiply> => Node::Op(Box::new(l), o, Box::new(r)),
   Multiply,
 }
 
 Multiply: Node<'input> = {
-  <l:Multiply> <o:OP_MUL> <r:Unary> => Node::Op(Box::new(l), o, Box::new(r)),
+  <l:Multiply> <o:OP_MULS> <r:Unary> => Node::Op(Box::new(l), o, Box::new(r)),
   Unary,
 }
 
 Unary: Node<'input> = {
   <l:Unary> <o:OP_POW> <r:Die> => Node::Op(Box::new(l), o, Box::new(r)),
-  <o:OP_ADD> <r:Die> => Node::Unary(o, Box::new(r)),
+  <o:OP_ADDS> <r:Die> => Node::Unary(o, Box::new(r)),
   Die,
 }
 
@@ -52,63 +76,37 @@ Die: Node<'input> = {
 }
 
 Atom: Node<'input> = {
-  "(" <e:Expr> ")" => Node::Paren(Box::new(e)),
+  LPAREN <e:Expr> RPAREN => Node::Paren(Box::new(e)),
   Identifier,
   Literal,
 }
 
 Identifier: Node<'input> = {
-  IDENTIFIER,
+  <s:ID> => Node::Id(s),
 }
 
 Literal: Node<'input> = {
-  INT,
+  <i:INT> => Node::Int(i),
 }
 
 //
 
-OP_OR: Sym = {
-  r"(?i)or" => Sym::Or,
+OP_EQS: Token<'input> = {
+  OP_EQ,
+  OP_NE,
+  OP_LT,
+  OP_LE,
+  OP_GT,
+  OP_GE,
 }
 
-OP_AND: Sym = {
-  r"(?i)and" => Sym::And,
+OP_ADDS: Token<'input> = {
+  OP_ADD,
+  OP_SUB,
 }
 
-OP_EQ: Sym = {
-  "==" => Sym::Eq,
-  "!=" => Sym::NotEq,
-  "<" => Sym::Less,
-  "<=" => Sym::LessEq,
-  ">" => Sym::Greater,
-  ">=" => Sym::GreaterEq,
-}
-
-OP_ADD: Sym = {
-  "+" => Sym::Add,
-  "-" => Sym::Sub,
-}
-
-OP_MUL: Sym = {
-  "%" => Sym::Mod,
-  "*" => Sym::Mul,
-  "/" => Sym::Div,
-}
-
-OP_POW: Sym = {
-  "^" => Sym::Pow,
-}
-
-OP_DIE: Sym = {
-  "d" => Sym::Die,
-}
-
-INT: Node<'input> = {
-  <s:r"[0-9]+"> =>? i32::from_str(s)
-    .map(|r| Node::Int(r))
-    .map_err(|_| ParseError::User{error: "Integer out of range"}),
-}
-
-IDENTIFIER: Node<'input> = {
-  <s:r"\$[_a-zA-Z][_a-zA-Z0-9]*"> => Node::Id(s)
+OP_MULS: Token<'input> = {
+  OP_MOD,
+  OP_MUL,
+  OP_DIV,
 }
