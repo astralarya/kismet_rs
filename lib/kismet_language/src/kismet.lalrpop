@@ -4,35 +4,6 @@ use super::token::Token;
 
 grammar<'input>;
 
-extern {
-  type Location = usize;
-  type Error = LexerError;
-
-  enum Token<'input> {
-    DELIM => Token::DELIM,
-    OR => Token::OR,
-    AND => Token::AND,
-    EQ => Token::EQ,
-    NE => Token::NE,
-    LT => Token::LT,
-    LE => Token::LE,
-    GT => Token::GT,
-    GE => Token::GE,
-    ADD => Token::ADD,
-    SUB => Token::SUB,
-    MOD => Token::MOD,
-    MUL => Token::MUL,
-    DIV => Token::DIV,
-    POW => Token::POW,
-    DIE => Token::DIE,
-    LPAREN => Token::LPAREN,
-    RPAREN => Token::RPAREN,
-    INT => Token::Int(<i32>),
-    ID => Token::Id(<&'input str>),
-  }
-}
-
-
 pub Kismet: Node<'input> = {
   Stmts
 }
@@ -53,34 +24,20 @@ Stmt: Node<'input> = {
   Expr,
 }
 
+Infix<Op, Next>: Node<'input> = {
+  <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::Op(Box::new(l), o, Box::new(r)),
+  Next
+}
+
 Expr: Node<'input> = {
   Disjunction,
 }
 
-Disjunction: Node<'input> = {
-  <l:Disjunction> <o:OR> <r:Conjunction> => Node::Op(Box::new(l), o, Box::new(r)),
-  Conjunction,
-}
-
-Conjunction: Node<'input> = {
-  <l:Conjunction> <o:AND> <r:Comparison> => Node::Op(Box::new(l), o, Box::new(r)),
-  Comparison,
-}
-
-Comparison: Node<'input> = {
-  <l:Comparison> <o:EQS> <r:Addition> => Node::Op(Box::new(l), o, Box::new(r)),
-  Addition,
-}
-
-Addition: Node<'input> = {
-  <l:Addition> <o:ADDS> <r:Multiply> => Node::Op(Box::new(l), o, Box::new(r)),
-  Multiply,
-}
-
-Multiply: Node<'input> = {
-  <l:Multiply> <o:MULS> <r:Unary> => Node::Op(Box::new(l), o, Box::new(r)),
-  Unary,
-}
+Disjunction = Infix<OR, Conjunction>;
+Conjunction = Infix<AND, Comparison>;
+Comparison = Infix<EQS, Addition>;
+Addition = Infix<ADDS, Multiply>;
+Multiply = Infix<MULS, Unary>;
 
 Unary: Node<'input> = {
   <l:Unary> <o:POW> <r:Die> => Node::Op(Box::new(l), o, Box::new(r)),
@@ -128,4 +85,32 @@ MULS: Token<'input> = {
   MOD,
   MUL,
   DIV,
+}
+
+extern {
+  type Location = usize;
+  type Error = LexerError;
+
+  enum Token<'input> {
+    DELIM => Token::DELIM,
+    OR => Token::OR,
+    AND => Token::AND,
+    EQ => Token::EQ,
+    NE => Token::NE,
+    LT => Token::LT,
+    LE => Token::LE,
+    GT => Token::GT,
+    GE => Token::GE,
+    ADD => Token::ADD,
+    SUB => Token::SUB,
+    MOD => Token::MOD,
+    MUL => Token::MUL,
+    DIV => Token::DIV,
+    POW => Token::POW,
+    DIE => Token::DIE,
+    LPAREN => Token::LPAREN,
+    RPAREN => Token::RPAREN,
+    INT => Token::Int(<i32>),
+    ID => Token::Id(<&'input str>),
+  }
 }
