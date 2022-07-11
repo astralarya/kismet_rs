@@ -2,14 +2,15 @@ use std::{error::Error, fmt};
 
 use lalrpop_util::{lexer::Token, ParseError as LalrpopError};
 
-pub type ParseResult<'life> = Result<Node, ParseError<'life>>;
-pub type ParseError<'life> = LalrpopError<usize, Token<'life>, &'life str>;
+pub type ParseResult<'input> = Result<Node<'input>, ParseError<'input>>;
+pub type ParseError<'input> = LalrpopError<usize, Token<'input>, &'input str>;
 
 #[derive(Debug)]
-pub enum Node {
-    Op(Box<Node>, Sym, Box<Node>),
-    Unary(Sym, Box<Node>),
-    Paren(Box<Node>),
+pub enum Node<'input> {
+    Op(Box<Node<'input>>, Sym, Box<Node<'input>>),
+    Unary(Sym, Box<Node<'input>>),
+    Paren(Box<Node<'input>>),
+    Id(&'input str),
     Int(i32),
     Error(Box<dyn Error>),
 }
@@ -33,10 +34,11 @@ pub enum Sym {
     Or,
 }
 
-impl fmt::Display for Node {
+impl fmt::Display for Node<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Node::Int(n) => write!(f, "{}", n),
+            Node::Id(s) => write!(f, "{}", s),
             Node::Paren(e) => write!(f, "({})", e),
             Node::Op(l, o, r) => match o {
                 Sym::Die | Sym::Pow | Sym::Mul => write!(f, "{}{}{}", l, o, r),

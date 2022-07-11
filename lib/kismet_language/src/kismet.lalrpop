@@ -6,57 +6,62 @@ use super::ast::{Node, Sym};
 
 grammar;
 
-pub Kismet: Node = {
+pub Kismet: Node<'input> = {
   Expr
 }
 
-Expr: Node = {
+Expr: Node<'input> = {
   Disjunction,
 }
 
-Disjunction: Node = {
+Disjunction: Node<'input> = {
   <l:Disjunction> <o:OP_OR> <r:Conjunction> => Node::Op(Box::new(l), o, Box::new(r)),
   Conjunction,
 }
 
-Conjunction: Node = {
+Conjunction: Node<'input> = {
   <l:Conjunction> <o:OP_AND> <r:Comparison> => Node::Op(Box::new(l), o, Box::new(r)),
   Comparison,
 }
 
-Comparison: Node = {
+Comparison: Node<'input> = {
   <l:Comparison> <o:OP_EQ> <r:Addition> => Node::Op(Box::new(l), o, Box::new(r)),
   Addition,
 }
 
-Addition: Node = {
+Addition: Node<'input> = {
   <l:Addition> <o:OP_ADD> <r:Multiply> => Node::Op(Box::new(l), o, Box::new(r)),
   Multiply,
 }
 
-Multiply: Node = {
+Multiply: Node<'input> = {
   <l:Multiply> <o:OP_MUL> <r:Unary> => Node::Op(Box::new(l), o, Box::new(r)),
   Unary,
 }
 
-Unary: Node = {
+Unary: Node<'input> = {
   <l:Unary> <o:OP_POW> <r:Die> => Node::Op(Box::new(l), o, Box::new(r)),
   <o:OP_ADD> <r:Die> => Node::Unary(o, Box::new(r)),
   Die,
 }
 
-Die: Node = {
+Die: Node<'input> = {
   <l:Die> <o:OP_DIE> <r:Atom> => Node::Op(Box::new(l), o, Box::new(r)),
   <o:OP_DIE> <r:Atom> => Node::Unary(o, Box::new(r)),
   Atom,
 }
 
-Atom: Node = {
+Atom: Node<'input> = {
   "(" <e:Expr> ")" => Node::Paren(Box::new(e)),
+  Identifier,
   Literal,
 }
 
-Literal: Node = {
+Identifier: Node<'input> = {
+  IDENTIFIER,
+}
+
+Literal: Node<'input> = {
   INT,
 }
 
@@ -98,8 +103,12 @@ OP_DIE: Sym = {
   "d" => Sym::Die,
 }
 
-INT: Node = {
+INT: Node<'input> = {
   <s:r"[0-9]+"> =>? i32::from_str(s)
     .map(|r| Node::Int(r))
     .map_err(|_| ParseError::User{error: "Integer out of range"}),
+}
+
+IDENTIFIER: Node<'input> = {
+  <s:r"\$[_a-zA-Z][_a-zA-Z0-9]*"> => Node::Id(s)
 }
