@@ -61,6 +61,25 @@ ParenthForm: Node<'input> = {
 
 ListDisplay: Node<'input> = {
   LBRACKET <Exprs> RBRACKET => Node::Vector(<>),
+  LBRACKET Comprehension RBRACKET => Node::to_enclosure(<>),
+}
+
+Comprehension: Node<'input> = {
+  Expr CompFor+ => Node::to_comprehension(<>)
+}
+
+CompFor: Node<'input> = {
+  FOR <TargetList> IN <Disjunction> => Node::to_compfor(<>)
+}
+
+Target: Node<'input> = {
+  Identifier,
+  LPAREN TargetList RPAREN => Node::to_enclosure(<>),
+  LBRACKET TargetList RBRACKET => Node::to_enclosure(<>),
+}
+
+TargetList: Node<'input> = {
+  Join<COMMA, Target> => Node::TargetList(<>),
 }
 
 Identifier: Node<'input> = {
@@ -101,6 +120,8 @@ extern {
   enum Token<'input> {
     DELIM => Token::DELIM,
     COMMA => Token::COMMA,
+    FOR => Token::FOR,
+    IN => Token::IN,
     OR => Token::OR,
     AND => Token::AND,
     EQ => Token::EQ,

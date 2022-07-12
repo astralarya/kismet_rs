@@ -12,6 +12,9 @@ pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 #[derive(Debug, PartialEq)]
 pub enum Node<'input> {
     Stmts(Vec<Node<'input>>),
+    Comprehension(Box<Node<'input>>, Vec<Node<'input>>),
+    CompFor(Box<Node<'input>>, Box<Node<'input>>),
+    TargetList(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
     Unary(Token<'input>, Box<Node<'input>>),
     Enclosure(Token<'input>, Box<Node<'input>>, Token<'input>),
@@ -62,6 +65,14 @@ impl<'input> Node<'input> {
     pub fn to_enclosure(l: Token<'input>, n: Node<'input>, r: Token<'input>) -> Node<'input> {
         Node::Enclosure(l, Box::new(n), r)
     }
+
+    pub fn to_comprehension(n: Node<'input>, v: Vec<Node<'input>>) -> Node<'input> {
+        Node::Comprehension(Box::new(n), v)
+    }
+
+    pub fn to_compfor(l: Node<'input>, r: Node<'input>) -> Node<'input> {
+        Node::CompFor(Box::new(l), Box::new(r))
+    }
 }
 
 impl fmt::Display for Node<'_> {
@@ -76,6 +87,14 @@ impl fmt::Display for Node<'_> {
 
         match self {
             Node::Stmts(nodes) => write!(f, "{}", join(nodes, "\n")),
+            /*
+            Comprehension(Box<Node<'input>>, Vec<Node<'input>>),
+            CompFor(Box<Node<'input>>, Box<Node<'input>>),
+            TargetList(Vec<Node<'input>>),
+            */
+            Node::Comprehension(l, v) => write!(f, "{} {}", l, join(v, " ")),
+            Node::CompFor(l, r) => write!(f, "FOR {} IN {}", l, r),
+            Node::TargetList(v) => write!(f, "{}", join(v, ", ")),
             Node::Op(left, op, right) => match (op.enclose(left), op.enclose(right)) {
                 (true, true) => {
                     write!(f, "({}){}{}{}({})", left, op.space(), op, op.space(), right)

@@ -14,6 +14,12 @@ pub enum Token<'input> {
     #[regex(",")]
     COMMA,
 
+    #[regex(r"(?i)for")]
+    FOR,
+
+    #[regex(r"(?i)in")]
+    IN,
+
     #[regex(r"(?i)or")]
     OR,
 
