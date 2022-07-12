@@ -64,6 +64,18 @@ pub enum Token<'input> {
     #[token(")")]
     RPAREN,
 
+    #[token("[")]
+    LBRACKET,
+
+    #[token("]")]
+    RBRACKET,
+
+    #[token("{")]
+    LBRACE,
+
+    #[token("}")]
+    RBRACE,
+
     #[regex("\"", Token::parse_string)]
     #[regex("r#*\"", Token::parse_rawstring)]
     String(String),
@@ -219,6 +231,10 @@ impl fmt::Display for Token<'_> {
             Token::DIE => write!(f, "d"),
             Token::LPAREN => write!(f, "("),
             Token::RPAREN => write!(f, ")"),
+            Token::LBRACKET => write!(f, "["),
+            Token::RBRACKET => write!(f, "]"),
+            Token::LBRACE => write!(f, "{{"),
+            Token::RBRACE => write!(f, "}}"),
             _ => write!(f, "{:?}", self),
         }
     }

@@ -14,6 +14,7 @@ pub enum Node<'input> {
     Stmts(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
     Enclosure(Token<'input>, Box<Node<'input>>, Token<'input>),
+    Vector(Vec<Node<'input>>),
     Unary(Token<'input>, Box<Node<'input>>),
     Tuple(Vec<Node<'input>>),
     Id(&'input str),
@@ -69,6 +70,7 @@ impl fmt::Display for Node<'_> {
                     _ => Ok(()),
                 }
             }
+            Node::Vector(nodes) => fmt_seq(f, nodes, ", "),
             Node::Enclosure(left, op, right) => {
                 write!(
                     f,
