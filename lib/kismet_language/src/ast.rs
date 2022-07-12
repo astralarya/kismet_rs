@@ -16,7 +16,7 @@ pub enum Node<'input> {
     Unary(Token<'input>, Box<Node<'input>>),
     Tuple(Vec<Node<'input>>),
     Id(&'input str),
-    String(&'input str),
+    String(String),
     Int(i32),
     Error(Box<dyn Error>),
 }

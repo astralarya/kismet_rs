@@ -1,8 +1,9 @@
 use std::{fmt, str::FromStr};
 
 use logos::{Lexer, Logos};
+use syn::{parse_str, LitStr};
 
-#[derive(Logos, Copy, Clone, Debug, PartialEq)]
+#[derive(Logos, Clone, Debug, PartialEq)]
 pub enum Token<'input> {
     #[regex(r"[;\n]")]
     DELIM,
@@ -62,7 +63,7 @@ pub enum Token<'input> {
     RPAREN,
 
     #[regex("\"", parse_string)]
-    String(&'input str),
+    String(String),
 
     #[regex(r"[0-9]+", parse_int)]
     Int(i32),
@@ -120,7 +121,7 @@ fn parse_int<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<i32, ()> {
     }
 }
 
-fn parse_string<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<&'input str, ()> {
+fn parse_string<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<String, ()> {
     #[derive(Logos, Debug, PartialEq)]
     enum Part<'input> {
         #[token("\"")]
@@ -141,9 +142,13 @@ fn parse_string<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<&'input 
     for token in Part::lexer(&t.remainder()) {
         match token {
             Part::Quote => {
-                let string = &remainder[0..remainder.len() - &t.remainder().len()];
                 t.bump(1);
-                return Ok(string);
+                let mut string = String::from("\"");
+                string.push_str(&remainder[0..remainder.len() - &t.remainder().len()]);
+                return match parse_str::<LitStr>(string.as_str()) {
+                    Ok(n) => Ok(n.value()),
+                    Err(_) => Err(()),
+                };
             }
             Part::Chars(s) => t.bump(s.len()),
             Part::SlashEscape => t.bump(2),
