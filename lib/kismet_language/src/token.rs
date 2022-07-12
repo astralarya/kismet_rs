@@ -63,6 +63,7 @@ pub enum Token<'input> {
     RPAREN,
 
     #[regex("\"", parse_string)]
+    #[regex("r#*\"", parse_rawstring)]
     String(String),
 
     #[regex(r"[0-9]+", parse_int)]
@@ -152,6 +153,51 @@ fn parse_string<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<String, 
             }
             Part::Chars(s) => t.bump(s.len()),
             Part::SlashEscape => t.bump(2),
+            Part::Error => return Err(()),
+        }
+    }
+    Err(())
+}
+
+fn parse_rawstring<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<String, ()> {
+    #[derive(Logos, Debug, PartialEq)]
+    enum Part<'input> {
+        #[token("\"")]
+        Quote,
+
+        #[token("#")]
+        Hash,
+
+        #[regex(r##"[^"#]+"##)]
+        Chars(&'input str),
+
+        #[error]
+        #[regex(r"", logos::skip)]
+        Error,
+    }
+
+    let mut string = String::from(t.slice());
+    let guard = string.len() - 2;
+    let remainder = t.remainder();
+    let mut signal: usize = 0;
+    for token in Part::lexer(&t.remainder()) {
+        match token {
+            Part::Quote => {
+                t.bump(1);
+                signal = 0;
+            }
+            Part::Hash => {
+                t.bump(1);
+                signal += 1;
+                if signal == guard {
+                    string.push_str(&remainder[0..remainder.len() - &t.remainder().len()]);
+                    return match parse_str::<LitStr>(string.as_str()) {
+                        Ok(n) => Ok(n.value()),
+                        Err(_) => Err(()),
+                    };
+                }
+            }
+            Part::Chars(s) => t.bump(s.len()),
             Part::Error => return Err(()),
         }
     }
