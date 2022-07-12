@@ -132,6 +132,13 @@ Join<Delim, Child>: Vec<Node<'input>> = {
 }
 
 
+JoinPlus<Delim, Child>: Vec<Node<'input>> = {
+  <mut v:(<Child> Delim)+> <e:Child?> => match e {
+    None => v,
+    Some(e) => { v.push(e); v }
+  },
+}
+
 JoinFilter<Delim, Child>: Vec<Node<'input>> = {
   DELIM* <mut v:(<Child> Delim+)*> <e:Child?> => match e {
     None => v,
@@ -139,12 +146,6 @@ JoinFilter<Delim, Child>: Vec<Node<'input>> = {
   },
 }
 
-JoinPlus<Delim, Child>: Vec<Node<'input>> = {
-  <mut v:(<Child> Delim)+> <e:Child?> => match e {
-    None => v,
-    Some(e) => { v.push(e); v }
-  },
-}
 
 Infix<Op, Next>: Node<'input> = {
   <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::to_op(<>),
