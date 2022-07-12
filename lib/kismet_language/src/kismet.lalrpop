@@ -44,18 +44,18 @@ Atom: Node<'input> = {
   Literal,
 }
 
+Enclosure: Node<'input> = {
+  LPAREN <JoinPlus<COMMA, Expr>> RPAREN => Node::Tuple(<>),
+  <l:LPAREN> <e:Expr> <r:RPAREN> => Node::Enclosure(l, Box::new(e), r),
+  LPAREN RPAREN => Node::Tuple(vec![]),
+}
+
 Identifier: Node<'input> = {
   ID => Node::Id(<>),
 }
 
 Literal: Node<'input> = {
   INT => Node::Int(<>),
-}
-
-Enclosure: Node<'input> = {
-  LPAREN <JoinPlus<COMMA, Expr>> RPAREN => Node::Tuple(<>),
-  <l:LPAREN> <e:Expr> <r:RPAREN> => Node::Enclosure(l, Box::new(e), r),
-  LPAREN RPAREN => Node::Tuple(vec![]),
 }
 
 // Tokens
