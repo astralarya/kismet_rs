@@ -48,29 +48,25 @@ impl<'input> Node<'input> {
 
 impl fmt::Display for Node<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn fmt_seq(f: &mut fmt::Formatter, nodes: &Vec<Node>, delim: &'static str) -> fmt::Result {
-            write!(
-                f,
-                "{}",
-                nodes
-                    .iter()
-                    .map(|node| node.to_string())
-                    .collect::<Vec<String>>()
-                    .join(delim)
-            )
+        fn join(nodes: &Vec<Node>, delim: &'static str) -> String {
+            nodes
+                .iter()
+                .map(|node| node.to_string())
+                .collect::<Vec<String>>()
+                .join(delim)
         }
 
         match self {
-            Node::Stmts(nodes) => fmt_seq(f, nodes, "\n"),
-            Node::Tuple(nodes) => {
-                fmt_seq(f, nodes, ", ")?;
-                match nodes.len() {
-                    0 => write!(f, "()"),
-                    1 => write!(f, ","),
-                    _ => Ok(()),
+            Node::Stmts(nodes) => write!(f, "{}", join(nodes, "\n")),
+            Node::Op(left, op, right) => match (left.is_int() || left.is_tuple(), op) {
+                (false, Token::DIE) => {
+                    write!(f, "({}){}{}{}{}", left, op.space(), op, op.space(), right)
                 }
+                _ => write!(f, "{}{}{}{}{}", left, op.space(), op, op.space(), right),
+            },
+            Node::Unary(op, right) => {
+                write!(f, "{}{}{}", op, op.space(), right)
             }
-            Node::Vector(nodes) => fmt_seq(f, nodes, ", "),
             Node::Enclosure(left, op, right) => {
                 write!(
                     f,
@@ -82,15 +78,11 @@ impl fmt::Display for Node<'_> {
                     right
                 )
             }
-            Node::Op(left, op, right) => match (left.is_int() || left.is_tuple(), op) {
-                (false, Token::DIE) => {
-                    write!(f, "({}){}{}{}{}", left, op.space(), op, op.space(), right)
-                }
-                _ => write!(f, "{}{}{}{}{}", left, op.space(), op, op.space(), right),
+            Node::Vector(nodes) => write!(f, "[{}]", join(nodes, ", ")),
+            Node::Tuple(nodes) => match nodes.len() {
+                1 => write!(f, "({},)", nodes[0]),
+                _ => write!(f, "({})", join(nodes, ", ")),
             },
-            Node::Unary(op, right) => {
-                write!(f, "{}{}{}", op, op.space(), right)
-            }
             Node::String(s) => write!(f, "\"{}\"", s),
             Node::Integer(n) => write!(f, "{}", n),
             Node::Id(s) => write!(f, "{}", s),
