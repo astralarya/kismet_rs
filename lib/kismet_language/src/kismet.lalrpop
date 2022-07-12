@@ -17,7 +17,7 @@ Stmt: Node<'input> = {
 }
 
 Exprs: Node<'input> = {
-  Join<COMMA, Expr> => Node::Exprs(<>),
+  JoinPlus<COMMA, Expr> => Node::Exprs(<>),
 }
 
 Expr: Node<'input> = {
@@ -57,6 +57,7 @@ Literal: Node<'input> = {
 }
 
 Enclosure: Node<'input> = {
+  LPAREN <Expr> RPAREN,
   LPAREN <e:Exprs> RPAREN => Node::Tuple(Box::new(<>)),
 }
 
@@ -117,7 +118,14 @@ Join<Delim, Child>: Vec<Node<'input>> = {
   <mut v:(<Child> Delim)*> <e:Child?> => match e {
     None => v,
     Some(e) => { v.push(e); v }
-  }
+  },
+}
+
+JoinPlus<Delim, Child>: Vec<Node<'input>> = {
+  <mut v:(<Child> Delim)+> <e:Child?> => match e {
+    None => v,
+    Some(e) => { v.push(e); v }
+  },
 }
 
 Infix<Op, Next>: Node<'input> = {
