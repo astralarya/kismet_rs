@@ -4,6 +4,7 @@ use lalrpop_util::ParseError as LalrpopError;
 
 use super::lexer::LexerError;
 use super::token::Token;
+use super::types::Integer;
 
 pub type ParseResult<'input> = Result<Node<'input>, ParseError<'input>>;
 pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
@@ -17,7 +18,7 @@ pub enum Node<'input> {
     Tuple(Vec<Node<'input>>),
     Id(&'input str),
     String(String),
-    Int(i32),
+    Integer(Integer),
     Error(Box<dyn Error>),
 }
 
@@ -38,7 +39,7 @@ impl<'input> Node<'input> {
 
     pub fn is_int(&self) -> bool {
         match self {
-            Node::Int(_) => true,
+            Node::Integer(_) => true,
             _ => false,
         }
     }
@@ -89,7 +90,7 @@ impl fmt::Display for Node<'_> {
                 write!(f, "{}{}{}", op, op.space(), right)
             }
             Node::String(s) => write!(f, "\"{}\"", s),
-            Node::Int(n) => write!(f, "{}", n),
+            Node::Integer(n) => write!(f, "{}", n),
             Node::Id(s) => write!(f, "{}", s),
             Node::Error(e) => write!(f, "{}", e),
         }

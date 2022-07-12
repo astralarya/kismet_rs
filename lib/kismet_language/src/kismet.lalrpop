@@ -1,6 +1,7 @@
 use super::ast::Node;
 use super::lexer::LexerError;
 use super::token::Token;
+use super::types::Integer;
 
 grammar<'input>;
 
@@ -56,7 +57,7 @@ Identifier: Node<'input> = {
 
 Literal: Node<'input> = {
   STRING => Node::String(<>),
-  INT => Node::Int(<>),
+  INT => Node::Integer(<>),
 }
 
 // Tokens
@@ -106,7 +107,7 @@ extern {
     LPAREN => Token::LPAREN,
     RPAREN => Token::RPAREN,
     STRING => Token::String(<String>),
-    INT => Token::Int(<i32>),
+    INT => Token::Integer(<Integer>),
     ID => Token::Id(<&'input str>),
   }
 }

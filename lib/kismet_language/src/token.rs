@@ -3,6 +3,8 @@ use std::fmt;
 use logos::{Lexer, Logos};
 use syn::{parse_str, LitInt, LitStr};
 
+use super::types::Integer;
+
 #[derive(Logos, Clone, Debug, PartialEq)]
 pub enum Token<'input> {
     #[regex(r"[;\n]")]
@@ -70,7 +72,7 @@ pub enum Token<'input> {
     #[regex(r"0b[0-1_]*", Token::parse_int)]
     #[regex(r"0o[0-7_]*", Token::parse_int)]
     #[regex(r"0x[[:xdigit:]]*", Token::parse_int)]
-    Int(i32),
+    Integer(Integer),
 
     #[regex(r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*")]
     Id(&'input str),
@@ -83,9 +85,9 @@ pub enum Token<'input> {
 }
 
 impl<'input> Token<'input> {
-    fn parse_int(t: &mut Lexer<'input, Token<'input>>) -> Result<i32, ()> {
+    fn parse_int(t: &mut Lexer<'input, Token<'input>>) -> Result<Integer, ()> {
         match parse_str::<LitInt>(t.slice()) {
-            Ok(n) => match n.base10_parse::<i32>() {
+            Ok(n) => match n.base10_parse::<Integer>() {
                 Ok(i) => Ok(i),
                 Err(_) => Err(()),
             },

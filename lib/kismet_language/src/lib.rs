@@ -1,10 +1,12 @@
 mod ast;
 mod lexer;
 mod token;
+mod types;
 
 pub use ast::*;
 pub use lexer::*;
 pub use token::*;
+pub use types::*;
 
 #[macro_use]
 extern crate lalrpop_util;
