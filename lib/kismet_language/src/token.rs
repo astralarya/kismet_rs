@@ -138,12 +138,12 @@ fn parse_string<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<String, 
         Error,
     }
 
+    let mut string = String::from(t.slice());
     let remainder = t.remainder();
     for token in Part::lexer(&t.remainder()) {
         match token {
             Part::Quote => {
                 t.bump(1);
-                let mut string = String::from("\"");
                 string.push_str(&remainder[0..remainder.len() - &t.remainder().len()]);
                 return match parse_str::<LitStr>(string.as_str()) {
                     Ok(n) => Ok(n.value()),
