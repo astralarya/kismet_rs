@@ -83,6 +83,7 @@ impl<'input> Token<'input> {
 impl fmt::Display for Token<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Token::DELIM => write!(f, "\n"),
             Token::OR => write!(f, "OR"),
             Token::AND => write!(f, "AND"),
             Token::EQ => write!(f, "=="),

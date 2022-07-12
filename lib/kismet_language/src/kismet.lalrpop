@@ -8,25 +8,12 @@ pub Kismet: Node<'input> = {
   Stmts
 }
 
-Delim<T>: Node<'input> = {
-  <mut v:(<T> DELIM)*> <e:T?> => match e {
-    None => Node::Stmts(v),
-    Some(e) => {
-      v.push(e);
-      Node::Stmts(v)
-    }
-  }
+Stmts: Node<'input> = {
+  Join<DELIM, Stmt> => Node::Seq(Token::DELIM, <>)
 }
-
-Stmts = Delim<Stmt>;
 
 Stmt: Node<'input> = {
   Expr,
-}
-
-Infix<Op, Next>: Node<'input> = {
-  <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::Op(Box::new(l), o, Box::new(r)),
-  Next
 }
 
 Expr: Node<'input> = {
@@ -65,7 +52,7 @@ Literal: Node<'input> = {
   <i:INT> => Node::Int(i),
 }
 
-//
+// Tokens
 
 EQS: Token<'input> = {
   EQ,
@@ -113,4 +100,18 @@ extern {
     INT => Token::Int(<i32>),
     ID => Token::Id(<&'input str>),
   }
+}
+
+// Macros
+
+Join<Delim, Child>: Vec<Node<'input>> = {
+  <mut v:(<Child> Delim)*> <e:Child?> => match e {
+    None => v,
+    Some(e) => { v.push(e); v }
+  }
+}
+
+Infix<Op, Next>: Node<'input> = {
+  <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::Op(Box::new(l), o, Box::new(r)),
+  Next
 }

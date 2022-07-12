@@ -10,7 +10,7 @@ pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 
 #[derive(Debug)]
 pub enum Node<'input> {
-    Stmts(Vec<Node<'input>>),
+    Seq(Token<'input>, Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
     Unary(Token<'input>, Box<Node<'input>>),
     Group(Token<'input>, Box<Node<'input>>, Token<'input>),
@@ -22,11 +22,11 @@ pub enum Node<'input> {
 impl fmt::Display for Node<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Node::Stmts(v) => {
-                for (idx, n) in v.iter().enumerate() {
+            Node::Seq(delim, nodes) => {
+                for (idx, node) in nodes.iter().enumerate() {
                     match idx {
-                        0 => write!(f, "{}", n)?,
-                        _ => write!(f, "\n{}", n)?,
+                        0 => write!(f, "{}", node)?,
+                        _ => write!(f, "{}{}", delim, node)?,
                     }
                 }
                 Ok(())
