@@ -3,6 +3,7 @@ use std::fmt;
 use logos::{Lexer, Logos};
 use syn::{parse_str, LitInt, LitStr};
 
+use super::ast::Node;
 use super::types::Integer;
 
 #[derive(Logos, Clone, Debug, PartialEq)]
@@ -205,6 +206,16 @@ impl<'input> Token<'input> {
         match self {
             Token::DIE | Token::POW | Token::MUL | Token::LPAREN | Token::RPAREN => "",
             _ => " ",
+        }
+    }
+
+    pub fn enclose(&self, node: &Box<Node<'input>>) -> bool {
+        match (
+            self,
+            !node.is_int() && !node.is_tuple() && !node.is_vector(),
+        ) {
+            (Token::DIE, true) => true,
+            _ => false,
         }
     }
 }

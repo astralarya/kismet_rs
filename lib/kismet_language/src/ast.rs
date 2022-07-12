@@ -23,6 +23,13 @@ pub enum Node<'input> {
 }
 
 impl<'input> Node<'input> {
+    pub fn is_vector(&self) -> bool {
+        match self {
+            Node::Vector(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn is_tuple(&self) -> bool {
         match self {
             Node::Tuple(_) => true,
@@ -69,25 +76,18 @@ impl fmt::Display for Node<'_> {
 
         match self {
             Node::Stmts(nodes) => write!(f, "{}", join(nodes, "\n")),
-            Node::Op(left, op, right) => match (
-                left.is_int() || left.is_tuple(),
-                op,
-                right.is_int() || right.is_tuple(),
-            ) {
-                (true, Token::DIE, false) => {
-                    write!(f, "{}{}{}{}({})", left, op.space(), op, op.space(), right)
-                }
-                (false, Token::DIE, true) => {
-                    write!(f, "({}){}{}{}{}", left, op.space(), op, op.space(), right)
-                }
-                (false, Token::DIE, false) => {
+            Node::Op(left, op, right) => match (op.enclose(left), op.enclose(right)) {
+                (true, true) => {
                     write!(f, "({}){}{}{}({})", left, op.space(), op, op.space(), right)
                 }
-                _ => write!(f, "{}{}{}{}{}", left, op.space(), op, op.space(), right),
+                (true, false) => write!(f, "({}){}{}{}{}", left, op.space(), op, op.space(), right),
+                (false, true) => write!(f, "{}{}{}{}({})", left, op.space(), op, op.space(), right),
+                (false, false) => write!(f, "{}{}{}{}{}", left, op.space(), op, op.space(), right),
             },
-            Node::Unary(op, right) => {
-                write!(f, "{}{}{}", op, op.space(), right)
-            }
+            Node::Unary(op, right) => match op.enclose(right) {
+                true => write!(f, "{}{}({})", op, op.space(), right),
+                false => write!(f, "{}{}{}", op, op.space(), right),
+            },
             Node::Enclosure(left, op, right) => {
                 write!(
                     f,
