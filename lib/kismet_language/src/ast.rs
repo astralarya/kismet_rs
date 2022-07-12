@@ -87,11 +87,6 @@ impl fmt::Display for Node<'_> {
 
         match self {
             Node::Stmts(nodes) => write!(f, "{}", join(nodes, "\n")),
-            /*
-            Comprehension(Box<Node<'input>>, Vec<Node<'input>>),
-            CompFor(Box<Node<'input>>, Box<Node<'input>>),
-            TargetList(Vec<Node<'input>>),
-            */
             Node::Comprehension(l, v) => write!(f, "{} {}", l, join(v, " ")),
             Node::CompFor(l, r) => write!(f, "FOR {} IN {}", l, r),
             Node::TargetList(v) => write!(f, "{}", join(v, ", ")),
