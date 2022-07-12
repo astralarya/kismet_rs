@@ -10,7 +10,8 @@ pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 
 #[derive(Debug)]
 pub enum Node<'input> {
-    Seq(Token<'input>, Vec<Node<'input>>),
+    Stmts(Vec<Node<'input>>),
+    Exprs(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
     Unary(Token<'input>, Box<Node<'input>>),
     Group(Token<'input>, Box<Node<'input>>, Token<'input>),
@@ -21,16 +22,21 @@ pub enum Node<'input> {
 
 impl fmt::Display for Node<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fn fmt_seq(f: &mut fmt::Formatter, nodes: &Vec<Node>, delim: &'static str) -> fmt::Result {
+            write!(
+                f,
+                "{}",
+                nodes
+                    .iter()
+                    .map(|node| node.to_string())
+                    .collect::<Vec<String>>()
+                    .join(delim)
+            )
+        }
+
         match self {
-            Node::Seq(delim, nodes) => {
-                for (idx, node) in nodes.iter().enumerate() {
-                    match idx {
-                        0 => write!(f, "{}", node)?,
-                        _ => write!(f, "{}{}", delim, node)?,
-                    }
-                }
-                Ok(())
-            }
+            Node::Stmts(nodes) => fmt_seq(f, nodes, "\n"),
+            Node::Exprs(nodes) => fmt_seq(f, nodes, ", "),
             Node::Op(left, op, right) => {
                 write!(f, "{}{}{}{}{}", left, op.space(), op, op.space(), right)
             }

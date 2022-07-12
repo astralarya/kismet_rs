@@ -9,7 +9,7 @@ pub Kismet: Node<'input> = {
 }
 
 Stmts: Node<'input> = {
-  Join<DELIM, Stmt> => Node::Seq(Token::DELIM, <>),
+  Join<DELIM, Stmt> => Node::Stmts(<>),
 }
 
 Stmt: Node<'input> = {
@@ -17,7 +17,7 @@ Stmt: Node<'input> = {
 }
 
 Exprs: Node<'input> = {
-  Join<COMMA, Expr> => Node::Seq(Token::COMMA, <>),
+  Join<COMMA, Expr> => Node::Exprs(<>),
 }
 
 Expr: Node<'input> = {
