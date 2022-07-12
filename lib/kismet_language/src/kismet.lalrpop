@@ -54,7 +54,7 @@ Literal: Node<'input> = {
 
 Enclosure: Node<'input> = {
   LPAREN <JoinPlus<COMMA, Expr>> RPAREN => Node::Tuple(<>),
-  LPAREN <Expr> RPAREN,
+  <l:LPAREN> <e:Expr> <r:RPAREN> => Node::Enclosure(l, Box::new(e), r),
   LPAREN RPAREN => Node::Tuple(vec![]),
 }
 

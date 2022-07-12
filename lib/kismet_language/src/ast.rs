@@ -12,6 +12,7 @@ pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 pub enum Node<'input> {
     Stmts(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
+    Enclosure(Token<'input>, Box<Node<'input>>, Token<'input>),
     Unary(Token<'input>, Box<Node<'input>>),
     Tuple(Vec<Node<'input>>),
     Id(&'input str),
@@ -65,6 +66,17 @@ impl fmt::Display for Node<'_> {
                     1 => write!(f, ","),
                     _ => Ok(()),
                 }
+            }
+            Node::Enclosure(left, op, right) => {
+                write!(
+                    f,
+                    "{}{}{}{}{}",
+                    left,
+                    left.space(),
+                    op,
+                    right.space(),
+                    right
+                )
             }
             Node::Op(left, op, right) => match (left.is_int() || left.is_tuple(), op) {
                 (false, Token::DIE) => {

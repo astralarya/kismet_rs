@@ -77,7 +77,7 @@ pub enum Token<'input> {
 impl<'input> Token<'input> {
     pub fn space(&self) -> &'static str {
         match self {
-            Token::DIE | Token::POW | Token::MUL => "",
+            Token::DIE | Token::POW | Token::MUL | Token::LPAREN | Token::RPAREN => "",
             _ => " ",
         }
     }
