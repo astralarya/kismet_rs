@@ -6,87 +6,97 @@ use super::types::Integer;
 grammar<'input>;
 
 pub Kismet: Node<'input> = {
-  <Stmts>,
+  stmts,
 }
 
-Stmts: Node<'input> = {
-  JoinFilter<DELIM, Stmt> => Node::Stmts(<>),
+stmts: Node<'input> = {
+  JoinFilter<DELIM, stmt> => Node::Stmts(<>),
 }
 
-Stmt: Node<'input> = {
-  Expr,
+stmt: Node<'input> = {
+  expr,
 }
 
-Exprs: Vec<Node<'input>> = <JoinPlus<COMMA, Expr>>;
+exprs: Vec<Node<'input>> = <JoinPlus<COMMA, expr>>;
 
-Expr: Node<'input> = {
-  Disjunction,
+expr: Node<'input> = {
+  or_test,
 }
 
-Disjunction = Infix<OR, Conjunction>;
-Conjunction = Infix<AND, Comparison>;
-Comparison = Infix<EQS, Addition>;
-Addition = Infix<ADDS, Multiply>;
-Multiply = Infix<MULS, Unary>;
+or_test = Infix<OR, and_test>;
+and_test = Infix<AND, not_test>;
 
-Unary: Node<'input> = {
-  <l:Unary> <o:POW> <r:Die> => Node::to_op(<>),
-  <o:ADDS> <r:Die> => Node::to_unary(<>),
-  Die,
+not_test: Node<'input> = {
+  NOT not_test => Node::to_unary(<>),
+  c_expr,
 }
 
-Die: Node<'input> = {
-  <l:Die> <o:DIE> <r:Atom> => Node::to_op(<>),
-  <o:DIE> <r:Atom> => Node::to_unary(<>),
-  Atom,
+c_expr = Infix<EQS, a_expr>;
+a_expr = Infix<ADDS, m_expr>;
+m_expr = Infix<MULS, u_expr>;
+
+u_expr: Node<'input> = {
+  ADDS primary => Node::to_unary(<>),
+  power,
 }
 
-Atom: Node<'input> = {
-  Enclosure,
-  Identifier,
-  Literal,
+power: Node<'input> = {
+  primary POW u_expr => Node::to_op(<>),
+  primary,
 }
 
-Enclosure: Node<'input> = {
-  ParenthForm,
-  ListDisplay,
-  <l:LBRACE> <v:Stmts> <r:RBRACE> => Node::to_enclosure(<>),
+primary: Node<'input> = {
+  primary DIE atom => Node::to_op(<>),
+  DIE atom => Node::to_unary(<>),
+  atom,
 }
 
-ParenthForm: Node<'input> = {
-  LPAREN <Exprs> RPAREN => Node::Tuple(<>),
-  <l:LPAREN> <e:Expr> <r:RPAREN> => Node::to_enclosure(<>),
+atom: Node<'input> = {
+  enclosure,
+  identifier,
+  literal,
+}
+
+enclosure: Node<'input> = {
+  parenth_form,
+  list_display,
+  <l:LBRACE> <v:stmts> <r:RBRACE> => Node::to_enclosure(<>),
+}
+
+parenth_form: Node<'input> = {
+  LPAREN <exprs> RPAREN => Node::Tuple(<>),
+  <l:LPAREN> <e:expr> <r:RPAREN> => Node::to_enclosure(<>),
   LPAREN RPAREN => Node::Tuple(vec![]),
 }
 
-ListDisplay: Node<'input> = {
-  LBRACKET <Exprs> RBRACKET => Node::Vector(<>),
-  LBRACKET Comprehension RBRACKET => Node::to_enclosure(<>),
+list_display: Node<'input> = {
+  LBRACKET <exprs> RBRACKET => Node::Vector(<>),
+  LBRACKET comprehension RBRACKET => Node::to_enclosure(<>),
 }
 
-Comprehension: Node<'input> = {
-  Expr CompFor+ => Node::to_comprehension(<>)
+comprehension: Node<'input> = {
+  expr comp_for+ => Node::to_comprehension(<>)
 }
 
-CompFor: Node<'input> = {
-  FOR <TargetList> IN <Disjunction> <(IF <Disjunction>)?> => Node::to_compfor(<>)
+comp_for: Node<'input> = {
+  FOR <target_list> IN <or_test> <(IF <or_test>)?> => Node::to_compfor(<>)
 }
 
-Target: Node<'input> = {
-  Identifier,
-  LPAREN TargetList RPAREN => Node::to_enclosure(<>),
-  LBRACKET TargetList RBRACKET => Node::to_enclosure(<>),
+target: Node<'input> = {
+  identifier,
+  LPAREN target_list RPAREN => Node::to_enclosure(<>),
+  LBRACKET target_list RBRACKET => Node::to_enclosure(<>),
 }
 
-TargetList: Node<'input> = {
-  Join<COMMA, Target> => Node::TargetList(<>),
+target_list: Node<'input> = {
+  Join<COMMA, target> => Node::TargetList(<>),
 }
 
-Identifier: Node<'input> = {
+identifier: Node<'input> = {
   ID => Node::Id(<>),
 }
 
-Literal: Node<'input> = {
+literal: Node<'input> = {
   STRING => Node::String(<>),
   INT => Node::Integer(<>),
 }
@@ -125,6 +135,7 @@ extern {
     IF => Token::IF,
     OR => Token::OR,
     AND => Token::AND,
+    NOT => Token::NOT,
     EQ => Token::EQ,
     NE => Token::NE,
     LT => Token::LT,

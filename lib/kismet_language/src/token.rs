@@ -29,6 +29,9 @@ pub enum Token<'input> {
     #[regex(r"(?i)and")]
     AND,
 
+    #[regex(r"(?i)not")]
+    NOT,
+
     #[token("==")]
     EQ,
 
