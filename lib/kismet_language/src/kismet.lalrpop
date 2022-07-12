@@ -49,11 +49,11 @@ Atom: Node<'input> = {
 }
 
 Identifier: Node<'input> = {
-  <s:ID> => Node::Id(s),
+  ID => Node::Id(<>),
 }
 
 Literal: Node<'input> = {
-  <i:INT> => Node::Int(i),
+  INT => Node::Int(<>),
 }
 
 Enclosure: Node<'input> = {
