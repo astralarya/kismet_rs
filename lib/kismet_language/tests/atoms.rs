@@ -14,7 +14,7 @@ fn integer() {
     assert_stmt(Node::Integer(42), r###"0b101010"###);
     assert_stmt(Node::Integer(42), r###"0b101_010"###);
     assert!(
-        parse(&i128::MAX.to_string()).is_err(),
+        parse(&u128::MAX.to_string()).is_err(),
         "Parser should error on overflow"
     )
 }
