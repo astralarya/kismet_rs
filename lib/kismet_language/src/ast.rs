@@ -16,6 +16,7 @@ pub enum Node<'input> {
     Unary(Token<'input>, Box<Node<'input>>),
     Tuple(Vec<Node<'input>>),
     Id(&'input str),
+    String(&'input str),
     Int(i32),
     Error(Box<dyn Error>),
 }
@@ -87,6 +88,7 @@ impl fmt::Display for Node<'_> {
             Node::Unary(op, right) => {
                 write!(f, "{}{}{}", op, op.space(), right)
             }
+            Node::String(s) => write!(f, "\"{}\"", s),
             Node::Int(n) => write!(f, "{}", n),
             Node::Id(s) => write!(f, "{}", s),
             Node::Error(e) => write!(f, "{}", e),

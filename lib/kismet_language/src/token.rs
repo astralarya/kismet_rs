@@ -61,10 +61,13 @@ pub enum Token<'input> {
     #[token(")")]
     RPAREN,
 
+    #[regex("\"", parse_string)]
+    String(&'input str),
+
     #[regex(r"[0-9]+", parse_int)]
     Int(i32),
 
-    #[regex(r"([_a-ce-zA-CE-Z]|d[_a-zA-Z])[_a-zA-Z0-9]*")]
+    #[regex(r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*")]
     Id(&'input str),
 
     #[regex(r"[ \t\f]+", logos::skip)]
@@ -115,4 +118,37 @@ fn parse_int<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<i32, ()> {
         Ok(i) => Ok(i),
         Err(_) => Err(()),
     }
+}
+
+fn parse_string<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<&'input str, ()> {
+    #[derive(Logos, Debug, PartialEq)]
+    enum Part<'input> {
+        #[token("\"")]
+        Quote,
+
+        #[regex(r#"[^"\\]+"#)]
+        Chars(&'input str),
+
+        #[regex(r#"\\."#)]
+        SlashEscape,
+
+        #[error]
+        #[regex(r"", logos::skip)]
+        Error,
+    }
+
+    let remainder = t.remainder();
+    for token in Part::lexer(&t.remainder()) {
+        match token {
+            Part::Quote => {
+                let string = &remainder[0..remainder.len() - &t.remainder().len()];
+                t.bump(1);
+                return Ok(string);
+            }
+            Part::Chars(s) => t.bump(s.len()),
+            Part::SlashEscape => t.bump(2),
+            Part::Error => return Err(()),
+        }
+    }
+    Err(())
 }

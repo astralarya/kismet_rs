@@ -12,6 +12,5 @@ extern crate lalrpop_util;
 lalrpop_mod!(pub kismet);
 
 pub fn parse<'input>(input: &'input String) -> ast::ParseResult<'input> {
-    let lex = lexer::lex(input);
-    kismet::KismetParser::new().parse(lex.into_iter())
+    kismet::KismetParser::new().parse(lexer::lex(input).into_iter())
 }

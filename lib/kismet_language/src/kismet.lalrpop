@@ -55,6 +55,7 @@ Identifier: Node<'input> = {
 }
 
 Literal: Node<'input> = {
+  STRING => Node::String(<>),
   INT => Node::Int(<>),
 }
 
@@ -104,6 +105,7 @@ extern {
     DIE => Token::DIE,
     LPAREN => Token::LPAREN,
     RPAREN => Token::RPAREN,
+    STRING => Token::String(<&'input str>),
     INT => Token::Int(<i32>),
     ID => Token::Id(<&'input str>),
   }
