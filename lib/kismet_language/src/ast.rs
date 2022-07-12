@@ -22,6 +22,19 @@ pub enum Node<'input> {
     Integer(Integer),
 }
 
+pub mod create {
+    use super::super::token::Token;
+    use crate::Node;
+
+    pub fn op<'input>(l: Node<'input>, o: Token<'input>, r: Node<'input>) -> Node<'input> {
+        Node::Op(Box::new(l), o, Box::new(r))
+    }
+
+    pub fn unary<'input>(o: Token<'input>, r: Node<'input>) -> Node<'input> {
+        Node::Unary(o, Box::new(r))
+    }
+}
+
 impl<'input> Node<'input> {
     pub fn is_tuple(&self) -> bool {
         match self {

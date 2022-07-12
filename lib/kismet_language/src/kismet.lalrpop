@@ -1,4 +1,4 @@
-use super::ast::Node;
+use super::ast::{create, Node};
 use super::lexer::LexerError;
 use super::token::Token;
 use super::types::Integer;
@@ -28,14 +28,14 @@ Addition = Infix<ADDS, Multiply>;
 Multiply = Infix<MULS, Unary>;
 
 Unary: Node<'input> = {
-  <l:Unary> <o:POW> <r:Die> => Node::Op(Box::new(l), o, Box::new(r)),
-  <o:ADDS> <r:Die> => Node::Unary(o, Box::new(r)),
+  <l:Unary> <o:POW> <r:Die> => create::op(<>),
+  <o:ADDS> <r:Die> => create::unary(<>),
   Die,
 }
 
 Die: Node<'input> = {
-  <l:Die> <o:DIE> <r:Atom> => Node::Op(Box::new(l), o, Box::new(r)),
-  <o:DIE> <r:Atom> => Node::Unary(o, Box::new(r)),
+  <l:Die> <o:DIE> <r:Atom> => create::op(<>),
+  <o:DIE> <r:Atom> => create::unary(<>),
   Atom,
 }
 
@@ -143,6 +143,6 @@ JoinPlus<Delim, Child>: Vec<Node<'input>> = {
 }
 
 Infix<Op, Next>: Node<'input> = {
-  <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::Op(Box::new(l), o, Box::new(r)),
+  <l:Infix<Op, Next>> <o:Op> <r:Next> => create::op(<>),
   Next
 }

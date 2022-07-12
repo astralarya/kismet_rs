@@ -1,10 +1,13 @@
-use kismet_language::{ast::Node, Token};
+use kismet_language::{
+    ast::{
+        create::{op, unary},
+        Node,
+    },
+    Token,
+};
 
 mod assert;
-mod create;
-
 use assert::assert_stmt;
-use create::{op, unary};
 
 #[test]
 fn arithmetic() {
