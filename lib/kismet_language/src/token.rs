@@ -7,6 +7,9 @@ pub enum Token<'input> {
     #[regex(r"[;\n]")]
     DELIM,
 
+    #[regex(",")]
+    COMMA,
+
     #[regex(r"(?i)or")]
     OR,
 
@@ -84,6 +87,7 @@ impl fmt::Display for Token<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Token::DELIM => write!(f, "\n"),
+            Token::COMMA => write!(f, ","),
             Token::OR => write!(f, "OR"),
             Token::AND => write!(f, "AND"),
             Token::EQ => write!(f, "=="),

@@ -5,15 +5,19 @@ use super::token::Token;
 grammar<'input>;
 
 pub Kismet: Node<'input> = {
-  Stmts
+  Stmts,
 }
 
 Stmts: Node<'input> = {
-  Join<DELIM, Stmt> => Node::Seq(Token::DELIM, <>)
+  Join<DELIM, Stmt> => Node::Seq(Token::DELIM, <>),
 }
 
 Stmt: Node<'input> = {
   Expr,
+}
+
+Exprs: Node<'input> = {
+  Join<COMMA, Expr> => Node::Seq(Token::COMMA, <>),
 }
 
 Expr: Node<'input> = {
@@ -39,7 +43,7 @@ Die: Node<'input> = {
 }
 
 Atom: Node<'input> = {
-  <l:LPAREN> <e:Expr> <r:RPAREN> => Node::Group(l, Box::new(e), r),
+  Enclosure,
   Identifier,
   Literal,
 }
@@ -50,6 +54,10 @@ Identifier: Node<'input> = {
 
 Literal: Node<'input> = {
   <i:INT> => Node::Int(i),
+}
+
+Enclosure: Node<'input> = {
+  <l:LPAREN> <e:Exprs> <r:RPAREN> => Node::Group(l, Box::new(e), r),
 }
 
 // Tokens
@@ -80,6 +88,7 @@ extern {
 
   enum Token<'input> {
     DELIM => Token::DELIM,
+    COMMA => Token::COMMA,
     OR => Token::OR,
     AND => Token::AND,
     EQ => Token::EQ,
