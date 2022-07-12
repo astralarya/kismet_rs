@@ -21,7 +21,21 @@ pub enum Node<'input> {
 }
 
 impl<'input> Node<'input> {
-    fn is_int(&self) -> bool {
+    pub fn is_tuple(&self) -> bool {
+        match self {
+            Node::Tuple(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_id(&self) -> bool {
+        match self {
+            Node::Id(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_int(&self) -> bool {
         match self {
             Node::Int(_) => true,
             _ => false,
@@ -52,7 +66,7 @@ impl fmt::Display for Node<'_> {
                     _ => Ok(()),
                 }
             }
-            Node::Op(left, op, right) => match (left.is_int(), op) {
+            Node::Op(left, op, right) => match (left.is_int() || left.is_tuple(), op) {
                 (false, Token::DIE) => {
                     write!(f, "({}){}{}{}{}", left, op.space(), op, op.space(), right)
                 }
