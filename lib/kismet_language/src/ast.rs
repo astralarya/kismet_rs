@@ -11,10 +11,9 @@ pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 #[derive(Debug)]
 pub enum Node<'input> {
     Stmts(Vec<Node<'input>>),
-    Exprs(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
     Unary(Token<'input>, Box<Node<'input>>),
-    Tuple(Box<Node<'input>>),
+    Tuple(Vec<Node<'input>>),
     Id(&'input str),
     Int(i32),
     Error(Box<dyn Error>),
@@ -59,9 +58,10 @@ impl fmt::Display for Node<'_> {
 
         match self {
             Node::Stmts(nodes) => fmt_seq(f, nodes, "\n"),
-            Node::Exprs(nodes) => {
+            Node::Tuple(nodes) => {
                 fmt_seq(f, nodes, ", ")?;
                 match nodes.len() {
+                    0 => write!(f, "()"),
                     1 => write!(f, ","),
                     _ => Ok(()),
                 }
@@ -75,7 +75,6 @@ impl fmt::Display for Node<'_> {
             Node::Unary(op, right) => {
                 write!(f, "{}{}{}", op, op.space(), right)
             }
-            Node::Tuple(node) => write!(f, "({})", node),
             Node::Int(n) => write!(f, "{}", n),
             Node::Id(s) => write!(f, "{}", s),
             Node::Error(e) => write!(f, "{}", e),

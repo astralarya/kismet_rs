@@ -16,10 +16,6 @@ Stmt: Node<'input> = {
   Expr,
 }
 
-Exprs: Node<'input> = {
-  JoinPlus<COMMA, Expr> => Node::Exprs(<>),
-}
-
 Expr: Node<'input> = {
   Disjunction,
 }
@@ -57,8 +53,9 @@ Literal: Node<'input> = {
 }
 
 Enclosure: Node<'input> = {
+  LPAREN <JoinPlus<COMMA, Expr>> RPAREN => Node::Tuple(<>),
   LPAREN <Expr> RPAREN,
-  LPAREN <e:Exprs> RPAREN => Node::Tuple(Box::new(<>)),
+  LPAREN RPAREN => Node::Tuple(vec![]),
 }
 
 // Tokens
