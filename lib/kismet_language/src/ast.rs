@@ -13,7 +13,11 @@ pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 pub enum Node<'input> {
     Stmts(Vec<Node<'input>>),
     Comprehension(Box<Node<'input>>, Vec<Node<'input>>),
-    CompFor(Box<Node<'input>>, Box<Node<'input>>),
+    CompFor(
+        Box<Node<'input>>,
+        Box<Node<'input>>,
+        Box<Option<Node<'input>>>,
+    ),
     TargetList(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
     Unary(Token<'input>, Box<Node<'input>>),
@@ -70,8 +74,12 @@ impl<'input> Node<'input> {
         Node::Comprehension(Box::new(n), v)
     }
 
-    pub fn to_compfor(l: Node<'input>, r: Node<'input>) -> Node<'input> {
-        Node::CompFor(Box::new(l), Box::new(r))
+    pub fn to_compfor(
+        item: Node<'input>,
+        iter: Node<'input>,
+        ifnode: Option<Node<'input>>,
+    ) -> Node<'input> {
+        Node::CompFor(Box::new(item), Box::new(iter), Box::new(ifnode))
     }
 }
 
@@ -88,7 +96,10 @@ impl fmt::Display for Node<'_> {
         match self {
             Node::Stmts(nodes) => write!(f, "{}", join(nodes, "\n")),
             Node::Comprehension(l, v) => write!(f, "{} {}", l, join(v, " ")),
-            Node::CompFor(l, r) => write!(f, "FOR {} IN {}", l, r),
+            Node::CompFor(item, iter, expr) => match &**expr {
+                Some(node) => write!(f, "FOR {} IN {} IF {}", item, iter, node),
+                None => write!(f, "FOR {} IN {}", item, iter),
+            },
             Node::TargetList(v) => write!(f, "{}", join(v, ", ")),
             Node::Op(left, op, right) => match (op.enclose(left), op.enclose(right)) {
                 (true, true) => {

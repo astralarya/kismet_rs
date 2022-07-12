@@ -20,6 +20,9 @@ pub enum Token<'input> {
     #[regex(r"(?i)in")]
     IN,
 
+    #[regex(r"(?i)if")]
+    IF,
+
     #[regex(r"(?i)or")]
     OR,
 
