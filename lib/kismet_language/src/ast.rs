@@ -14,7 +14,7 @@ pub enum Node<'input> {
     Exprs(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
     Unary(Token<'input>, Box<Node<'input>>),
-    Group(Token<'input>, Box<Node<'input>>, Token<'input>),
+    Tuple(Box<Node<'input>>),
     Id(&'input str),
     Int(i32),
     Error(Box<dyn Error>),
@@ -43,9 +43,7 @@ impl fmt::Display for Node<'_> {
             Node::Unary(op, right) => {
                 write!(f, "{}{}{}", op, op.space(), right)
             }
-            Node::Group(left, node, right) => {
-                write!(f, "{}{}{}", left, node, right)
-            }
+            Node::Tuple(node) => write!(f, "({})", node),
             Node::Int(n) => write!(f, "{}", n),
             Node::Id(s) => write!(f, "{}", s),
             Node::Error(e) => write!(f, "{}", e),

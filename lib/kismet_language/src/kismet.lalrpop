@@ -57,7 +57,7 @@ Literal: Node<'input> = {
 }
 
 Enclosure: Node<'input> = {
-  <l:LPAREN> <e:Exprs> <r:RPAREN> => Node::Group(l, Box::new(e), r),
+  LPAREN <e:Exprs> RPAREN => Node::Tuple(Box::new(<>)),
 }
 
 // Tokens
