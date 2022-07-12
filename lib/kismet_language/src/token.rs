@@ -62,14 +62,14 @@ pub enum Token<'input> {
     #[token(")")]
     RPAREN,
 
-    #[regex("\"", parse_string)]
-    #[regex("r#*\"", parse_rawstring)]
+    #[regex("\"", Token::parse_string)]
+    #[regex("r#*\"", Token::parse_rawstring)]
     String(String),
 
-    #[regex(r"[[:digit:]][[:digit:]_]*", parse_int)]
-    #[regex(r"0b[0-1_]*", parse_int)]
-    #[regex(r"0o[0-7_]*", parse_int)]
-    #[regex(r"0x[[:xdigit:]]*", parse_int)]
+    #[regex(r"[[:digit:]][[:digit:]_]*", Token::parse_int)]
+    #[regex(r"0b[0-1_]*", Token::parse_int)]
+    #[regex(r"0o[0-7_]*", Token::parse_int)]
+    #[regex(r"0x[[:xdigit:]]*", Token::parse_int)]
     Int(i32),
 
     #[regex(r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*")]
@@ -83,6 +83,110 @@ pub enum Token<'input> {
 }
 
 impl<'input> Token<'input> {
+    fn parse_int(t: &mut Lexer<'input, Token<'input>>) -> Result<i32, ()> {
+        match parse_str::<LitInt>(t.slice()) {
+            Ok(n) => match n.base10_parse::<i32>() {
+                Ok(i) => Ok(i),
+                Err(_) => Err(()),
+            },
+            Err(_) => Err(()),
+        }
+    }
+
+    fn parse_string(t: &mut Lexer<'input, Token<'input>>) -> Result<String, ()> {
+        #[derive(Logos, Debug, PartialEq)]
+        enum Part<'input> {
+            #[token("\"")]
+            Quote,
+
+            #[regex(r#"[^"\\]+"#)]
+            Chars(&'input str),
+
+            #[regex(r#"\\."#)]
+            SlashEscape,
+
+            #[error]
+            #[regex(r"", logos::skip)]
+            Error,
+        }
+
+        let mut string = String::from(t.slice());
+        let remainder = t.remainder();
+        for token in Part::lexer(&t.remainder()) {
+            match token {
+                Part::Quote => {
+                    t.bump(1);
+                    string.push_str(&remainder[0..remainder.len() - &t.remainder().len()]);
+                    return match parse_str::<LitStr>(string.as_str()) {
+                        Ok(n) => Ok(n.value()),
+                        Err(_) => Err(()),
+                    };
+                }
+                Part::Chars(s) => t.bump(s.len()),
+                Part::SlashEscape => t.bump(2),
+                Part::Error => return Err(()),
+            }
+        }
+        Err(())
+    }
+
+    fn parse_rawstring(t: &mut Lexer<'input, Token<'input>>) -> Result<String, ()> {
+        #[derive(Logos, Debug, PartialEq)]
+        enum Part<'input> {
+            #[token("\"")]
+            Quote,
+
+            #[token("#")]
+            Hash,
+
+            #[regex(r##"[^"#]+"##)]
+            Chars(&'input str),
+
+            #[error]
+            #[regex(r"", logos::skip)]
+            Error,
+        }
+
+        let mut string = String::from(t.slice());
+        let remainder = t.remainder();
+        let guard = string.len() - 2;
+        let mut signal: Option<usize> = None;
+        for token in Part::lexer(&t.remainder()) {
+            match token {
+                Part::Quote => {
+                    t.bump(1);
+                    signal = Some(0);
+                }
+                Part::Hash => {
+                    t.bump(1);
+                    match signal {
+                        Some(s) => signal = Some(s + 1),
+                        None => (),
+                    }
+                }
+                Part::Chars(s) => {
+                    t.bump(s.len());
+                    signal = None;
+                }
+                Part::Error => return Err(()),
+            }
+            match signal {
+                Some(signal_val) => match (signal_val == guard, token) {
+                    (true, Part::Quote) | (true, Part::Hash) => {
+                        string.push_str(&remainder[0..remainder.len() - &t.remainder().len()]);
+                        return match parse_str::<LitStr>(string.as_str()) {
+                            Ok(n) => Ok(n.value()),
+                            Err(_) => Err(()),
+                        };
+                    }
+                    _ => (),
+                },
+                None => (),
+            }
+        }
+        Err(())
+    }
+
     pub fn space(&self) -> &'static str {
         match self {
             Token::DIE | Token::POW | Token::MUL | Token::LPAREN | Token::RPAREN => "",
@@ -116,96 +220,4 @@ impl fmt::Display for Token<'_> {
             _ => write!(f, "{:?}", self),
         }
     }
-}
-
-fn parse_int<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<i32, ()> {
-    match parse_str::<LitInt>(t.slice()) {
-        Ok(n) => match n.base10_parse::<i32>() {
-            Ok(i) => Ok(i),
-            Err(_) => Err(()),
-        },
-        Err(_) => Err(()),
-    }
-}
-
-fn parse_string<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<String, ()> {
-    #[derive(Logos, Debug, PartialEq)]
-    enum Part<'input> {
-        #[token("\"")]
-        Quote,
-
-        #[regex(r#"[^"\\]+"#)]
-        Chars(&'input str),
-
-        #[regex(r#"\\."#)]
-        SlashEscape,
-
-        #[error]
-        #[regex(r"", logos::skip)]
-        Error,
-    }
-
-    let mut string = String::from(t.slice());
-    let remainder = t.remainder();
-    for token in Part::lexer(&t.remainder()) {
-        match token {
-            Part::Quote => {
-                t.bump(1);
-                string.push_str(&remainder[0..remainder.len() - &t.remainder().len()]);
-                return match parse_str::<LitStr>(string.as_str()) {
-                    Ok(n) => Ok(n.value()),
-                    Err(_) => Err(()),
-                };
-            }
-            Part::Chars(s) => t.bump(s.len()),
-            Part::SlashEscape => t.bump(2),
-            Part::Error => return Err(()),
-        }
-    }
-    Err(())
-}
-
-fn parse_rawstring<'input>(t: &mut Lexer<'input, Token<'input>>) -> Result<String, ()> {
-    #[derive(Logos, Debug, PartialEq)]
-    enum Part<'input> {
-        #[token("\"")]
-        Quote,
-
-        #[token("#")]
-        Hash,
-
-        #[regex(r##"[^"#]+"##)]
-        Chars(&'input str),
-
-        #[error]
-        #[regex(r"", logos::skip)]
-        Error,
-    }
-
-    let mut string = String::from(t.slice());
-    let guard = string.len() - 2;
-    let remainder = t.remainder();
-    let mut signal: usize = 0;
-    for token in Part::lexer(&t.remainder()) {
-        match token {
-            Part::Quote => {
-                t.bump(1);
-                signal = 0;
-            }
-            Part::Hash => {
-                t.bump(1);
-                signal += 1;
-                if signal == guard {
-                    string.push_str(&remainder[0..remainder.len() - &t.remainder().len()]);
-                    return match parse_str::<LitStr>(string.as_str()) {
-                        Ok(n) => Ok(n.value()),
-                        Err(_) => Err(()),
-                    };
-                }
-            }
-            Part::Chars(s) => t.bump(s.len()),
-            Part::Error => return Err(()),
-        }
-    }
-    Err(())
 }
