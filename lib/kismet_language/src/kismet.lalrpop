@@ -46,11 +46,15 @@ Atom: Node<'input> = {
 }
 
 Enclosure: Node<'input> = {
+  ParenthForm,
+  LBRACKET <JoinPlus<COMMA, Expr>> RBRACKET => Node::Vector(<>),
+  <l:LBRACE> <v:Stmts> <r:RBRACE> => Node::to_enclosure(<>),
+}
+
+ParenthForm: Node<'input> = {
   LPAREN <JoinPlus<COMMA, Expr>> RPAREN => Node::Tuple(<>),
   <l:LPAREN> <e:Expr> <r:RPAREN> => Node::to_enclosure(<>),
   LPAREN RPAREN => Node::Tuple(vec![]),
-  LBRACKET <JoinPlus<COMMA, Expr>> RBRACKET => Node::Vector(<>),
-  <l:LBRACE> <v:Stmts> <r:RBRACE> => Node::to_enclosure(<>),
 }
 
 Identifier: Node<'input> = {
