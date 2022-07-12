@@ -69,9 +69,19 @@ impl fmt::Display for Node<'_> {
 
         match self {
             Node::Stmts(nodes) => write!(f, "{}", join(nodes, "\n")),
-            Node::Op(left, op, right) => match (left.is_int() || left.is_tuple(), op) {
-                (false, Token::DIE) => {
+            Node::Op(left, op, right) => match (
+                left.is_int() || left.is_tuple(),
+                op,
+                right.is_int() || right.is_tuple(),
+            ) {
+                (true, Token::DIE, false) => {
+                    write!(f, "{}{}{}{}({})", left, op.space(), op, op.space(), right)
+                }
+                (false, Token::DIE, true) => {
                     write!(f, "({}){}{}{}{}", left, op.space(), op, op.space(), right)
+                }
+                (false, Token::DIE, false) => {
+                    write!(f, "({}){}{}{}({})", left, op.space(), op, op.space(), right)
                 }
                 _ => write!(f, "{}{}{}{}{}", left, op.space(), op, op.space(), right),
             },
