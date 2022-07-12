@@ -47,10 +47,10 @@ Atom: Node<'input> = {
 
 Enclosure: Node<'input> = {
   LPAREN <JoinPlus<COMMA, Expr>> RPAREN => Node::Tuple(<>),
-  <l:LPAREN> <e:Expr> <r:RPAREN> => Node::Enclosure(l, Box::new(e), r),
+  <l:LPAREN> <e:Expr> <r:RPAREN> => Node::to_enclosure(<>),
   LPAREN RPAREN => Node::Tuple(vec![]),
   LBRACKET <JoinPlus<COMMA, Expr>> RBRACKET => Node::Vector(<>),
-  <l:LBRACE> <v:Stmts> <r:RBRACE> => Node::Enclosure(l, Box::new(v), r),
+  <l:LBRACE> <v:Stmts> <r:RBRACE> => Node::to_enclosure(<>),
 }
 
 Identifier: Node<'input> = {

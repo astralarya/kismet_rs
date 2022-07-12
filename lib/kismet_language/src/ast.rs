@@ -13,9 +13,9 @@ pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 pub enum Node<'input> {
     Stmts(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
+    Unary(Token<'input>, Box<Node<'input>>),
     Enclosure(Token<'input>, Box<Node<'input>>, Token<'input>),
     Vector(Vec<Node<'input>>),
-    Unary(Token<'input>, Box<Node<'input>>),
     Tuple(Vec<Node<'input>>),
     Id(&'input str),
     String(String),
@@ -50,6 +50,10 @@ impl<'input> Node<'input> {
 
     pub fn to_unary(o: Token<'input>, r: Node<'input>) -> Node<'input> {
         Node::Unary(o, Box::new(r))
+    }
+
+    pub fn to_enclosure(l: Token<'input>, n: Node<'input>, r: Token<'input>) -> Node<'input> {
+        Node::Enclosure(l, Box::new(n), r)
     }
 }
 
