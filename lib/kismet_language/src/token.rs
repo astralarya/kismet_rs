@@ -83,7 +83,7 @@ pub enum Token<'input> {
     #[regex(r"[[:digit:]][[:digit:]_]*", Token::parse_int)]
     #[regex(r"0b[0-1_]*", Token::parse_int)]
     #[regex(r"0o[0-7_]*", Token::parse_int)]
-    #[regex(r"0x[[:xdigit:]]*", Token::parse_int)]
+    #[regex(r"0x[[:xdigit:]_]*", Token::parse_int)]
     Integer(Integer),
 
     #[regex(r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*")]

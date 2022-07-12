@@ -1,4 +1,4 @@
-use std::{error::Error, fmt};
+use std::fmt;
 
 use lalrpop_util::ParseError as LalrpopError;
 
@@ -9,7 +9,7 @@ use super::types::Integer;
 pub type ParseResult<'input> = Result<Node<'input>, ParseError<'input>>;
 pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Node<'input> {
     Stmts(Vec<Node<'input>>),
     Op(Box<Node<'input>>, Token<'input>, Box<Node<'input>>),
@@ -20,7 +20,6 @@ pub enum Node<'input> {
     Id(&'input str),
     String(String),
     Integer(Integer),
-    Error(Box<dyn Error>),
 }
 
 impl<'input> Node<'input> {
@@ -86,7 +85,6 @@ impl fmt::Display for Node<'_> {
             Node::String(s) => write!(f, "\"{}\"", s),
             Node::Integer(n) => write!(f, "{}", n),
             Node::Id(s) => write!(f, "{}", s),
-            Node::Error(e) => write!(f, "{}", e),
         }
     }
 }

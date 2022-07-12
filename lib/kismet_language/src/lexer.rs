@@ -4,6 +4,7 @@ use logos::{Logos, SpannedIter};
 
 use super::token::Token;
 
+#[derive(Debug, PartialEq)]
 pub struct LexerError {
     loc: Range<usize>,
 }
