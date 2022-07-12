@@ -58,18 +58,6 @@ impl<'input> Node<'input> {
         }
     }
 
-    pub fn to_op(l: Node<'input>, o: Token<'input>, r: Node<'input>) -> Node<'input> {
-        Node::Op(Box::new(l), o, Box::new(r))
-    }
-
-    pub fn to_unary(o: Token<'input>, r: Node<'input>) -> Node<'input> {
-        Node::Unary(o, Box::new(r))
-    }
-
-    pub fn to_enclosure(l: Token<'input>, n: Node<'input>, r: Token<'input>) -> Node<'input> {
-        Node::Enclosure(l, Box::new(n), r)
-    }
-
     pub fn to_comprehension(n: Node<'input>, v: Vec<Node<'input>>) -> Node<'input> {
         Node::Comprehension(Box::new(n), v)
     }
@@ -80,6 +68,18 @@ impl<'input> Node<'input> {
         ifnode: Option<Node<'input>>,
     ) -> Node<'input> {
         Node::CompFor(Box::new(item), Box::new(iter), Box::new(ifnode))
+    }
+
+    pub fn to_op(l: Node<'input>, o: Token<'input>, r: Node<'input>) -> Node<'input> {
+        Node::Op(Box::new(l), o, Box::new(r))
+    }
+
+    pub fn to_unary(o: Token<'input>, r: Node<'input>) -> Node<'input> {
+        Node::Unary(o, Box::new(r))
+    }
+
+    pub fn to_enclosure(l: Token<'input>, n: Node<'input>, r: Token<'input>) -> Node<'input> {
+        Node::Enclosure(l, Box::new(n), r)
     }
 }
 
