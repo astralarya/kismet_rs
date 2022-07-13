@@ -33,8 +33,7 @@ impl fmt::Display for LexerError {
 }
 
 pub fn lex<'input>(input: &'input str) -> KismetLexer<'input> {
-    let lex = Token::lexer(input);
     KismetLexer {
-        curr: lex.spanned(),
+        curr: Token::lexer(input).spanned(),
     }
 }

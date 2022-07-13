@@ -1,7 +1,7 @@
-use super::ast::Node;
-use super::lexer::LexerError;
-use super::token::Token;
-use super::types::Integer;
+use crate::ast::Node;
+use crate::lexer::LexerError;
+use crate::token::Token;
+use crate::types::Integer;
 
 grammar<'input>;
 

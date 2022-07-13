@@ -1,4 +1,4 @@
-use kismet_language::{ast::Node, Token};
+use kismet_language::{ast::Node, token::Token};
 
 mod assert;
 use assert::assert_stmt;
