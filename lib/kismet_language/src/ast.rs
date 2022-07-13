@@ -1,6 +1,5 @@
 use std::fmt;
 
-// use codemap::Span;
 use lalrpop_util::ParseError as LalrpopError;
 
 use super::lexer::LexerError;
@@ -12,7 +11,6 @@ pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 
 #[derive(Debug, PartialEq)]
 pub struct Node<'input> {
-    // pub span: Span,
     pub kind: Box<NodeKind<'input>>,
 }
 

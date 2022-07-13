@@ -1,5 +1,5 @@
 use super::ast::Node;
-use super::lexer::LexerError;
+use super::lexer::{LexerError};
 use super::token::Token;
 use super::types::Integer;
 
