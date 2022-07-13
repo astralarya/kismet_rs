@@ -3,7 +3,7 @@ use std::fmt;
 use logos::{Lexer, Logos};
 use syn::{parse_str, LitInt, LitStr};
 
-use super::ast::Node;
+use super::ast::NodeKind;
 use super::types::Integer;
 
 #[derive(Logos, Clone, Debug, PartialEq)]
@@ -221,7 +221,7 @@ impl<'input> Token<'input> {
         }
     }
 
-    pub fn enclose(&self, node: &Box<Node<'input>>) -> bool {
+    pub fn enclose(&self, node: &Box<NodeKind<'input>>) -> bool {
         match (
             self,
             !node.is_int() && !node.is_tuple() && !node.is_vector(),

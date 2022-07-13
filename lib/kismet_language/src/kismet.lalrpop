@@ -10,7 +10,7 @@ pub Kismet: Node<'input> = {
 }
 
 stmts: Node<'input> = {
-  JoinFilter<DELIM, stmt> => Node::Stmts(<>),
+  JoinFilter<DELIM, stmt> => Node::stmts(<>),
 }
 
 stmt: Node<'input> = {
@@ -27,7 +27,7 @@ or_test = Infix<OR, and_test>;
 and_test = Infix<AND, not_test>;
 
 not_test: Node<'input> = {
-  NOT not_test => Node::to_unary(<>),
+  NOT not_test => Node::unary(<>),
   c_expr,
 }
 
@@ -36,18 +36,18 @@ a_expr = Infix<ADDS, m_expr>;
 m_expr = Infix<MULS, u_expr>;
 
 u_expr: Node<'input> = {
-  ADDS primary => Node::to_unary(<>),
+  ADDS primary => Node::unary(<>),
   power,
 }
 
 power: Node<'input> = {
-  primary POW u_expr => Node::to_op(<>),
+  primary POW u_expr => Node::op(<>),
   primary,
 }
 
 primary: Node<'input> = {
-  primary DIE atom => Node::to_op(<>),
-  DIE atom => Node::to_unary(<>),
+  primary DIE atom => Node::op(<>),
+  DIE atom => Node::unary(<>),
   atom,
 }
 
@@ -60,45 +60,45 @@ atom: Node<'input> = {
 enclosure: Node<'input> = {
   parenth_form,
   list_display,
-  <l:LBRACE> <v:stmts> <r:RBRACE> => Node::to_enclosure(<>),
+  <l:LBRACE> <v:stmts> <r:RBRACE> => Node::enclosure(<>),
 }
 
 parenth_form: Node<'input> = {
-  LPAREN <exprs> RPAREN => Node::Tuple(<>),
-  <l:LPAREN> <e:expr> <r:RPAREN> => Node::to_enclosure(<>),
-  LPAREN RPAREN => Node::Tuple(vec![]),
+  LPAREN <exprs> RPAREN => Node::tuple(<>),
+  <l:LPAREN> <e:expr> <r:RPAREN> => Node::enclosure(<>),
+  LPAREN RPAREN => Node::tuple(vec![]),
 }
 
 list_display: Node<'input> = {
-  LBRACKET <exprs> RBRACKET => Node::Vector(<>),
-  LBRACKET comprehension RBRACKET => Node::to_enclosure(<>),
+  LBRACKET <exprs> RBRACKET => Node::vector(<>),
+  LBRACKET comprehension RBRACKET => Node::enclosure(<>),
 }
 
 comprehension: Node<'input> = {
-  expr comp_for+ => Node::to_comprehension(<>)
+  expr comp_for+ => Node::comprehension(<>)
 }
 
 comp_for: Node<'input> = {
-  FOR <target_list> IN <or_test> <(IF <or_test>)?> => Node::to_compfor(<>)
+  FOR <target_list> IN <or_test> <(IF <or_test>)?> => Node::comp_for(<>)
 }
 
 target: Node<'input> = {
   identifier,
-  LPAREN target_list RPAREN => Node::to_enclosure(<>),
-  LBRACKET target_list RBRACKET => Node::to_enclosure(<>),
+  LPAREN target_list RPAREN => Node::enclosure(<>),
+  LBRACKET target_list RBRACKET => Node::enclosure(<>),
 }
 
 target_list: Node<'input> = {
-  Join<COMMA, target> => Node::TargetList(<>),
+  Join<COMMA, target> => Node::target_list(<>),
 }
 
 identifier: Node<'input> = {
-  ID => Node::Id(<>),
+  ID => Node::id(<>),
 }
 
 literal: Node<'input> = {
-  STRING => Node::String(<>),
-  INT => Node::Integer(<>),
+  STRING => Node::string(<>),
+  INT => Node::integer(<>),
 }
 
 // Tokens
@@ -187,6 +187,6 @@ JoinFilter<Delim, Child>: Vec<Node<'input>> = {
 
 
 Infix<Op, Next>: Node<'input> = {
-  <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::to_op(<>),
+  <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::op(<>),
   Next
 }

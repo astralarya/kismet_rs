@@ -6,68 +6,68 @@ use assert::assert_stmt;
 #[test]
 fn arithmetic() {
     assert_stmt(
-        Node::to_op(Node::Integer(2), Token::ADD, Node::Integer(3)),
+        Node::op(Node::integer(2), Token::ADD, Node::integer(3)),
         r###"2+3"###,
     );
     assert_stmt(
-        Node::to_op(
-            Node::to_op(Node::Integer(2), Token::ADD, Node::Integer(3)),
+        Node::op(
+            Node::op(Node::integer(2), Token::ADD, Node::integer(3)),
             Token::ADD,
-            Node::Integer(4),
+            Node::integer(4),
         ),
         r###"2+3+4"###,
     );
     assert_stmt(
-        Node::to_op(
-            Node::Integer(2),
+        Node::op(
+            Node::integer(2),
             Token::ADD,
-            Node::to_op(Node::Integer(3), Token::MUL, Node::Integer(4)),
+            Node::op(Node::integer(3), Token::MUL, Node::integer(4)),
         ),
         r###"2+3*4"###,
     );
     assert_stmt(
-        Node::to_op(
-            Node::to_op(Node::Integer(2), Token::POW, Node::Integer(5)),
+        Node::op(
+            Node::op(Node::integer(2), Token::POW, Node::integer(5)),
             Token::ADD,
-            Node::to_op(
-                Node::Integer(3),
+            Node::op(
+                Node::integer(3),
                 Token::MUL,
-                Node::to_op(Node::Integer(4), Token::POW, Node::Integer(6)),
+                Node::op(Node::integer(4), Token::POW, Node::integer(6)),
             ),
         ),
         r###"2^5+3*4^6"###,
     );
-    assert_stmt(Node::to_unary(Token::ADD, Node::Integer(3)), r###"+3"###);
-    assert_stmt(Node::to_unary(Token::SUB, Node::Integer(3)), r###"-3"###);
+    assert_stmt(Node::unary(Token::ADD, Node::integer(3)), r###"+3"###);
+    assert_stmt(Node::unary(Token::SUB, Node::integer(3)), r###"-3"###);
     assert_stmt(
-        Node::to_op(
-            Node::Integer(2),
+        Node::op(
+            Node::integer(2),
             Token::ADD,
-            Node::to_unary(Token::ADD, Node::Integer(3)),
+            Node::unary(Token::ADD, Node::integer(3)),
         ),
         r###"2++3"###,
     );
     assert_stmt(
-        Node::to_op(
-            Node::Integer(2),
+        Node::op(
+            Node::integer(2),
             Token::SUB,
-            Node::to_unary(Token::SUB, Node::Integer(3)),
+            Node::unary(Token::SUB, Node::integer(3)),
         ),
         r###"2--3"###,
     );
     assert_stmt(
-        Node::to_op(
-            Node::Integer(2),
+        Node::op(
+            Node::integer(2),
             Token::MUL,
-            Node::to_unary(Token::ADD, Node::Integer(3)),
+            Node::unary(Token::ADD, Node::integer(3)),
         ),
         r###"2*+3"###,
     );
     assert_stmt(
-        Node::to_op(
-            Node::Integer(2),
+        Node::op(
+            Node::integer(2),
             Token::MUL,
-            Node::to_unary(Token::SUB, Node::Integer(3)),
+            Node::unary(Token::SUB, Node::integer(3)),
         ),
         r###"2*-3"###,
     );
