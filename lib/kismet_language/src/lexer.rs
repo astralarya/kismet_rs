@@ -4,14 +4,9 @@ use logos::{Logos, SpannedIter};
 
 use super::token::Token;
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Location {
-    range: Range<usize>,
-}
-
 #[derive(Debug, PartialEq)]
 pub struct LexerError {
-    loc: Location,
+    loc: Range<usize>,
 }
 
 pub struct KismetLexer<'input> {
@@ -24,9 +19,7 @@ impl<'input> Iterator for KismetLexer<'input> {
     fn next(&mut self) -> Option<Self::Item> {
         let next = self.curr.next();
         match next {
-            Some((Token::ERROR, r)) => Some(Err(LexerError {
-                loc: Location { range: r },
-            })),
+            Some((Token::ERROR, r)) => Some(Err(LexerError { loc: r })),
             Some((t, r)) => Some(Ok((r.start, t, r.end))),
             None => None,
         }
@@ -35,13 +28,7 @@ impl<'input> Iterator for KismetLexer<'input> {
 
 impl fmt::Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Lexer error at {}", self.loc)
-    }
-}
-
-impl fmt::Display for Location {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.range.start, self.range.end)
+        write!(f, "Lexer error at {:?}", self.loc)
     }
 }
 
