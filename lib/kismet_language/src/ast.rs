@@ -32,36 +32,6 @@ pub enum NodeKind<'input> {
     Integer(Integer),
 }
 
-impl<'input> NodeKind<'input> {
-    pub fn is_vector(&self) -> bool {
-        match self {
-            NodeKind::Vector(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_tuple(&self) -> bool {
-        match self {
-            NodeKind::Tuple(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_id(&self) -> bool {
-        match self {
-            NodeKind::Id(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_int(&self) -> bool {
-        match self {
-            NodeKind::Integer(_) => true,
-            _ => false,
-        }
-    }
-}
-
 impl<'input> Node<'input> {
     pub fn stmts(v: Vec<Node<'input>>) -> Node<'input> {
         return Node {
@@ -159,7 +129,7 @@ impl fmt::Display for Node<'_> {
             },
             NodeKind::TargetList(v) => write!(f, "{}", join(&v, ", ")),
             NodeKind::Op(left, op, right) => {
-                match (op.enclose(&left.kind), op.enclose(&right.kind)) {
+                match (op.enclose(&*left.kind), op.enclose(&*right.kind)) {
                     (true, true) => {
                         write!(f, "({}){}{}{}({})", left, op.space(), op, op.space(), right)
                     }
@@ -174,7 +144,7 @@ impl fmt::Display for Node<'_> {
                     }
                 }
             }
-            NodeKind::Unary(op, right) => match op.enclose(&right.kind) {
+            NodeKind::Unary(op, right) => match op.enclose(&*right.kind) {
                 true => write!(f, "{}{}({})", op, op.space(), right),
                 false => write!(f, "{}{}{}", op, op.space(), right),
             },

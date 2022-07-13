@@ -221,12 +221,11 @@ impl<'input> Token<'input> {
         }
     }
 
-    pub fn enclose(&self, node: &Box<NodeKind<'input>>) -> bool {
-        match (
-            self,
-            !node.is_int() && !node.is_tuple() && !node.is_vector(),
-        ) {
-            (Token::DIE, true) => true,
+    pub fn enclose(&self, kind: &NodeKind<'input>) -> bool {
+        match (self, kind) {
+            (Token::DIE, NodeKind::Integer(_))
+            | (Token::DIE, NodeKind::Tuple(_))
+            | (Token::DIE, NodeKind::Vector(_)) => true,
             _ => false,
         }
     }
