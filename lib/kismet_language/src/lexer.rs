@@ -1,6 +1,6 @@
 use std::{fmt, ops::Range};
 
-use logos::{Logos, SpannedIter};
+use logos::{Lexer as LogosLexer, Logos, SpannedIter};
 
 use super::token::Token;
 
@@ -8,17 +8,33 @@ use super::token::Token;
 pub struct LexerError {
     loc: Range<usize>,
 }
+type ParserStream<'input> = Result<(usize, Token<'input>, usize), LexerError>;
 
-pub struct KismetLexer<'input> {
-    curr: SpannedIter<'input, Token<'input>>,
+pub struct Lexer<'input> {
+    lexer: LogosLexer<'input, Token<'input>>,
 }
 
-impl<'input> Iterator for KismetLexer<'input> {
-    type Item = Result<(usize, Token<'input>, usize), LexerError>;
+impl<'input> IntoIterator for Lexer<'input> {
+    type Item = ParserStream<'input>;
+
+    type IntoIter = LexerIterator<'input>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        LexerIterator {
+            iter: self.lexer.spanned(),
+        }
+    }
+}
+
+pub struct LexerIterator<'input> {
+    iter: SpannedIter<'input, Token<'input>>,
+}
+
+impl<'input> Iterator for LexerIterator<'input> {
+    type Item = ParserStream<'input>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let next = self.curr.next();
-        match next {
+        match self.iter.next() {
             Some((Token::ERROR, r)) => Some(Err(LexerError { loc: r })),
             Some((t, r)) => Some(Ok((r.start, t, r.end))),
             None => None,
@@ -32,8 +48,8 @@ impl fmt::Display for LexerError {
     }
 }
 
-pub fn lex<'input>(input: &'input str) -> KismetLexer<'input> {
-    KismetLexer {
-        curr: Token::lexer(input).spanned(),
+pub fn lex<'input>(input: &'input str) -> Lexer<'input> {
+    Lexer {
+        lexer: Token::lexer(input),
     }
 }
