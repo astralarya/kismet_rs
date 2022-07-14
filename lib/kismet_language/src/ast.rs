@@ -93,24 +93,24 @@ impl<'input> Node<'input> {
         };
     }
 
-    pub fn id(i: &'input str) -> Node<'input> {
+    pub fn id((span, string): (Span, &'input str)) -> Node<'input> {
         return Node {
-            range: 0..0,
-            kind: Box::new(NodeKind::Id(i)),
+            range: span,
+            kind: Box::new(NodeKind::Id(string)),
         };
     }
 
-    pub fn string(i: String) -> Node<'input> {
+    pub fn string((span, string): (Span, String)) -> Node<'input> {
         return Node {
-            range: 0..0,
-            kind: Box::new(NodeKind::String(i)),
+            range: span,
+            kind: Box::new(NodeKind::String(string)),
         };
     }
 
-    pub fn integer((r, i): (Span, Integer)) -> Node<'input> {
+    pub fn integer((span, value): (Span, Integer)) -> Node<'input> {
         return Node {
-            range: r,
-            kind: Box::new(NodeKind::Integer(i)),
+            range: span,
+            kind: Box::new(NodeKind::Integer(value)),
         };
     }
 }

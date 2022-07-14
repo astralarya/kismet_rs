@@ -155,9 +155,9 @@ extern {
     RBRACKET => Token::RBRACKET(_),
     LBRACE => Token::LBRACE(_),
     RBRACE => Token::RBRACE(_),
-    STRING => Token::String(<String>),
+    STRING => Token::String(<(Span, String)>),
     INT => Token::Integer(<(Span, Integer)>),
-    ID => Token::Id(<&'input str>),
+    ID => Token::Id(<(Span, &'input str)>),
   }
 }
 

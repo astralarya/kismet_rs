@@ -21,26 +21,32 @@ fn integer() {
 
 #[test]
 fn string() {
-    assert_stmt(Node::string(String::from("ababa")), r###""ababa""###);
-    assert_stmt(Node::string(String::from("aba\"ba")), r###""aba\"ba""###);
     assert_stmt(
-        Node::string(String::from("aba\\\"ba")),
+        Node::string((0..7, String::from("ababa"))),
+        r###""ababa""###,
+    );
+    assert_stmt(
+        Node::string((0..9, String::from("aba\"ba"))),
+        r###""aba\"ba""###,
+    );
+    assert_stmt(
+        Node::string((0..11, String::from("aba\\\"ba"))),
         r###""aba\\\"ba""###,
     );
     assert_stmt(
-        Node::string(String::from(r#"aba#aba"aba"#)),
+        Node::string((0..16, String::from(r#"aba#aba"aba"#))),
         r###"r#"aba#aba"aba"#"###,
     );
     assert_stmt(
-        Node::string(String::from(r##"aba"#aba#"aba"##)),
+        Node::string((0..20, String::from(r##"aba"#aba#"aba"##))),
         r###"r##"aba"#aba#"aba"##"###,
     );
 }
 
 #[test]
 fn identifier() {
-    assert_stmt(Node::id("ababa"), r###"ababa"###);
-    assert_stmt(Node::id("da"), r###"da"###);
+    assert_stmt(Node::id((0..5, "ababa")), r###"ababa"###);
+    assert_stmt(Node::id((0..2, "da")), r###"da"###);
     assert!(
         parse(r###"d"###).is_err(),
         "Parser should not accept `d` as id"

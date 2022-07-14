@@ -8,90 +8,90 @@ use super::types::{Integer, Span};
 
 #[derive(Logos, Clone, Debug, PartialEq)]
 pub enum Token<'input> {
-    #[regex(r"[;\n]", Token::range)]
+    #[regex(r"[;\n]", Token::span)]
     DELIM(Span),
 
-    #[regex(",", Token::range)]
+    #[regex(",", Token::span)]
     COMMA(Span),
 
-    #[regex(r"(?i)for", Token::range)]
+    #[regex(r"(?i)for", Token::span)]
     FOR(Span),
 
-    #[regex(r"(?i)in", Token::range)]
+    #[regex(r"(?i)in", Token::span)]
     IN(Span),
 
-    #[regex(r"(?i)if", Token::range)]
+    #[regex(r"(?i)if", Token::span)]
     IF(Span),
 
-    #[regex(r"(?i)or", Token::range)]
+    #[regex(r"(?i)or", Token::span)]
     OR(Span),
 
-    #[regex(r"(?i)and", Token::range)]
+    #[regex(r"(?i)and", Token::span)]
     AND(Span),
 
-    #[regex(r"(?i)not", Token::range)]
+    #[regex(r"(?i)not", Token::span)]
     NOT(Span),
 
-    #[token("==", Token::range)]
+    #[token("==", Token::span)]
     EQ(Span),
 
-    #[token("!=", Token::range)]
+    #[token("!=", Token::span)]
     NE(Span),
 
-    #[token("<", Token::range)]
+    #[token("<", Token::span)]
     LT(Span),
 
-    #[token("<=", Token::range)]
+    #[token("<=", Token::span)]
     LE(Span),
 
-    #[token(">", Token::range)]
+    #[token(">", Token::span)]
     GT(Span),
 
-    #[token(">=", Token::range)]
+    #[token(">=", Token::span)]
     GE(Span),
 
-    #[token("+", Token::range)]
+    #[token("+", Token::span)]
     ADD(Span),
 
-    #[token("-", Token::range)]
+    #[token("-", Token::span)]
     SUB(Span),
 
-    #[token("%", Token::range)]
+    #[token("%", Token::span)]
     MOD(Span),
 
-    #[token("*", Token::range)]
+    #[token("*", Token::span)]
     MUL(Span),
 
-    #[token("/", Token::range)]
+    #[token("/", Token::span)]
     DIV(Span),
 
-    #[token("^", Token::range)]
+    #[token("^", Token::span)]
     POW(Span),
 
-    #[regex(r"(?i)d", Token::range)]
+    #[regex(r"(?i)d", Token::span)]
     DIE(Span),
 
-    #[token("(", Token::range)]
+    #[token("(", Token::span)]
     LPAREN(Span),
 
-    #[token(")", Token::range)]
+    #[token(")", Token::span)]
     RPAREN(Span),
 
-    #[token("[", Token::range)]
+    #[token("[", Token::span)]
     LBRACKET(Span),
 
-    #[token("]", Token::range)]
+    #[token("]", Token::span)]
     RBRACKET(Span),
 
-    #[token("{", Token::range)]
+    #[token("{", Token::span)]
     LBRACE(Span),
 
-    #[token("}", Token::range)]
+    #[token("}", Token::span)]
     RBRACE(Span),
 
     #[regex("\"", Token::parse_string)]
     #[regex("r#*\"", Token::parse_rawstring)]
-    String(String),
+    String((Span, String)),
 
     #[regex(r"[[:digit:]][[:digit:]_]*", Token::parse_int)]
     #[regex(r"0b[0-1_]*", Token::parse_int)]
@@ -99,8 +99,8 @@ pub enum Token<'input> {
     #[regex(r"0x[[:xdigit:]_]*", Token::parse_int)]
     Integer((Span, Integer)),
 
-    #[regex(r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*")]
-    Id(&'input str),
+    #[regex(r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*", Token::parse_id)]
+    Id((Span, &'input str)),
 
     #[regex(r"[ \t\f]+", logos::skip)]
     SKIP,
@@ -110,8 +110,12 @@ pub enum Token<'input> {
 }
 
 impl<'input> Token<'input> {
-    fn range(t: &mut Lexer<'input, Token<'input>>) -> Span {
+    fn span(t: &mut Lexer<'input, Token<'input>>) -> Span {
         t.span()
+    }
+
+    fn parse_id(t: &mut Lexer<'input, Token<'input>>) -> (Span, &'input str) {
+        (t.span(), t.slice())
     }
 
     fn parse_int(t: &mut Lexer<'input, Token<'input>>) -> Result<(Span, Integer), ()> {
@@ -124,7 +128,7 @@ impl<'input> Token<'input> {
         }
     }
 
-    fn parse_string(t: &mut Lexer<'input, Token<'input>>) -> Result<String, ()> {
+    fn parse_string(t: &mut Lexer<'input, Token<'input>>) -> Result<(Span, String), ()> {
         #[derive(Logos, Debug, PartialEq)]
         enum Part<'input> {
             #[token("\"")]
@@ -141,15 +145,12 @@ impl<'input> Token<'input> {
             Error,
         }
 
-        let mut string = String::from(t.slice());
-        let remainder = t.remainder();
         for token in Part::lexer(&t.remainder()) {
             match token {
                 Part::Quote => {
                     t.bump(1);
-                    string.push_str(&remainder[0..remainder.len() - &t.remainder().len()]);
-                    return match parse_str::<LitStr>(string.as_str()) {
-                        Ok(n) => Ok(n.value()),
+                    return match parse_str::<LitStr>(t.slice()) {
+                        Ok(n) => Ok((t.span(), n.value())),
                         Err(_) => Err(()),
                     };
                 }
@@ -161,7 +162,7 @@ impl<'input> Token<'input> {
         Err(())
     }
 
-    fn parse_rawstring(t: &mut Lexer<'input, Token<'input>>) -> Result<String, ()> {
+    fn parse_rawstring(t: &mut Lexer<'input, Token<'input>>) -> Result<(Span, String), ()> {
         #[derive(Logos, Debug, PartialEq)]
         enum Part<'input> {
             #[token("\"")]
@@ -178,9 +179,7 @@ impl<'input> Token<'input> {
             Error,
         }
 
-        let mut string = String::from(t.slice());
-        let remainder = t.remainder();
-        let guard = string.len() - 2;
+        let guard = t.span().end - t.span().start - 2;
         let mut signal: Option<usize> = None;
         for token in Part::lexer(&t.remainder()) {
             match token {
@@ -204,9 +203,8 @@ impl<'input> Token<'input> {
             match signal {
                 Some(signal_val) => match (signal_val == guard, token) {
                     (true, Part::Quote) | (true, Part::Hash) => {
-                        string.push_str(&remainder[0..remainder.len() - &t.remainder().len()]);
-                        return match parse_str::<LitStr>(string.as_str()) {
-                            Ok(n) => Ok(n.value()),
+                        return match parse_str::<LitStr>(t.slice()) {
+                            Ok(n) => Ok((t.span(), n.value())),
                             Err(_) => Err(()),
                         };
                     }
