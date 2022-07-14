@@ -4,11 +4,8 @@ use logos::{Lexer as LogosLexer, Logos, SpannedIter};
 
 use super::token::Token;
 
-#[derive(Debug, PartialEq)]
-pub struct LexerError {
-    loc: Range<usize>,
-}
 type ParserStream<'input> = Result<(usize, Token<'input>, usize), LexerError>;
+type SpannedParserStream<'input> = (Range<usize>, ParserStream<'input>);
 
 pub struct Lexer<'input> {
     lexer: LogosLexer<'input, Token<'input>>,
@@ -40,6 +37,27 @@ impl<'input> Iterator for LexerIterator<'input> {
             None => None,
         }
     }
+}
+
+pub struct LexerSpannedIterator<'input> {
+    iter: SpannedIter<'input, Token<'input>>,
+}
+
+impl<'input> Iterator for LexerSpannedIterator<'input> {
+    type Item = SpannedParserStream<'input>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.iter.next() {
+            Some((Token::ERROR, r)) => Some((r.clone(), Err(LexerError { loc: r }))),
+            Some((t, r)) => Some((r.clone(), Ok((r.start, t, r.end)))),
+            None => None,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct LexerError {
+    loc: Range<usize>,
 }
 
 impl fmt::Display for LexerError {
