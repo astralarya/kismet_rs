@@ -280,6 +280,7 @@ impl fmt::Display for Token<'_> {
             Token::IN(_) => write!(f, "IN"),
             Token::IF(_) => write!(f, "IF"),
             Token::AND(_) => write!(f, "AND"),
+            Token::OR(_) => write!(f, "OR"),
             Token::NOT(_) => write!(f, "NOT"),
             Token::EQ(_) => write!(f, "=="),
             Token::NE(_) => write!(f, "!="),
@@ -300,7 +301,10 @@ impl fmt::Display for Token<'_> {
             Token::RBRACKET(_) => write!(f, "]"),
             Token::LBRACE(_) => write!(f, "{{"),
             Token::RBRACE(_) => write!(f, "}}"),
-            _ => write!(f, "{:?}", self),
+            Token::String((_, value)) => write!(f, r#""{}""#, value),
+            Token::Integer((_, value)) => write!(f, "{}", value),
+            Token::Id((_, value)) => write!(f, "{}", value),
+            Token::SKIP | Token::ERROR => write!(f, "{:?}", self),
         }
     }
 }
