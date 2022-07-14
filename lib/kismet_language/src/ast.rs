@@ -1,13 +1,7 @@
 use std::fmt;
 
-use lalrpop_util::ParseError as LalrpopError;
-
-use super::lexer::LexerError;
 use super::token::Token;
 use super::types::Integer;
-
-pub type ParseResult<'input> = Result<Node<'input>, ParseError<'input>>;
-pub type ParseError<'input> = LalrpopError<usize, Token<'input>, LexerError>;
 
 #[derive(Debug, PartialEq)]
 pub struct Node<'input> {
