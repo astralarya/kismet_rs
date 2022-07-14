@@ -216,7 +216,7 @@ impl<'input> Token<'input> {
         Err(())
     }
 
-    pub fn span(&self) -> Span {
+    pub fn span(&self) -> &Span {
         match self {
             Token::DELIM(span)
             | Token::COMMA(span)
@@ -247,8 +247,8 @@ impl<'input> Token<'input> {
             | Token::RBRACE(span)
             | Token::String((span, _))
             | Token::Integer((span, _))
-            | Token::Id((span, _)) => span.clone(),
-            Token::SKIP | Token::ERROR => 0..0,
+            | Token::Id((span, _)) => span,
+            Token::SKIP | Token::ERROR => &Span { start: 0, end: 0 },
         }
     }
 

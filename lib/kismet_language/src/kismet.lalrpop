@@ -17,7 +17,7 @@ stmt: Node<'input> = {
   expr,
 }
 
-exprs: Vec<Node<'input>> = <JoinPlus<COMMA, expr>>;
+exprs: (Span, Vec<Node<'input>>) = <JoinPlus<COMMA, expr>>;
 
 expr: Node<'input> = {
   or_test,
@@ -64,9 +64,9 @@ enclosure: Node<'input> = {
 }
 
 parenth_form: Node<'input> = {
-  LPAREN <exprs> RPAREN => Node::tuple(<>),
+  <l:LPAREN> <e:exprs> <r:RPAREN> => Node::tuple((l.span().start..r.span().end, e.1)),
   <l:LPAREN> <e:expr> <r:RPAREN> => Node::enclosure(<>),
-  LPAREN RPAREN => Node::tuple(vec![]),
+  <l:LPAREN> <r:RPAREN> => Node::tuple((l.span().start..r.span().end,vec![])),
 }
 
 list_display: Node<'input> = {
@@ -163,30 +163,63 @@ extern {
 
 // Macros
 
-Join<Delim, Child>: Vec<Node<'input>> = {
-  <mut v:(<Child> Delim)*> <e:Child?> => match e {
-    None => v,
-    Some(e) => { v.push(e); v }
-  },
-}
-
-
-JoinPlus<Delim, Child>: Vec<Node<'input>> = {
-  <mut v:(<Child> Delim)+> <e:Child?> => match e {
-    None => v,
-    Some(e) => { v.push(e); v }
-  },
-}
-
-JoinFilter<Delim, Child>: Vec<Node<'input>> = {
-  Delim* <mut v:(<Child> Delim+)*> <e:Child?> => match e {
-    None => v,
-    Some(e) => { v.push(e); v }
-  },
-}
-
-
 Infix<Op, Next>: Node<'input> = {
   <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::op(<>),
   Next
+}
+
+Join<Delim, Child>: (Span, Vec<Node<'input>>) = {
+  <v:JoinInner<Delim, Child>> <d:Delim?> => match d {
+    None => v,
+    Some(d) => {
+      (v.0.start..d.span().end, v.1)
+    }
+  },
+}
+
+JoinInner<Delim, Child>: (Span, Vec<Node<'input>>) = {
+  <mut v:JoinInner<Delim, Child>> Delim <c:Child> => {
+    let span = v.0.start..c.span.end;
+    v.1.push(c);
+    (span, v.1)
+  },
+  Child => (<>.span.clone(), vec![<>])
+}
+
+JoinPlus<Delim, Child>: (Span, Vec<Node<'input>>) = {
+  <mut v:JoinPlusInner<Delim, Child>> <e:Child?> => match e {
+    None => v,
+    Some(e) => {
+      let span = v.0.start..e.span.end;
+      v.1.push(e);
+      (span, v.1)
+    }
+  },
+}
+
+JoinPlusInner<Delim, Child>: (Span, Vec<Node<'input>>) = {
+  <mut v:JoinPlusInner<Delim, Child>> <c:Child> <d:Delim> => {
+    let span = v.0.start..d.span().end;
+    v.1.push(c);
+    (span, v.1)
+  },
+  <c:Child> <d:Delim>=> (c.span.start..d.span().end, vec![c])
+}
+
+JoinFilter<Delim, Child>: (Span, Vec<Node<'input>>) = {
+  <l:Delim*> <v:JoinFilterInner<Delim, Child>> <r:Delim*> => match (r.len(), l.len()) {
+    (0, 0) => v,
+    (_, 0) => (l[0].span().start..v.0.end, v.1),
+    (0, _) => (v.0.start..r[r.len()-1].span().end, v.1),
+    (_, _) => (l[0].span().start..r[r.len()-1].span().end, v.1),
+  },
+}
+
+JoinFilterInner<Delim, Child>: (Span, Vec<Node<'input>>) = {
+  <mut v:JoinFilterInner<Delim, Child>> Delim+ <c:Child> => {
+    let span = v.0.start..c.span.end;
+    v.1.push(c);
+    (span, v.1)
+  },
+  Child => (<>.span.clone(), vec![<>])
 }

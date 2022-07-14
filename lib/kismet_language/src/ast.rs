@@ -26,9 +26,9 @@ pub enum NodeKind<'input> {
 }
 
 impl<'input> Node<'input> {
-    pub fn stmts(v: Vec<Node<'input>>) -> Node<'input> {
+    pub fn stmts((span, v): (Span, Vec<Node<'input>>)) -> Node<'input> {
         return Node {
-            span: 0..0,
+            span,
             kind: Box::new(NodeKind::Stmts(v)),
         };
     }
@@ -51,10 +51,10 @@ impl<'input> Node<'input> {
         };
     }
 
-    pub fn target_list(v: Vec<Node<'input>>) -> Node<'input> {
+    pub fn target_list((span, vector): (Span, Vec<Node<'input>>)) -> Node<'input> {
         return Node {
-            span: 0..0,
-            kind: Box::new(NodeKind::TargetList(v)),
+            span,
+            kind: Box::new(NodeKind::TargetList(vector)),
         };
     }
 
@@ -79,16 +79,16 @@ impl<'input> Node<'input> {
         };
     }
 
-    pub fn vector(v: Vec<Node<'input>>) -> Node<'input> {
+    pub fn vector((span, v): (Span, Vec<Node<'input>>)) -> Node<'input> {
         return Node {
-            span: 0..0,
+            span,
             kind: Box::new(NodeKind::Vector(v)),
         };
     }
 
-    pub fn tuple(v: Vec<Node<'input>>) -> Node<'input> {
+    pub fn tuple((span, v): (Span, Vec<Node<'input>>)) -> Node<'input> {
         return Node {
-            span: 0..0,
+            span,
             kind: Box::new(NodeKind::Tuple(v)),
         };
     }
