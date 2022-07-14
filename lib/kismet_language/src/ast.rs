@@ -5,7 +5,7 @@ use super::types::{Integer, Span};
 
 #[derive(Debug, PartialEq)]
 pub struct Node<'input> {
-    pub range: Span,
+    pub span: Span,
     pub kind: Box<NodeKind<'input>>,
 }
 
@@ -28,14 +28,14 @@ pub enum NodeKind<'input> {
 impl<'input> Node<'input> {
     pub fn stmts(v: Vec<Node<'input>>) -> Node<'input> {
         return Node {
-            range: 0..0,
+            span: 0..0,
             kind: Box::new(NodeKind::Stmts(v)),
         };
     }
 
     pub fn comprehension(n: Node<'input>, v: Vec<Node<'input>>) -> Node<'input> {
         return Node {
-            range: 0..0,
+            span: 0..0,
             kind: Box::new(NodeKind::Comprehension(n, v)),
         };
     }
@@ -46,70 +46,70 @@ impl<'input> Node<'input> {
         ifnode: Option<Node<'input>>,
     ) -> Node<'input> {
         return Node {
-            range: 0..0,
+            span: 0..0,
             kind: Box::new(NodeKind::CompFor(item, iter, ifnode)),
         };
     }
 
     pub fn target_list(v: Vec<Node<'input>>) -> Node<'input> {
         return Node {
-            range: 0..0,
+            span: 0..0,
             kind: Box::new(NodeKind::TargetList(v)),
         };
     }
 
     pub fn op(l: Node<'input>, o: Token<'input>, r: Node<'input>) -> Node<'input> {
         return Node {
-            range: 0..0,
+            span: 0..0,
             kind: Box::new(NodeKind::Op(l, o, r)),
         };
     }
 
     pub fn unary(o: Token<'input>, r: Node<'input>) -> Node<'input> {
         return Node {
-            range: 0..0,
+            span: 0..0,
             kind: Box::new(NodeKind::Unary(o, r)),
         };
     }
 
     pub fn enclosure(l: Token<'input>, n: Node<'input>, r: Token<'input>) -> Node<'input> {
         return Node {
-            range: 0..0,
+            span: 0..0,
             kind: Box::new(NodeKind::Enclosure(l, n, r)),
         };
     }
 
     pub fn vector(v: Vec<Node<'input>>) -> Node<'input> {
         return Node {
-            range: 0..0,
+            span: 0..0,
             kind: Box::new(NodeKind::Vector(v)),
         };
     }
 
     pub fn tuple(v: Vec<Node<'input>>) -> Node<'input> {
         return Node {
-            range: 0..0,
+            span: 0..0,
             kind: Box::new(NodeKind::Tuple(v)),
         };
     }
 
     pub fn id((span, string): (Span, &'input str)) -> Node<'input> {
         return Node {
-            range: span,
+            span,
             kind: Box::new(NodeKind::Id(string)),
         };
     }
 
     pub fn string((span, string): (Span, String)) -> Node<'input> {
         return Node {
-            range: span,
+            span,
             kind: Box::new(NodeKind::String(string)),
         };
     }
 
     pub fn integer((span, value): (Span, Integer)) -> Node<'input> {
         return Node {
-            range: span,
+            span,
             kind: Box::new(NodeKind::Integer(value)),
         };
     }
