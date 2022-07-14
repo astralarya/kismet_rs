@@ -1,8 +1,9 @@
-use std::{fmt, ops::Range};
+use std::fmt;
 
 use logos::{Lexer as LogosLexer, Logos, SpannedIter};
 
 use super::token::Token;
+use crate::types::Span;
 
 type ParserStream<'input> = Result<(usize, Token<'input>, usize), LexerError>;
 
@@ -40,7 +41,7 @@ impl<'input> Iterator for LexerIterator<'input> {
 
 #[derive(Debug, PartialEq)]
 pub struct LexerError {
-    loc: Range<usize>,
+    loc: Span,
 }
 
 impl fmt::Display for LexerError {

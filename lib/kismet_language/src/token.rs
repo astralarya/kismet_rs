@@ -4,12 +4,12 @@ use logos::{Lexer, Logos};
 use syn::{parse_str, LitInt, LitStr};
 
 use super::ast::NodeKind;
-use super::types::Integer;
+use super::types::{Integer, Span};
 
 #[derive(Logos, Clone, Debug, PartialEq)]
 pub enum Token<'input> {
-    #[regex(r"[;\n]")]
-    DELIM,
+    #[regex(r"[;\n]", Token::range)]
+    DELIM(Span),
 
     #[regex(",")]
     COMMA,
@@ -97,7 +97,7 @@ pub enum Token<'input> {
     #[regex(r"0b[0-1_]*", Token::parse_int)]
     #[regex(r"0o[0-7_]*", Token::parse_int)]
     #[regex(r"0x[[:xdigit:]_]*", Token::parse_int)]
-    Integer(Integer),
+    Integer((Span, Integer)),
 
     #[regex(r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*")]
     Id(&'input str),
@@ -110,10 +110,14 @@ pub enum Token<'input> {
 }
 
 impl<'input> Token<'input> {
-    fn parse_int(t: &mut Lexer<'input, Token<'input>>) -> Result<Integer, ()> {
+    fn range(t: &mut Lexer<'input, Token<'input>>) -> Span {
+        t.span()
+    }
+
+    fn parse_int(t: &mut Lexer<'input, Token<'input>>) -> Result<(Span, Integer), ()> {
         match parse_str::<LitInt>(t.slice()) {
             Ok(n) => match n.base10_parse::<Integer>() {
-                Ok(i) => Ok(i),
+                Ok(i) => Ok((t.span(), i)),
                 Err(_) => Err(()),
             },
             Err(_) => Err(()),
@@ -234,7 +238,7 @@ impl<'input> Token<'input> {
 impl fmt::Display for Token<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Token::DELIM => write!(f, "\n"),
+            Token::DELIM(_) => write!(f, "\n"),
             Token::COMMA => write!(f, ","),
             Token::OR => write!(f, "OR"),
             Token::AND => write!(f, "AND"),

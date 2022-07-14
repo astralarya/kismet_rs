@@ -1,7 +1,7 @@
 use crate::ast::Node;
 use crate::lexer::LexerError;
 use crate::token::Token;
-use crate::types::Integer;
+use crate::types::{Integer, Span};
 
 grammar<'input>;
 
@@ -128,7 +128,7 @@ extern {
   type Error = LexerError;
 
   enum Token<'input> {
-    DELIM => Token::DELIM,
+    DELIM => Token::DELIM(_),
     COMMA => Token::COMMA,
     FOR => Token::FOR,
     IN => Token::IN,
@@ -156,7 +156,7 @@ extern {
     LBRACE => Token::LBRACE,
     RBRACE => Token::RBRACE,
     STRING => Token::String(<String>),
-    INT => Token::Integer(<Integer>),
+    INT => Token::Integer(<(Span, Integer)>),
     ID => Token::Id(<&'input str>),
   }
 }
