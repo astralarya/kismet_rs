@@ -111,17 +111,17 @@ pub enum Token<'input> {
 
 impl<'input> Token<'input> {
     fn parse_span(t: &mut Lexer<'input, Token<'input>>) -> Span {
-        t.span()
+        Span(t.span())
     }
 
     fn parse_id(t: &mut Lexer<'input, Token<'input>>) -> (Span, &'input str) {
-        (t.span(), t.slice())
+        (Span(t.span()), t.slice())
     }
 
     fn parse_int(t: &mut Lexer<'input, Token<'input>>) -> Result<(Span, Integer), ()> {
         match parse_str::<LitInt>(t.slice()) {
             Ok(n) => match n.base10_parse::<Integer>() {
-                Ok(i) => Ok((t.span(), i)),
+                Ok(i) => Ok((Span(t.span()), i)),
                 Err(_) => Err(()),
             },
             Err(_) => Err(()),
@@ -150,7 +150,7 @@ impl<'input> Token<'input> {
                 Part::Quote => {
                     t.bump(1);
                     return match parse_str::<LitStr>(t.slice()) {
-                        Ok(n) => Ok((t.span(), n.value())),
+                        Ok(n) => Ok((Span(t.span()), n.value())),
                         Err(_) => Err(()),
                     };
                 }
@@ -204,7 +204,7 @@ impl<'input> Token<'input> {
                 Some(signal_val) => match (signal_val == guard, token) {
                     (true, Part::Quote) | (true, Part::Hash) => {
                         return match parse_str::<LitStr>(t.slice()) {
-                            Ok(n) => Ok((t.span(), n.value())),
+                            Ok(n) => Ok((Span(t.span()), n.value())),
                             Err(_) => Err(()),
                         };
                     }
@@ -248,7 +248,7 @@ impl<'input> Token<'input> {
             | Token::String((span, _))
             | Token::Integer((span, _))
             | Token::Id((span, _)) => span,
-            Token::SKIP | Token::ERROR => &Span { start: 0, end: 0 },
+            Token::SKIP | Token::ERROR => &Span(0..0),
         }
     }
 

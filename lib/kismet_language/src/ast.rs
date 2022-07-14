@@ -35,7 +35,7 @@ impl<'input> Node<'input> {
 
     pub fn comprehension(n: Node<'input>, v: Vec<Node<'input>>) -> Node<'input> {
         return Node {
-            span: 0..0,
+            span: Span(0..0),
             kind: Box::new(NodeKind::Comprehension(n, v)),
         };
     }
@@ -46,7 +46,7 @@ impl<'input> Node<'input> {
         ifnode: Option<Node<'input>>,
     ) -> Node<'input> {
         return Node {
-            span: 0..0,
+            span: Span(0..0),
             kind: Box::new(NodeKind::CompFor(item, iter, ifnode)),
         };
     }
@@ -60,21 +60,21 @@ impl<'input> Node<'input> {
 
     pub fn op(l: Node<'input>, o: Token<'input>, r: Node<'input>) -> Node<'input> {
         return Node {
-            span: 0..0,
+            span: Span(0..0),
             kind: Box::new(NodeKind::Op(l, o, r)),
         };
     }
 
     pub fn unary(o: Token<'input>, r: Node<'input>) -> Node<'input> {
         return Node {
-            span: 0..0,
+            span: Span(0..0),
             kind: Box::new(NodeKind::Unary(o, r)),
         };
     }
 
     pub fn enclosure(l: Token<'input>, n: Node<'input>, r: Token<'input>) -> Node<'input> {
         return Node {
-            span: 0..0,
+            span: Span(0..0),
             kind: Box::new(NodeKind::Enclosure(l, n, r)),
         };
     }

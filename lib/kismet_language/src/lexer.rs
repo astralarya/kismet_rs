@@ -32,7 +32,7 @@ impl<'input> Iterator for LexerIterator<'input> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
-            Some((Token::ERROR, span)) => Some(Err(LexerError { loc: span })),
+            Some((Token::ERROR, span)) => Some(Err(LexerError { loc: Span(span) })),
             Some((token, span)) => Some(Ok((span.start, token, span.end))),
             None => None,
         }
