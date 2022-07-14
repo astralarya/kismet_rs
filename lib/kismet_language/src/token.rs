@@ -8,85 +8,85 @@ use super::types::{Integer, Span};
 
 #[derive(Logos, Clone, Debug, PartialEq)]
 pub enum Token<'input> {
-    #[regex(r"[;\n]", Token::span)]
+    #[regex(r"[;\n]", Token::parse_span)]
     DELIM(Span),
 
-    #[regex(",", Token::span)]
+    #[regex(",", Token::parse_span)]
     COMMA(Span),
 
-    #[regex(r"(?i)for", Token::span)]
+    #[regex(r"(?i)for", Token::parse_span)]
     FOR(Span),
 
-    #[regex(r"(?i)in", Token::span)]
+    #[regex(r"(?i)in", Token::parse_span)]
     IN(Span),
 
-    #[regex(r"(?i)if", Token::span)]
+    #[regex(r"(?i)if", Token::parse_span)]
     IF(Span),
 
-    #[regex(r"(?i)or", Token::span)]
+    #[regex(r"(?i)or", Token::parse_span)]
     OR(Span),
 
-    #[regex(r"(?i)and", Token::span)]
+    #[regex(r"(?i)and", Token::parse_span)]
     AND(Span),
 
-    #[regex(r"(?i)not", Token::span)]
+    #[regex(r"(?i)not", Token::parse_span)]
     NOT(Span),
 
-    #[token("==", Token::span)]
+    #[token("==", Token::parse_span)]
     EQ(Span),
 
-    #[token("!=", Token::span)]
+    #[token("!=", Token::parse_span)]
     NE(Span),
 
-    #[token("<", Token::span)]
+    #[token("<", Token::parse_span)]
     LT(Span),
 
-    #[token("<=", Token::span)]
+    #[token("<=", Token::parse_span)]
     LE(Span),
 
-    #[token(">", Token::span)]
+    #[token(">", Token::parse_span)]
     GT(Span),
 
-    #[token(">=", Token::span)]
+    #[token(">=", Token::parse_span)]
     GE(Span),
 
-    #[token("+", Token::span)]
+    #[token("+", Token::parse_span)]
     ADD(Span),
 
-    #[token("-", Token::span)]
+    #[token("-", Token::parse_span)]
     SUB(Span),
 
-    #[token("%", Token::span)]
+    #[token("%", Token::parse_span)]
     MOD(Span),
 
-    #[token("*", Token::span)]
+    #[token("*", Token::parse_span)]
     MUL(Span),
 
-    #[token("/", Token::span)]
+    #[token("/", Token::parse_span)]
     DIV(Span),
 
-    #[token("^", Token::span)]
+    #[token("^", Token::parse_span)]
     POW(Span),
 
-    #[regex(r"(?i)d", Token::span)]
+    #[regex(r"(?i)d", Token::parse_span)]
     DIE(Span),
 
-    #[token("(", Token::span)]
+    #[token("(", Token::parse_span)]
     LPAREN(Span),
 
-    #[token(")", Token::span)]
+    #[token(")", Token::parse_span)]
     RPAREN(Span),
 
-    #[token("[", Token::span)]
+    #[token("[", Token::parse_span)]
     LBRACKET(Span),
 
-    #[token("]", Token::span)]
+    #[token("]", Token::parse_span)]
     RBRACKET(Span),
 
-    #[token("{", Token::span)]
+    #[token("{", Token::parse_span)]
     LBRACE(Span),
 
-    #[token("}", Token::span)]
+    #[token("}", Token::parse_span)]
     RBRACE(Span),
 
     #[regex("\"", Token::parse_string)]
@@ -110,7 +110,7 @@ pub enum Token<'input> {
 }
 
 impl<'input> Token<'input> {
-    fn span(t: &mut Lexer<'input, Token<'input>>) -> Span {
+    fn parse_span(t: &mut Lexer<'input, Token<'input>>) -> Span {
         t.span()
     }
 
@@ -216,6 +216,42 @@ impl<'input> Token<'input> {
         Err(())
     }
 
+    pub fn span(&self) -> Span {
+        match self {
+            Token::DELIM(span)
+            | Token::COMMA(span)
+            | Token::FOR(span)
+            | Token::IN(span)
+            | Token::IF(span)
+            | Token::OR(span)
+            | Token::NOT(span)
+            | Token::AND(span)
+            | Token::EQ(span)
+            | Token::NE(span)
+            | Token::LT(span)
+            | Token::LE(span)
+            | Token::GT(span)
+            | Token::GE(span)
+            | Token::ADD(span)
+            | Token::SUB(span)
+            | Token::MOD(span)
+            | Token::MUL(span)
+            | Token::DIV(span)
+            | Token::POW(span)
+            | Token::DIE(span)
+            | Token::LPAREN(span)
+            | Token::RPAREN(span)
+            | Token::LBRACKET(span)
+            | Token::RBRACKET(span)
+            | Token::LBRACE(span)
+            | Token::RBRACE(span)
+            | Token::String((span, _))
+            | Token::Integer((span, _))
+            | Token::Id((span, _)) => span.clone(),
+            Token::SKIP | Token::ERROR => 0..0,
+        }
+    }
+
     pub fn space(&self) -> &'static str {
         match self {
             Token::DIE(_) | Token::POW(_) | Token::MUL(_) | Token::LPAREN(_) | Token::RPAREN(_) => {
@@ -240,8 +276,11 @@ impl fmt::Display for Token<'_> {
         match self {
             Token::DELIM(_) => write!(f, "\n"),
             Token::COMMA(_) => write!(f, ","),
-            Token::OR(_) => write!(f, "OR"),
+            Token::FOR(_) => write!(f, "FOR"),
+            Token::IN(_) => write!(f, "IN"),
+            Token::IF(_) => write!(f, "IF"),
             Token::AND(_) => write!(f, "AND"),
+            Token::NOT(_) => write!(f, "NOT"),
             Token::EQ(_) => write!(f, "=="),
             Token::NE(_) => write!(f, "!="),
             Token::LT(_) => write!(f, "<"),
