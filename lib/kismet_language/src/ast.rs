@@ -169,7 +169,7 @@ impl fmt::Display for Node<'_> {
                 1 => write!(f, "({},)", nodes[0]),
                 _ => write!(f, "({})", join(&nodes, ", ")),
             },
-            NodeKind::String(s) => write!(f, "\"{}\"", s),
+            NodeKind::String(s) => write!(f, r#""{}""#, s),
             NodeKind::Integer(n) => write!(f, "{}", n),
             NodeKind::Id(s) => write!(f, "{}", s),
         }
