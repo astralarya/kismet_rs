@@ -179,7 +179,7 @@ JoinPlus<Delim, Child>: Vec<Node<'input>> = {
 }
 
 JoinFilter<Delim, Child>: Vec<Node<'input>> = {
-  DELIM* <mut v:(<Child> Delim+)*> <e:Child?> => match e {
+  Delim* <mut v:(<Child> Delim+)*> <e:Child?> => match e {
     None => v,
     Some(e) => { v.push(e); v }
   },
