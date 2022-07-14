@@ -11,83 +11,83 @@ pub enum Token<'input> {
     #[regex(r"[;\n]", Token::range)]
     DELIM(Span),
 
-    #[regex(",")]
-    COMMA,
+    #[regex(",", Token::range)]
+    COMMA(Span),
 
-    #[regex(r"(?i)for")]
-    FOR,
+    #[regex(r"(?i)for", Token::range)]
+    FOR(Span),
 
-    #[regex(r"(?i)in")]
-    IN,
+    #[regex(r"(?i)in", Token::range)]
+    IN(Span),
 
-    #[regex(r"(?i)if")]
-    IF,
+    #[regex(r"(?i)if", Token::range)]
+    IF(Span),
 
-    #[regex(r"(?i)or")]
-    OR,
+    #[regex(r"(?i)or", Token::range)]
+    OR(Span),
 
-    #[regex(r"(?i)and")]
-    AND,
+    #[regex(r"(?i)and", Token::range)]
+    AND(Span),
 
-    #[regex(r"(?i)not")]
-    NOT,
+    #[regex(r"(?i)not", Token::range)]
+    NOT(Span),
 
-    #[token("==")]
-    EQ,
+    #[token("==", Token::range)]
+    EQ(Span),
 
-    #[token("!=")]
-    NE,
+    #[token("!=", Token::range)]
+    NE(Span),
 
-    #[token("<")]
-    LT,
+    #[token("<", Token::range)]
+    LT(Span),
 
-    #[token("<=")]
-    LE,
+    #[token("<=", Token::range)]
+    LE(Span),
 
-    #[token(">")]
-    GT,
+    #[token(">", Token::range)]
+    GT(Span),
 
-    #[token(">=")]
-    GE,
+    #[token(">=", Token::range)]
+    GE(Span),
 
-    #[token("+")]
-    ADD,
+    #[token("+", Token::range)]
+    ADD(Span),
 
-    #[token("-")]
-    SUB,
+    #[token("-", Token::range)]
+    SUB(Span),
 
-    #[token("%")]
-    MOD,
+    #[token("%", Token::range)]
+    MOD(Span),
 
-    #[token("*")]
-    MUL,
+    #[token("*", Token::range)]
+    MUL(Span),
 
-    #[token("/")]
-    DIV,
+    #[token("/", Token::range)]
+    DIV(Span),
 
-    #[token("^")]
-    POW,
+    #[token("^", Token::range)]
+    POW(Span),
 
-    #[regex(r"(?i)d")]
-    DIE,
+    #[regex(r"(?i)d", Token::range)]
+    DIE(Span),
 
-    #[token("(")]
-    LPAREN,
+    #[token("(", Token::range)]
+    LPAREN(Span),
 
-    #[token(")")]
-    RPAREN,
+    #[token(")", Token::range)]
+    RPAREN(Span),
 
-    #[token("[")]
-    LBRACKET,
+    #[token("[", Token::range)]
+    LBRACKET(Span),
 
-    #[token("]")]
-    RBRACKET,
+    #[token("]", Token::range)]
+    RBRACKET(Span),
 
-    #[token("{")]
-    LBRACE,
+    #[token("{", Token::range)]
+    LBRACE(Span),
 
-    #[token("}")]
-    RBRACE,
+    #[token("}", Token::range)]
+    RBRACE(Span),
 
     #[regex("\"", Token::parse_string)]
     #[regex("r#*\"", Token::parse_rawstring)]
@@ -220,16 +220,18 @@ impl<'input> Token<'input> {
 
     pub fn space(&self) -> &'static str {
         match self {
-            Token::DIE | Token::POW | Token::MUL | Token::LPAREN | Token::RPAREN => "",
+            Token::DIE(_) | Token::POW(_) | Token::MUL(_) | Token::LPAREN(_) | Token::RPAREN(_) => {
+                ""
+            }
             _ => " ",
         }
     }
 
     pub fn enclose(&self, kind: &NodeKind<'input>) -> bool {
         match (self, kind) {
-            (Token::DIE, NodeKind::Integer(_))
-            | (Token::DIE, NodeKind::Tuple(_))
-            | (Token::DIE, NodeKind::Vector(_)) => true,
+            (Token::DIE(_), NodeKind::Integer(_))
+            | (Token::DIE(_), NodeKind::Tuple(_))
+            | (Token::DIE(_), NodeKind::Vector(_)) => true,
             _ => false,
         }
     }
@@ -239,28 +241,28 @@ impl fmt::Display for Token<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Token::DELIM(_) => write!(f, "\n"),
-            Token::COMMA => write!(f, ","),
-            Token::OR => write!(f, "OR"),
-            Token::AND => write!(f, "AND"),
-            Token::EQ => write!(f, "=="),
-            Token::NE => write!(f, "!="),
-            Token::LT => write!(f, "<"),
-            Token::LE => write!(f, "<="),
-            Token::GT => write!(f, ">"),
-            Token::GE => write!(f, ">="),
-            Token::ADD => write!(f, "+"),
-            Token::SUB => write!(f, "-"),
-            Token::MOD => write!(f, "%"),
-            Token::MUL => write!(f, "*"),
-            Token::DIV => write!(f, "/"),
-            Token::POW => write!(f, "^"),
-            Token::DIE => write!(f, "d"),
-            Token::LPAREN => write!(f, "("),
-            Token::RPAREN => write!(f, ")"),
-            Token::LBRACKET => write!(f, "["),
-            Token::RBRACKET => write!(f, "]"),
-            Token::LBRACE => write!(f, "{{"),
-            Token::RBRACE => write!(f, "}}"),
+            Token::COMMA(_) => write!(f, ","),
+            Token::OR(_) => write!(f, "OR"),
+            Token::AND(_) => write!(f, "AND"),
+            Token::EQ(_) => write!(f, "=="),
+            Token::NE(_) => write!(f, "!="),
+            Token::LT(_) => write!(f, "<"),
+            Token::LE(_) => write!(f, "<="),
+            Token::GT(_) => write!(f, ">"),
+            Token::GE(_) => write!(f, ">="),
+            Token::ADD(_) => write!(f, "+"),
+            Token::SUB(_) => write!(f, "-"),
+            Token::MOD(_) => write!(f, "%"),
+            Token::MUL(_) => write!(f, "*"),
+            Token::DIV(_) => write!(f, "/"),
+            Token::POW(_) => write!(f, "^"),
+            Token::DIE(_) => write!(f, "d"),
+            Token::LPAREN(_) => write!(f, "("),
+            Token::RPAREN(_) => write!(f, ")"),
+            Token::LBRACKET(_) => write!(f, "["),
+            Token::RBRACKET(_) => write!(f, "]"),
+            Token::LBRACE(_) => write!(f, "{{"),
+            Token::RBRACE(_) => write!(f, "}}"),
             _ => write!(f, "{:?}", self),
         }
     }
