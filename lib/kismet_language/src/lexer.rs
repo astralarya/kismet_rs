@@ -5,12 +5,11 @@ use logos::{Lexer as LogosLexer, Logos, SpannedIter};
 use super::token::Token;
 
 type ParserStream<'input> = Result<(usize, Token<'input>, usize), LexerError>;
-type SpannedParserStream<'input> = (Range<usize>, ParserStream<'input>);
 
-fn to_parser_stream<'input>(t: Token<'input>, r: Range<usize>) -> ParserStream<'input> {
-    match (&t, &r) {
-        (Token::ERROR, _) => Err(LexerError { loc: r }),
-        _ => Ok((r.start, t, r.end)),
+fn to_parser_stream<'input>(token: Token<'input>, span: Range<usize>) -> ParserStream<'input> {
+    match (&token, &span) {
+        (Token::ERROR, _) => Err(LexerError { loc: span }),
+        _ => Ok((span.start, token, span.end)),
     }
 }
 
