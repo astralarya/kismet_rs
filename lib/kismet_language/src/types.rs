@@ -10,7 +10,16 @@ pub struct Span(pub Range<usize>);
 pub struct SpanVec(pub Vec<Span>);
 
 impl Span {
-    pub fn combine(lhs: Option<&Span>, rhs: Option<&Span>) -> Option<Span> {
+    pub fn combine(lhs: Option<Span>, rhs: Option<Span>) -> Option<Span> {
+        match (lhs, rhs) {
+            (Some(l), Some(r)) => Some(l + r),
+            (Some(l), None) => Some(l.clone()),
+            (None, Some(r)) => Some(r.clone()),
+            (None, None) => None,
+        }
+    }
+
+    pub fn combine_ref(lhs: Option<&Span>, rhs: Option<&Span>) -> Option<Span> {
         match (lhs, rhs) {
             (Some(l), Some(r)) => Some(l + r),
             (Some(l), None) => Some(l.clone()),
@@ -24,6 +33,12 @@ impl Deref for Span {
     type Target = Range<usize>;
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl SpanVec {
+    pub fn to_span(&self) -> Option<Span> {
+        Span::combine_ref(self.first(), self.last())
     }
 }
 
@@ -86,12 +101,6 @@ impl Add<Span> for Option<Span> {
     }
 }
 
-impl SpanVec {
-    pub fn to_span(&self) -> Option<Span> {
-        Span::combine(self.first(), self.last())
-    }
-}
-
 impl Deref for SpanVec {
     type Target = Vec<Span>;
     fn deref(&self) -> &Self::Target {
@@ -102,7 +111,7 @@ impl Deref for SpanVec {
 impl<'a> Add for &'a SpanVec {
     type Output = Option<Span>;
     fn add(self, rhs: Self) -> Self::Output {
-        Span::combine(self.first(), rhs.last())
+        Span::combine_ref(self.first(), rhs.last())
     }
 }
 
