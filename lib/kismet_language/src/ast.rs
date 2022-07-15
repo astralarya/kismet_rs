@@ -60,21 +60,21 @@ impl<'input> Node<'input> {
 
     pub fn op(l: Node<'input>, o: Token<'input>, r: Node<'input>) -> Node<'input> {
         return Node {
-            span: Span(0..0),
+            span: l.span.clone() + r.span.clone(),
             kind: Box::new(NodeKind::Op(l, o, r)),
         };
     }
 
     pub fn unary(o: Token<'input>, r: Node<'input>) -> Node<'input> {
         return Node {
-            span: Span(0..0),
+            span: o.span().clone() + r.span.clone(),
             kind: Box::new(NodeKind::Unary(o, r)),
         };
     }
 
     pub fn enclosure(l: Token<'input>, n: Node<'input>, r: Token<'input>) -> Node<'input> {
         return Node {
-            span: Span(0..0),
+            span: l.span().clone() + r.span().clone(),
             kind: Box::new(NodeKind::Enclosure(l, n, r)),
         };
     }

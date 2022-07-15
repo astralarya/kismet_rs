@@ -1,5 +1,5 @@
 use std::{
-    cmp::min,
+    cmp::{max, min},
     ops::{Add, Deref, Range},
 };
 
@@ -45,7 +45,7 @@ impl SpanVec {
 impl<'a> Add for &'a Span {
     type Output = Span;
     fn add(self, rhs: Self) -> Self::Output {
-        Span(min(self.start, rhs.start)..min(self.end, rhs.end))
+        Span(min(self.start, rhs.start)..max(self.end, rhs.end))
     }
 }
 
