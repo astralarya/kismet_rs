@@ -1,7 +1,7 @@
 use crate::ast::Node;
 use crate::lexer::LexerError;
 use crate::token::Token;
-use crate::types::{Integer, Span, span};
+use crate::types::{Integer, Span};
 
 grammar<'input>;
 
