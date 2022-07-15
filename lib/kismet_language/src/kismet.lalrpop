@@ -80,7 +80,8 @@ comprehension: Node<'input> = {
 }
 
 comp_for: Node<'input> = {
-  FOR <target_list> IN <or_test> <(IF <or_test>)?> => Node::comp_for(<>)
+  <l:FOR> <t:target_list> IN <n:or_test> <o:(IF <or_test>)?> =>
+    Node::comp_for(l.span() + n.span.clone() + o.as_ref().map_or(None, |x| Some(x.span.clone())), t, n, o)
 }
 
 target: Node<'input> = {

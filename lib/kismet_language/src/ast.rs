@@ -35,18 +35,19 @@ impl<'input> Node<'input> {
 
     pub fn comprehension(n: Node<'input>, v: Vec<Node<'input>>) -> Node<'input> {
         return Node {
-            span: Span(0..0),
+            span: n.span.clone() + v.last().map_or(None, |x| Some(x.span.clone())),
             kind: Box::new(NodeKind::Comprehension(n, v)),
         };
     }
 
     pub fn comp_for(
+        span: Span,
         item: Node<'input>,
         iter: Node<'input>,
         ifnode: Option<Node<'input>>,
     ) -> Node<'input> {
         return Node {
-            span: Span(0..0),
+            span,
             kind: Box::new(NodeKind::CompFor(item, iter, ifnode)),
         };
     }
