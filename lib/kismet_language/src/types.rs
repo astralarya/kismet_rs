@@ -1,4 +1,7 @@
-use std::ops::{Add, Deref, Range};
+use std::{
+    cmp::min,
+    ops::{Add, Deref, Range},
+};
 
 pub type Integer = i32;
 
@@ -27,7 +30,7 @@ impl Deref for Span {
 impl<'a> Add for &'a Span {
     type Output = Span;
     fn add(self, rhs: Self) -> Self::Output {
-        Span(self.start..rhs.end)
+        Span(min(self.start, rhs.start)..min(self.end, rhs.end))
     }
 }
 
@@ -121,5 +124,33 @@ impl<'a> Add<&'a SpanVec> for SpanVec {
     type Output = Option<Span>;
     fn add(self, rhs: &'a SpanVec) -> Self::Output {
         &self + rhs
+    }
+}
+
+impl<'a> Add<&'a Span> for &'a SpanVec {
+    type Output = Span;
+    fn add(self, rhs: &Span) -> Self::Output {
+        self.to_span() + rhs
+    }
+}
+
+impl<'a> Add<Span> for &'a SpanVec {
+    type Output = Span;
+    fn add(self, rhs: Span) -> Self::Output {
+        self + &rhs
+    }
+}
+
+impl<'a> Add<&'a SpanVec> for Span {
+    type Output = Span;
+    fn add(self, rhs: &'a SpanVec) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl<'a> Add<SpanVec> for Span {
+    type Output = Span;
+    fn add(self, rhs: SpanVec) -> Self::Output {
+        &rhs + self
     }
 }
