@@ -206,8 +206,8 @@ JoinFilter<Delim, Child>: (Span, Vec<Node<'input>>) = {
   <l:Delim*> <v:JoinFilterInner<Delim, Child>> <r:Delim*> =>
     (
       v.0 + Span::combine(
-        Span::reduce(&mut Token::to_span_iter(&r)),
-        Span::reduce(&mut Token::to_span_iter(&l)),
+        Token::vec_to_span(r),
+        Token::vec_to_span(l),
       ),
       v.1,
     )

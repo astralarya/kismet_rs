@@ -110,10 +110,14 @@ pub enum Token<'input> {
 }
 
 impl<'input> Token<'input> {
-    pub fn to_span_iter(
+    pub fn vec_to_span_iter(
         v: &'input Vec<Token<'input>>,
     ) -> Map<std::slice::Iter<'_, Token<'_>>, fn(&Token) -> Span> {
         v.iter().map(|x| x.span().clone())
+    }
+
+    pub fn vec_to_span(v: Vec<Token<'input>>) -> Option<Span> {
+        Span::reduce(&mut Token::vec_to_span_iter(&v))
     }
 
     fn parse_span(t: &mut Lexer<'input, Token<'input>>) -> Span {
