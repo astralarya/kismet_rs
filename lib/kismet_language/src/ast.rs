@@ -1,4 +1,4 @@
-use std::{fmt, iter::Map};
+use std::fmt;
 
 use super::token::Token;
 use super::types::{Integer, Span};
@@ -32,14 +32,8 @@ pub struct Comprehension<'input> {
 }
 
 impl<'input> Node<'input> {
-    pub fn vec_to_span_iter(
-        v: &'input Vec<Node<'input>>,
-    ) -> Map<std::slice::Iter<'_, Node<'_>>, fn(&Node) -> Span> {
-        v.iter().map(|x| x.span.clone())
-    }
-
     pub fn vec_to_span(v: &'input Vec<Node<'input>>) -> Option<Span> {
-        Span::reduce(&mut Node::vec_to_span_iter(&v))
+        Span::reduce(&mut v.iter().map(|x| x.span.clone()))
     }
 
     pub fn stmts((span, v): (Span, Vec<Node<'input>>)) -> Node<'input> {

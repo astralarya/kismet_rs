@@ -1,4 +1,4 @@
-use std::{fmt, iter::Map};
+use std::fmt;
 
 use logos::{Lexer, Logos};
 use syn::{parse_str, LitInt, LitStr};
@@ -110,14 +110,8 @@ pub enum Token<'input> {
 }
 
 impl<'input> Token<'input> {
-    pub fn vec_to_span_iter(
-        v: &'input Vec<Token<'input>>,
-    ) -> Map<std::slice::Iter<'_, Token<'_>>, fn(&Token) -> Span> {
-        v.iter().map(|x| x.span().clone())
-    }
-
     pub fn vec_to_span(v: &'input Vec<Token<'input>>) -> Option<Span> {
-        Span::reduce(&mut Token::vec_to_span_iter(&v))
+        Span::reduce(&mut v.iter().map(|x| x.span().clone()))
     }
 
     fn parse_span(t: &mut Lexer<'input, Token<'input>>) -> Span {
