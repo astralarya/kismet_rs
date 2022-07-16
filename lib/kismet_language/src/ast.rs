@@ -12,7 +12,7 @@ pub struct Node<'input> {
 #[derive(Debug, PartialEq)]
 pub enum NodeKind<'input> {
     Stmts(Vec<Node<'input>>),
-    Comprehension(Node<'input>, Vec<Node<'input>>),
+    Comprehension(Comprehension<'input>),
     CompFor(Node<'input>, Node<'input>, Option<Node<'input>>),
     TargetList(Vec<Node<'input>>),
     Op(Node<'input>, Token<'input>, Node<'input>),
@@ -25,6 +25,12 @@ pub enum NodeKind<'input> {
     Integer(Integer),
 }
 
+#[derive(Debug, PartialEq)]
+pub struct Comprehension<'input> {
+    expr: Node<'input>,
+    iter: Vec<Node<'input>>,
+}
+
 impl<'input> Node<'input> {
     pub fn vec_to_span_iter(
         v: &'input Vec<Node<'input>>,
@@ -32,7 +38,7 @@ impl<'input> Node<'input> {
         v.iter().map(|x| x.span.clone())
     }
 
-    pub fn vec_to_span(v: Vec<Node<'input>>) -> Option<Span> {
+    pub fn vec_to_span(v: &'input Vec<Node<'input>>) -> Option<Span> {
         Span::reduce(&mut Node::vec_to_span_iter(&v))
     }
 
@@ -43,10 +49,10 @@ impl<'input> Node<'input> {
         };
     }
 
-    pub fn comprehension(n: Node<'input>, v: Vec<Node<'input>>) -> Node<'input> {
+    pub fn comprehension(expr: Node<'input>, iter: Vec<Node<'input>>) -> Node<'input> {
         return Node {
-            span: n.span.clone() + v.last().map_or(None, |x| Some(x.span.clone())),
-            kind: Box::new(NodeKind::Comprehension(n, v)),
+            span: expr.span.clone() + Node::vec_to_span(&iter),
+            kind: Box::new(NodeKind::Comprehension(Comprehension { expr, iter })),
         };
     }
 
@@ -138,7 +144,7 @@ impl fmt::Display for Node<'_> {
 
         match &*self.kind {
             NodeKind::Stmts(nodes) => write!(f, "{}", join(&nodes, "\n")),
-            NodeKind::Comprehension(l, v) => write!(f, "{} {}", l, join(&v, " ")),
+            NodeKind::Comprehension(c) => write!(f, "{} {}", c.expr, join(&c.iter, " ")),
             NodeKind::CompFor(item, iter, expr) => match expr {
                 Some(node) => write!(f, "FOR {} IN {} IF {}", item, iter, node),
                 None => write!(f, "FOR {} IN {}", item, iter),

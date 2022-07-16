@@ -116,7 +116,7 @@ impl<'input> Token<'input> {
         v.iter().map(|x| x.span().clone())
     }
 
-    pub fn vec_to_span(v: Vec<Token<'input>>) -> Option<Span> {
+    pub fn vec_to_span(v: &'input Vec<Token<'input>>) -> Option<Span> {
         Span::reduce(&mut Token::vec_to_span_iter(&v))
     }
 
