@@ -30,6 +30,10 @@ impl Span {
             (None, None) => None,
         }
     }
+
+    pub fn reduce(iter: &mut dyn Iterator<Item = Span>) -> Option<Span> {
+        iter.reduce(|acc, next| acc + next)
+    }
 }
 
 impl Deref for Span {

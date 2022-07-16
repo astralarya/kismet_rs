@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, iter::Map};
 
 use super::token::Token;
 use super::types::{Integer, Span};
@@ -26,6 +26,12 @@ pub enum NodeKind<'input> {
 }
 
 impl<'input> Node<'input> {
+    pub fn to_span_iter(
+        v: &'input Vec<Node<'input>>,
+    ) -> Map<std::slice::Iter<'_, Node<'_>>, fn(&Node) -> Span> {
+        v.iter().map(|x| x.span.clone())
+    }
+
     pub fn stmts((span, v): (Span, Vec<Node<'input>>)) -> Node<'input> {
         return Node {
             span,

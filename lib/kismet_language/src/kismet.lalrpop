@@ -203,12 +203,14 @@ JoinPlusInner<Delim, Child>: (Span, Vec<Node<'input>>) = {
 }
 
 JoinFilter<Delim, Child>: (Span, Vec<Node<'input>>) = {
-  <l:Delim*> <v:JoinFilterInner<Delim, Child>> <r:Delim*> => match (r.len(), l.len()) {
-    (0, 0) => v,
-    (_, 0) => (l[0].span() + v.0, v.1),
-    (0, _) => (v.0 + r[r.len()-1].span(), v.1),
-    (_, _) => (l[0].span() + r[r.len()-1].span(), v.1),
-  },
+  <l:Delim*> <v:JoinFilterInner<Delim, Child>> <r:Delim*> =>
+    (
+      v.0 + Span::combine(
+        Span::reduce(&mut Token::to_span_iter(&r)),
+        Span::reduce(&mut Token::to_span_iter(&l)),
+      ),
+      v.1,
+    )
 }
 
 JoinFilterInner<Delim, Child>: (Span, Vec<Node<'input>>) = {
