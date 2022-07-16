@@ -13,7 +13,7 @@ pub type Integer = i32;
 pub struct Span(pub Range<usize>);
 
 impl Span {
-    pub fn combine(lhs: Option<Span>, rhs: Option<Span>) -> Option<Span> {
+    pub fn add_option(lhs: Option<Span>, rhs: Option<Span>) -> Option<Span> {
         match (lhs, rhs) {
             (Some(l), Some(r)) => Some(l + r),
             (Some(l), None) => Some(l.clone()),
@@ -22,7 +22,7 @@ impl Span {
         }
     }
 
-    pub fn combine_ref(lhs: Option<&Span>, rhs: Option<&Span>) -> Option<Span> {
+    pub fn add_option_ref(lhs: Option<&Span>, rhs: Option<&Span>) -> Option<Span> {
         match (lhs, rhs) {
             (Some(l), Some(r)) => Some(l + r),
             (Some(l), None) => Some(l.clone()),

@@ -205,7 +205,7 @@ JoinPlusInner<Delim, Child>: (Span, Vec<Node<'input>>) = {
 JoinFilter<Delim, Child>: (Span, Vec<Node<'input>>) = {
   <l:Delim*> <v:JoinFilterInner<Delim, Child>> <r:Delim*> =>
     (
-      v.0 + Span::combine(
+      v.0 + Span::add_option(
         Token::vec_to_span(r),
         Token::vec_to_span(l),
       ),
