@@ -1,13 +1,16 @@
 use std::{
     cmp::{max, min},
-    ops::{Add, Deref, Range},
+    ops,
+    ops::{Deref, Range},
 };
+
+extern crate overload;
+use overload::overload;
 
 pub type Integer = i32;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Span(pub Range<usize>);
-pub struct SpanVec(pub Vec<Span>);
 
 impl Span {
     pub fn combine(lhs: Option<Span>, rhs: Option<Span>) -> Option<Span> {
@@ -36,130 +39,28 @@ impl Deref for Span {
     }
 }
 
-impl SpanVec {
-    pub fn to_span(&self) -> Option<Span> {
-        Span::combine_ref(self.first(), self.last())
-    }
-}
+overload!((l: ?Span) + (r: ?Span) -> Span {
+    Span(min(l.start, r.start)..max(l.end, r.end))
+});
 
-impl<'a> Add for &'a Span {
-    type Output = Span;
-    fn add(self, rhs: Self) -> Self::Output {
-        Span(min(self.start, rhs.start)..max(self.end, rhs.end))
+overload!((l: ?Span) + (r: ?Option<Span>) -> Span {
+    match r {
+        Some(span) => l + span,
+        None => l.clone(),
     }
-}
+});
 
-impl<'a> Add<Span> for &'a Span {
-    type Output = Span;
-    fn add(self, rhs: Span) -> Self::Output {
-        self + &rhs
-    }
-}
+overload!((l: ?Option<Span>) + (r: ?Span) -> Span {
+    r + l
+});
 
-impl Add for Span {
-    type Output = Span;
-    fn add(self, rhs: Self) -> Self::Output {
-        &self + &rhs
+overload!((l: ?Span) + (r: ?Option<&Span>) -> Span {
+    match r {
+        Some(span) => l + span.clone(),
+        None => l.clone(),
     }
-}
+});
 
-impl<'a> Add<&'a Span> for Span {
-    type Output = Span;
-    fn add(self, rhs: &Self) -> Self::Output {
-        &self + rhs
-    }
-}
-
-impl<'a> Add<Option<Span>> for &'a Span {
-    type Output = Span;
-    fn add(self, rhs: Option<Span>) -> Self::Output {
-        match rhs {
-            Some(span) => self + span,
-            None => self.clone(),
-        }
-    }
-}
-
-impl Add<Option<Span>> for Span {
-    type Output = Span;
-    fn add(self, rhs: Option<Span>) -> Self::Output {
-        &self + rhs
-    }
-}
-
-impl<'a> Add<&'a Span> for Option<Span> {
-    type Output = Span;
-    fn add(self, rhs: &'a Span) -> Self::Output {
-        rhs + self
-    }
-}
-
-impl Add<Span> for Option<Span> {
-    type Output = Span;
-    fn add(self, rhs: Span) -> Self::Output {
-        &rhs + self
-    }
-}
-
-impl Deref for SpanVec {
-    type Target = Vec<Span>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<'a> Add for &'a SpanVec {
-    type Output = Option<Span>;
-    fn add(self, rhs: Self) -> Self::Output {
-        Span::combine_ref(self.first(), rhs.last())
-    }
-}
-
-impl<'a> Add<SpanVec> for &'a SpanVec {
-    type Output = Option<Span>;
-    fn add(self, rhs: SpanVec) -> Self::Output {
-        self + &rhs
-    }
-}
-
-impl Add for SpanVec {
-    type Output = Option<Span>;
-    fn add(self, rhs: Self) -> Self::Output {
-        &self + &rhs
-    }
-}
-
-impl<'a> Add<&'a SpanVec> for SpanVec {
-    type Output = Option<Span>;
-    fn add(self, rhs: &'a SpanVec) -> Self::Output {
-        &self + rhs
-    }
-}
-
-impl<'a> Add<&'a Span> for &'a SpanVec {
-    type Output = Span;
-    fn add(self, rhs: &Span) -> Self::Output {
-        self.to_span() + rhs
-    }
-}
-
-impl<'a> Add<Span> for &'a SpanVec {
-    type Output = Span;
-    fn add(self, rhs: Span) -> Self::Output {
-        self + &rhs
-    }
-}
-
-impl<'a> Add<&'a SpanVec> for Span {
-    type Output = Span;
-    fn add(self, rhs: &'a SpanVec) -> Self::Output {
-        rhs + self
-    }
-}
-
-impl<'a> Add<SpanVec> for Span {
-    type Output = Span;
-    fn add(self, rhs: SpanVec) -> Self::Output {
-        &rhs + self
-    }
-}
+overload!((l: ?Option<&Span>) + (r: ?Span) -> Span {
+    r + l
+});

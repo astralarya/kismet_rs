@@ -9,6 +9,7 @@ edition = "2021"
 lalrpop = "0.19.8"
 
 [dependencies]
+overload = "0.1.1"
 lalrpop-util = "0.19.8"
 logos = "0.12.1"
 logos-derive = "0.12.1"
