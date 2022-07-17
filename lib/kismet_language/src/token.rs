@@ -3,7 +3,7 @@ use std::fmt;
 use logos::{Lexer, Logos};
 use syn::{parse_str, LitInt, LitStr};
 
-use super::ast::NodeKind;
+use super::ast::{Atom, Expr};
 use super::types::{Integer, Span};
 
 #[derive(Logos, Clone, Debug, PartialEq)]
@@ -265,11 +265,11 @@ impl<'input> Token<'input> {
         }
     }
 
-    pub fn enclose(&self, kind: &NodeKind<'input>) -> bool {
+    pub fn enclose(&self, kind: &Expr<'input>) -> bool {
         match (self, kind) {
-            (Token::DIE(_), NodeKind::Integer(_))
-            | (Token::DIE(_), NodeKind::Tuple(_))
-            | (Token::DIE(_), NodeKind::Vector(_)) => true,
+            (Token::DIE(_), Expr::Atom(Atom::Integer(_)))
+            | (Token::DIE(_), Expr::Atom(Atom::Tuple(_)))
+            | (Token::DIE(_), Expr::Atom(Atom::Vector(_))) => true,
             _ => false,
         }
     }

@@ -4,147 +4,178 @@ use super::token::Token;
 use super::types::{Integer, Span};
 
 #[derive(Debug, PartialEq)]
-pub struct Node<'input> {
+pub struct Node<Kind> {
     pub span: Span,
-    pub kind: Box<NodeKind<'input>>,
+    pub kind: Box<Kind>,
 }
 
 #[derive(Debug, PartialEq)]
-pub enum NodeKind<'input> {
-    Stmts(Vec<Node<'input>>),
-    Comprehension(Comprehension<'input>),
-    CompFor(Node<'input>, Node<'input>, Option<Node<'input>>),
-    TargetList(Vec<Node<'input>>),
-    Op(Node<'input>, Token<'input>, Node<'input>),
-    Unary(Token<'input>, Node<'input>),
-    Enclosure(Token<'input>, Node<'input>, Token<'input>),
-    Vector(Vec<Node<'input>>),
-    Tuple(Vec<Node<'input>>),
+pub enum Expr<'input> {
+    Stmts(Vec<Node<Expr<'input>>>),
+    Comprehension(Node<Expr<'input>>, Vec<Node<Expr<'input>>>),
+    CompFor(
+        Node<Expr<'input>>,
+        Node<Expr<'input>>,
+        Option<Node<Expr<'input>>>,
+    ),
+    TargetList(Vec<Node<Atom<'input>>>),
+    Op(Node<Expr<'input>>, Token<'input>, Node<Expr<'input>>),
+    Unary(Token<'input>, Node<Expr<'input>>),
+    Atom(Atom<'input>),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Atom<'input> {
+    Enclosure(Token<'input>, Node<Expr<'input>>, Token<'input>),
+    Vector(Vec<Node<Expr<'input>>>),
+    Tuple(Vec<Node<Expr<'input>>>),
     Id(&'input str),
     String(String),
     Integer(Integer),
 }
 
-#[derive(Debug, PartialEq)]
-pub struct Comprehension<'input> {
-    expr: Node<'input>,
-    iter: Vec<Node<'input>>,
-}
-
-impl<'input> Node<'input> {
-    pub fn vec_to_span(v: &'input Vec<Node<'input>>) -> Option<Span> {
-        Span::reduce(&mut v.iter().map(|x| x.span.clone()))
+impl<T: std::fmt::Display> Node<T> {
+    pub fn vec_to_string(nodes: &Vec<Node<T>>, delim: &'static str) -> String {
+        nodes
+            .iter()
+            .map(|node| node.to_string())
+            .collect::<Vec<String>>()
+            .join(delim)
     }
 
-    pub fn stmts((span, v): (Span, Vec<Node<'input>>)) -> Node<'input> {
+    pub fn vec_to_span(v: &Vec<Node<T>>) -> Option<Span> {
+        Span::reduce(&mut v.iter().map(|x| x.span.clone()))
+    }
+}
+
+impl<T: std::fmt::Display> fmt::Display for Node<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.kind)
+    }
+}
+
+impl<'input> Node<Expr<'input>> {
+    pub fn stmts((span, v): (Span, Vec<Node<Expr<'input>>>)) -> Node<Expr<'input>> {
         return Node {
             span,
-            kind: Box::new(NodeKind::Stmts(v)),
+            kind: Box::new(Expr::Stmts(v)),
         };
     }
 
-    pub fn comprehension(expr: Node<'input>, iter: Vec<Node<'input>>) -> Node<'input> {
+    pub fn comprehension(
+        expr: Node<Expr<'input>>,
+        iter: Vec<Node<Expr<'input>>>,
+    ) -> Node<Expr<'input>> {
         return Node {
             span: expr.span.clone() + Node::vec_to_span(&iter),
-            kind: Box::new(NodeKind::Comprehension(Comprehension { expr, iter })),
+            kind: Box::new(Expr::Comprehension(expr, iter)),
         };
     }
 
     pub fn comp_for(
         span: Span,
-        item: Node<'input>,
-        iter: Node<'input>,
-        ifnode: Option<Node<'input>>,
-    ) -> Node<'input> {
+        item: Node<Expr<'input>>,
+        iter: Node<Expr<'input>>,
+        ifnode: Option<Node<Expr<'input>>>,
+    ) -> Node<Expr<'input>> {
         return Node {
             span,
-            kind: Box::new(NodeKind::CompFor(item, iter, ifnode)),
+            kind: Box::new(Expr::CompFor(item, iter, ifnode)),
         };
     }
 
-    pub fn target_list((span, vector): (Span, Vec<Node<'input>>)) -> Node<'input> {
+    pub fn target_list((span, vector): (Span, Vec<Node<Atom<'input>>>)) -> Node<Expr<'input>> {
         return Node {
             span,
-            kind: Box::new(NodeKind::TargetList(vector)),
+            kind: Box::new(Expr::TargetList(vector)),
         };
     }
 
-    pub fn op(l: Node<'input>, o: Token<'input>, r: Node<'input>) -> Node<'input> {
+    pub fn op(
+        l: Node<Expr<'input>>,
+        o: Token<'input>,
+        r: Node<Expr<'input>>,
+    ) -> Node<Expr<'input>> {
         return Node {
             span: l.span.clone() + r.span.clone(),
-            kind: Box::new(NodeKind::Op(l, o, r)),
+            kind: Box::new(Expr::Op(l, o, r)),
         };
     }
 
-    pub fn unary(o: Token<'input>, r: Node<'input>) -> Node<'input> {
+    pub fn unary(o: Token<'input>, r: Node<Expr<'input>>) -> Node<Expr<'input>> {
         return Node {
             span: o.span().clone() + r.span.clone(),
-            kind: Box::new(NodeKind::Unary(o, r)),
+            kind: Box::new(Expr::Unary(o, r)),
         };
     }
 
-    pub fn enclosure(l: Token<'input>, n: Node<'input>, r: Token<'input>) -> Node<'input> {
+    pub fn atom(a: Node<Atom<'input>>) -> Node<Expr<'input>> {
         return Node {
-            span: l.span().clone() + r.span().clone(),
-            kind: Box::new(NodeKind::Enclosure(l, n, r)),
-        };
-    }
-
-    pub fn vector((span, v): (Span, Vec<Node<'input>>)) -> Node<'input> {
-        return Node {
-            span,
-            kind: Box::new(NodeKind::Vector(v)),
-        };
-    }
-
-    pub fn tuple((span, v): (Span, Vec<Node<'input>>)) -> Node<'input> {
-        return Node {
-            span,
-            kind: Box::new(NodeKind::Tuple(v)),
-        };
-    }
-
-    pub fn id((span, string): (Span, &'input str)) -> Node<'input> {
-        return Node {
-            span,
-            kind: Box::new(NodeKind::Id(string)),
-        };
-    }
-
-    pub fn string((span, string): (Span, String)) -> Node<'input> {
-        return Node {
-            span,
-            kind: Box::new(NodeKind::String(string)),
-        };
-    }
-
-    pub fn integer((span, value): (Span, Integer)) -> Node<'input> {
-        return Node {
-            span,
-            kind: Box::new(NodeKind::Integer(value)),
+            span: a.span,
+            kind: Box::new(Expr::Atom(*a.kind)),
         };
     }
 }
 
-impl fmt::Display for Node<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn join(nodes: &Vec<Node>, delim: &'static str) -> String {
-            nodes
-                .iter()
-                .map(|node| node.to_string())
-                .collect::<Vec<String>>()
-                .join(delim)
-        }
+impl<'input> Node<Atom<'input>> {
+    pub fn enclosure(
+        l: Token<'input>,
+        n: Node<Expr<'input>>,
+        r: Token<'input>,
+    ) -> Node<Atom<'input>> {
+        return Node {
+            span: l.span().clone() + r.span().clone(),
+            kind: Box::new(Atom::Enclosure(l, n, r)),
+        };
+    }
 
-        match &*self.kind {
-            NodeKind::Stmts(nodes) => write!(f, "{}", join(&nodes, "\n")),
-            NodeKind::Comprehension(c) => write!(f, "{} {}", c.expr, join(&c.iter, " ")),
-            NodeKind::CompFor(item, iter, expr) => match expr {
+    pub fn vector((span, v): (Span, Vec<Node<Expr<'input>>>)) -> Node<Atom<'input>> {
+        return Node {
+            span,
+            kind: Box::new(Atom::Vector(v)),
+        };
+    }
+
+    pub fn tuple((span, v): (Span, Vec<Node<Expr<'input>>>)) -> Node<Atom<'input>> {
+        return Node {
+            span,
+            kind: Box::new(Atom::Tuple(v)),
+        };
+    }
+
+    pub fn id((span, string): (Span, &'input str)) -> Node<Atom<'input>> {
+        return Node {
+            span,
+            kind: Box::new(Atom::Id(string)),
+        };
+    }
+
+    pub fn string((span, string): (Span, String)) -> Node<Atom<'input>> {
+        return Node {
+            span,
+            kind: Box::new(Atom::String(string)),
+        };
+    }
+
+    pub fn integer((span, value): (Span, Integer)) -> Node<Atom<'input>> {
+        return Node {
+            span,
+            kind: Box::new(Atom::Integer(value)),
+        };
+    }
+}
+
+impl fmt::Display for Expr<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Expr::Stmts(nodes) => write!(f, "{}", Node::vec_to_string(&nodes, "\n")),
+            Expr::Comprehension(e, i) => write!(f, "{} {}", e, Node::vec_to_string(&i, " ")),
+            Expr::CompFor(item, iter, expr) => match expr {
                 Some(node) => write!(f, "FOR {} IN {} IF {}", item, iter, node),
                 None => write!(f, "FOR {} IN {}", item, iter),
             },
-            NodeKind::TargetList(v) => write!(f, "{}", join(&v, ", ")),
-            NodeKind::Op(left, op, right) => {
+            Expr::TargetList(v) => write!(f, "{}", Node::vec_to_string(&v, ", ")),
+            Expr::Op(left, op, right) => {
                 match (op.enclose(&*left.kind), op.enclose(&*right.kind)) {
                     (true, true) => {
                         write!(f, "({}){}{}{}({})", left, op.space(), op, op.space(), right)
@@ -160,11 +191,19 @@ impl fmt::Display for Node<'_> {
                     }
                 }
             }
-            NodeKind::Unary(op, right) => match op.enclose(&*right.kind) {
+            Expr::Unary(op, right) => match op.enclose(&*right.kind) {
                 true => write!(f, "{}{}({})", op, op.space(), right),
                 false => write!(f, "{}{}{}", op, op.space(), right),
             },
-            NodeKind::Enclosure(left, op, right) => {
+            Expr::Atom(a) => write!(f, "{}", a),
+        }
+    }
+}
+
+impl fmt::Display for Atom<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &*self {
+            Atom::Enclosure(left, op, right) => {
                 write!(
                     f,
                     "{}{}{}{}{}",
@@ -175,14 +214,14 @@ impl fmt::Display for Node<'_> {
                     right
                 )
             }
-            NodeKind::Vector(nodes) => write!(f, "[{}]", join(&nodes, ", ")),
-            NodeKind::Tuple(nodes) => match nodes.len() {
+            Atom::Vector(nodes) => write!(f, "[{}]", Node::vec_to_string(&nodes, ", ")),
+            Atom::Tuple(nodes) => match nodes.len() {
                 1 => write!(f, "({},)", nodes[0]),
-                _ => write!(f, "({})", join(&nodes, ", ")),
+                _ => write!(f, "({})", Node::vec_to_string(&nodes, ", ")),
             },
-            NodeKind::String(s) => write!(f, r#""{}""#, s),
-            NodeKind::Integer(n) => write!(f, "{}", n),
-            NodeKind::Id(s) => write!(f, "{}", s),
+            Atom::String(s) => write!(f, r#""{}""#, s),
+            Atom::Integer(n) => write!(f, "{}", n),
+            Atom::Id(s) => write!(f, "{}", s),
         }
     }
 }

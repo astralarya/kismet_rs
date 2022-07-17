@@ -1,33 +1,33 @@
-use crate::ast::Node;
+use crate::ast::{Atom, Expr, Node};
 use crate::lexer::LexerError;
 use crate::token::Token;
 use crate::types::{Integer, Span};
 
 grammar<'input>;
 
-pub Kismet: Node<'input> = {
+pub Kismet: Node<Expr<'input>> = {
   stmts,
   => Node::stmts((Span(0..0), vec![]))
 }
 
-stmts: Node<'input> = {
+stmts: Node<Expr<'input>> = {
   JoinFilter<DELIM, stmt> => Node::stmts(<>),
 }
 
-stmt: Node<'input> = {
+stmt: Node<Expr<'input>> = {
   expr,
 }
 
-exprs: (Span, Vec<Node<'input>>) = <JoinPlus<COMMA, expr>>;
+exprs: (Span, Vec<Node<Expr<'input>>>) = <JoinPlus<COMMA, expr>>;
 
-expr: Node<'input> = {
+expr: Node<Expr<'input>> = {
   or_test,
 }
 
 or_test = Infix<OR, and_test>;
 and_test = Infix<AND, not_test>;
 
-not_test: Node<'input> = {
+not_test: Node<Expr<'input>> = {
   NOT not_test => Node::unary(<>),
   c_expr,
 }
@@ -36,69 +36,70 @@ c_expr = Infix<EQS, a_expr>;
 a_expr = Infix<ADDS, m_expr>;
 m_expr = Infix<MULS, u_expr>;
 
-u_expr: Node<'input> = {
+u_expr: Node<Expr<'input>> = {
   ADDS primary => Node::unary(<>),
   power,
 }
 
-power: Node<'input> = {
-  primary POW u_expr => Node::op(<>),
+power = Infix<POW, die>;
+
+die: Node<Expr<'input>> = {
+  primary DIE primary => Node::op(<>),
+  DIE primary => Node::unary(<>),
   primary,
 }
 
-primary: Node<'input> = {
-  primary DIE atom => Node::op(<>),
-  DIE atom => Node::unary(<>),
+primary: Node<Expr<'input>> = {
   atom,
 }
 
-atom: Node<'input> = {
-  enclosure,
-  identifier,
-  literal,
+atom: Node<Expr<'input>> = {
+  enclosure => Node::atom(<>),
+  identifier => Node::atom(<>),
+  literal => Node::atom(<>),
 }
 
-enclosure: Node<'input> = {
+enclosure: Node<Atom<'input>> = {
   parenth_form,
   list_display,
   <l:LBRACE> <v:stmts> <r:RBRACE> => Node::enclosure(<>),
 }
 
-parenth_form: Node<'input> = {
+parenth_form: Node<Atom<'input>> = {
   <l:LPAREN> <e:exprs> <r:RPAREN> => Node::tuple((l.span() + r.span(), e.1)),
   <l:LPAREN> <e:expr> <r:RPAREN> => Node::enclosure(<>),
   <l:LPAREN> <r:RPAREN> => Node::tuple((l.span() + r.span(),vec![])),
 }
 
-list_display: Node<'input> = {
+list_display: Node<Atom<'input>> = {
   LBRACKET <exprs> RBRACKET => Node::vector(<>),
   LBRACKET comprehension RBRACKET => Node::enclosure(<>),
 }
 
-comprehension: Node<'input> = {
+comprehension: Node<Expr<'input>> = {
   expr comp_for+ => Node::comprehension(<>)
 }
 
-comp_for: Node<'input> = {
+comp_for: Node<Expr<'input>> = {
   <l:FOR> <t:target_list> IN <n:or_test> <o:(IF <or_test>)?> =>
     Node::comp_for(l.span() + n.span.clone() + o.as_ref().map_or(None, |x| Some(x.span.clone())), t, n, o)
 }
 
-target: Node<'input> = {
+target: Node<Atom<'input>> = {
   identifier,
   LPAREN target_list RPAREN => Node::enclosure(<>),
   LBRACKET target_list RBRACKET => Node::enclosure(<>),
 }
 
-target_list: Node<'input> = {
+target_list: Node<Expr<'input>> = {
   Join<COMMA, target> => Node::target_list(<>),
 }
 
-identifier: Node<'input> = {
+identifier: Node<Atom<'input>> = {
   ID => Node::id(<>),
 }
 
-literal: Node<'input> = {
+literal: Node<Atom<'input>> = {
   STRING => Node::string(<>),
   INT => Node::integer(<>),
 }
@@ -165,12 +166,12 @@ extern {
 
 // Macros
 
-Infix<Op, Next>: Node<'input> = {
+Infix<Op, Next>: Node<Expr<'input>> = {
   <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::op(<>),
   Next
 }
 
-Join<Delim, Child>: (Span, Vec<Node<'input>>) = {
+Join<Delim, Child>: (Span, Vec<Child>) = {
   <v:JoinInner<Delim, Child>> <d:Delim?> => match d {
     None => v,
     Some(d) => {
@@ -179,14 +180,14 @@ Join<Delim, Child>: (Span, Vec<Node<'input>>) = {
   },
 }
 
-JoinInner<Delim, Child>: (Span, Vec<Node<'input>>) = {
+JoinInner<Delim, Child>: (Span, Vec<Child>) = {
   <mut v:JoinInner<Delim, Child>> Delim <c:Child> => {
     (v.0 + c.span.clone(), {v.1.push(c); v.1})
   },
   Child => (<>.span.clone(), vec![<>])
 }
 
-JoinPlus<Delim, Child>: (Span, Vec<Node<'input>>) = {
+JoinPlus<Delim, Child>: (Span, Vec<Child>) = {
   <mut v:JoinPlusInner<Delim, Child>> <e:Child?> => match e {
     None => v,
     Some(e) => {
@@ -195,14 +196,14 @@ JoinPlus<Delim, Child>: (Span, Vec<Node<'input>>) = {
   },
 }
 
-JoinPlusInner<Delim, Child>: (Span, Vec<Node<'input>>) = {
+JoinPlusInner<Delim, Child>: (Span, Vec<Child>) = {
   <mut v:JoinPlusInner<Delim, Child>> <c:Child> <d:Delim> => {
     (v.0 + d.span(), {v.1.push(c); v.1})
   },
   <c:Child> <d:Delim>=> (c.span.clone() + d.span(), vec![c])
 }
 
-JoinFilter<Delim, Child>: (Span, Vec<Node<'input>>) = {
+JoinFilter<Delim, Child>: (Span, Vec<Child>) = {
   <l:Delim*> <v:JoinFilterInner<Delim, Child>> <r:Delim*> =>
     (
       v.0 + Span::add_option(
@@ -213,7 +214,7 @@ JoinFilter<Delim, Child>: (Span, Vec<Node<'input>>) = {
     )
 }
 
-JoinFilterInner<Delim, Child>: (Span, Vec<Node<'input>>) = {
+JoinFilterInner<Delim, Child>: (Span, Vec<Child>) = {
   <mut v:JoinFilterInner<Delim, Child>> Delim+ <c:Child> => {
     (v.0 + c.span.clone(), {v.1.push(c); v.1})
   },
