@@ -1,6 +1,6 @@
 use crate::ast::{Atom, Expr, Node};
 use crate::lexer::LexerError;
-use crate::token::Token;
+use crate::token::{Token, TokenKind};
 use crate::types::{Integer, Span};
 
 grammar<'input>;
@@ -66,9 +66,9 @@ enclosure: Node<Atom<'input>> = {
 }
 
 parenth_form: Node<Atom<'input>> = {
-  <l:LPAREN> <e:exprs> <r:RPAREN> => Node::tuple((l.span() + r.span(), e.1)),
+  <l:LPAREN> <e:exprs> <r:RPAREN> => Node::tuple((l.span + r.span, e.1)),
   <l:LPAREN> <e:expr> <r:RPAREN> => Node::enclosure(<>),
-  <l:LPAREN> <r:RPAREN> => Node::tuple((l.span() + r.span(),vec![])),
+  <l:LPAREN> <r:RPAREN> => Node::tuple((l.span + r.span,vec![])),
 }
 
 list_display: Node<Atom<'input>> = {
@@ -82,7 +82,7 @@ comprehension: Node<Expr<'input>> = {
 
 comp_for: Node<Expr<'input>> = {
   <l:FOR> <t:target_list> IN <n:or_test> <o:(IF <or_test>)?> =>
-    Node::comp_for(l.span() + n.span.clone() + o.as_ref().map_or(None, |x| Some(x.span.clone())), t, n, o)
+    Node::comp_for(l.span + n.span.clone() + o.as_ref().map_or(None, |x| Some(x.span.clone())), t, n, o)
 }
 
 target: Node<Atom<'input>> = {
@@ -131,36 +131,36 @@ extern {
   type Error = LexerError;
 
   enum Token<'input> {
-    DELIM => Token::DELIM(_),
-    COMMA => Token::COMMA(_),
-    FOR => Token::FOR(_),
-    IN => Token::IN(_),
-    IF => Token::IF(_),
-    OR => Token::OR(_),
-    AND => Token::AND(_),
-    NOT => Token::NOT(_),
-    EQ => Token::EQ(_),
-    NE => Token::NE(_),
-    LT => Token::LT(_),
-    LE => Token::LE(_),
-    GT => Token::GT(_),
-    GE => Token::GE(_),
-    ADD => Token::ADD(_),
-    SUB => Token::SUB(_),
-    MOD => Token::MOD(_),
-    MUL => Token::MUL(_),
-    DIV => Token::DIV(_),
-    POW => Token::POW(_),
-    DIE => Token::DIE(_),
-    LPAREN => Token::LPAREN(_),
-    RPAREN => Token::RPAREN(_),
-    LBRACKET => Token::LBRACKET(_),
-    RBRACKET => Token::RBRACKET(_),
-    LBRACE => Token::LBRACE(_),
-    RBRACE => Token::RBRACE(_),
-    STRING => Token::String(<(Span, String)>),
-    INT => Token::Integer(<(Span, Integer)>),
-    ID => Token::Id(<(Span, &'input str)>),
+    DELIM => Token { kind: TokenKind::DELIM, .. },
+    COMMA => Token { kind: TokenKind::COMMA, .. },
+    FOR => Token { kind: TokenKind::FOR, .. },
+    IN => Token { kind: TokenKind::IN, .. },
+    IF => Token { kind: TokenKind::IF, .. },
+    OR => Token { kind: TokenKind::OR, .. },
+    AND => Token { kind: TokenKind::AND, .. },
+    NOT => Token { kind: TokenKind::NOT, .. },
+    EQ => Token { kind: TokenKind::EQ, .. },
+    NE => Token { kind: TokenKind::NE, .. },
+    LT => Token { kind: TokenKind::LT, .. },
+    LE => Token { kind: TokenKind::LE, .. },
+    GT => Token { kind: TokenKind::GT, .. },
+    GE => Token { kind: TokenKind::GE, .. },
+    ADD => Token { kind: TokenKind::ADD, .. },
+    SUB => Token { kind: TokenKind::SUB, .. },
+    MOD => Token { kind: TokenKind::MOD, .. },
+    MUL => Token { kind: TokenKind::MUL, .. },
+    DIV => Token { kind: TokenKind::DIV, .. },
+    POW => Token { kind: TokenKind::POW, .. },
+    DIE => Token { kind: TokenKind::DIE, .. },
+    LPAREN => Token { kind: TokenKind::LPAREN, .. },
+    RPAREN => Token { kind: TokenKind::RPAREN, .. },
+    LBRACKET => Token { kind: TokenKind::LBRACKET, .. },
+    RBRACKET => Token { kind: TokenKind::RBRACKET, .. },
+    LBRACE => Token { kind: TokenKind::LBRACE, .. },
+    RBRACE => Token { kind: TokenKind::RBRACE, .. },
+    STRING => Token {span: <Span>, kind: TokenKind::String(<String>) },
+    INT => Token {span: <Span>, kind: TokenKind::Integer(<Integer>) },
+    ID => Token {span: <Span>, kind: TokenKind::Id(<&'input str>) },
   }
 }
 
@@ -175,7 +175,7 @@ Join<Delim, Child>: (Span, Vec<Child>) = {
   <v:JoinInner<Delim, Child>> <d:Delim?> => match d {
     None => v,
     Some(d) => {
-      (v.0 + d.span(), v.1)
+      (v.0 + d.span, v.1)
     }
   },
 }
@@ -198,9 +198,9 @@ JoinPlus<Delim, Child>: (Span, Vec<Child>) = {
 
 JoinPlusInner<Delim, Child>: (Span, Vec<Child>) = {
   <mut v:JoinPlusInner<Delim, Child>> <c:Child> <d:Delim> => {
-    (v.0 + d.span(), {v.1.push(c); v.1})
+    (v.0 + d.span, {v.1.push(c); v.1})
   },
-  <c:Child> <d:Delim>=> (c.span.clone() + d.span(), vec![c])
+  <c:Child> <d:Delim>=> (c.span.clone() + d.span, vec![c])
 }
 
 JoinFilter<Delim, Child>: (Span, Vec<Child>) = {

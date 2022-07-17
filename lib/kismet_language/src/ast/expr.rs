@@ -71,7 +71,7 @@ impl<'input> Node<Expr<'input>> {
 
     pub fn unary(o: Token<'input>, r: Node<Expr<'input>>) -> Node<Expr<'input>> {
         return Node {
-            span: o.span().clone() + r.span.clone(),
+            span: o.span.clone() + r.span.clone(),
             kind: Box::new(Expr::Unary(o, r)),
         };
     }

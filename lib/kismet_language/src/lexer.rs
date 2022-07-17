@@ -2,13 +2,13 @@ use std::fmt;
 
 use logos::{Lexer as LogosLexer, Logos, SpannedIter};
 
-use crate::token::Token;
+use crate::token::{Token, TokenKind};
 use crate::types::Span;
 
 type ParserStream<'input> = Result<(usize, Token<'input>, usize), LexerError>;
 
 pub struct Lexer<'input> {
-    lexer: LogosLexer<'input, Token<'input>>,
+    lexer: LogosLexer<'input, TokenKind<'input>>,
 }
 
 impl<'input> IntoIterator for Lexer<'input> {
@@ -24,7 +24,7 @@ impl<'input> IntoIterator for Lexer<'input> {
 }
 
 pub struct LexerIterator<'input> {
-    iter: SpannedIter<'input, Token<'input>>,
+    iter: SpannedIter<'input, TokenKind<'input>>,
 }
 
 impl<'input> Iterator for LexerIterator<'input> {
@@ -32,8 +32,15 @@ impl<'input> Iterator for LexerIterator<'input> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
-            Some((Token::ERROR, span)) => Some(Err(LexerError { loc: Span(span) })),
-            Some((token, span)) => Some(Ok((span.start, token, span.end))),
+            Some((TokenKind::ERROR, range)) => Some(Err(LexerError { loc: Span(range) })),
+            Some((kind, range)) => Some(Ok((
+                range.start,
+                Token {
+                    span: Span(range.clone()),
+                    kind,
+                },
+                range.end,
+            ))),
             None => None,
         }
     }
@@ -52,6 +59,6 @@ impl fmt::Display for LexerError {
 
 pub fn lex<'input>(input: &'input str) -> Lexer<'input> {
     Lexer {
-        lexer: Token::lexer(input),
+        lexer: TokenKind::lexer(input),
     }
 }

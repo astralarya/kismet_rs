@@ -1,4 +1,5 @@
 use std::fmt;
+use std::ops::Deref;
 
 use logos::{Lexer, Logos};
 use syn::{parse_str, LitInt, LitStr};
@@ -6,101 +7,130 @@ use syn::{parse_str, LitInt, LitStr};
 use crate::ast::{Atom, Expr};
 use crate::types::{Integer, Span};
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct Token<'input> {
+    pub span: Span,
+    pub kind: TokenKind<'input>,
+}
+
+impl<'input> Token<'input> {
+    pub fn vec_to_span(v: &'input Vec<Token<'input>>) -> Option<Span> {
+        Span::reduce(&mut v.iter().map(|x| x.span.clone()))
+    }
+}
+
+impl<'input> Deref for Token<'input> {
+    type Target = TokenKind<'input>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.kind
+    }
+}
+
+impl fmt::Display for Token<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.kind)
+    }
+}
+
 #[derive(Logos, Clone, Debug, PartialEq)]
-pub enum Token<'input> {
-    #[regex(r"[;\n]", Token::parse_span)]
-    DELIM(Span),
+pub enum TokenKind<'input> {
+    #[regex(r"[;\n]")]
+    DELIM,
 
-    #[regex(",", Token::parse_span)]
-    COMMA(Span),
+    #[regex(",")]
+    COMMA,
 
-    #[regex(r"(?i)for", Token::parse_span)]
-    FOR(Span),
+    #[regex(r"(?i)for")]
+    FOR,
 
-    #[regex(r"(?i)in", Token::parse_span)]
-    IN(Span),
+    #[regex(r"(?i)in")]
+    IN,
 
-    #[regex(r"(?i)if", Token::parse_span)]
-    IF(Span),
+    #[regex(r"(?i)if")]
+    IF,
 
-    #[regex(r"(?i)or", Token::parse_span)]
-    OR(Span),
+    #[regex(r"(?i)or")]
+    OR,
 
-    #[regex(r"(?i)and", Token::parse_span)]
-    AND(Span),
+    #[regex(r"(?i)and")]
+    AND,
 
-    #[regex(r"(?i)not", Token::parse_span)]
-    NOT(Span),
+    #[regex(r"(?i)not")]
+    NOT,
 
-    #[token("==", Token::parse_span)]
-    EQ(Span),
+    #[token("==")]
+    EQ,
 
-    #[token("!=", Token::parse_span)]
-    NE(Span),
+    #[token("!=")]
+    NE,
 
-    #[token("<", Token::parse_span)]
-    LT(Span),
+    #[token("<")]
+    LT,
 
-    #[token("<=", Token::parse_span)]
-    LE(Span),
+    #[token("<=")]
+    LE,
 
-    #[token(">", Token::parse_span)]
-    GT(Span),
+    #[token(">")]
+    GT,
 
-    #[token(">=", Token::parse_span)]
-    GE(Span),
+    #[token(">=")]
+    GE,
 
-    #[token("+", Token::parse_span)]
-    ADD(Span),
+    #[token("+")]
+    ADD,
 
-    #[token("-", Token::parse_span)]
-    SUB(Span),
+    #[token("-")]
+    SUB,
 
-    #[token("%", Token::parse_span)]
-    MOD(Span),
+    #[token("%")]
+    MOD,
 
-    #[token("*", Token::parse_span)]
-    MUL(Span),
+    #[token("*")]
+    MUL,
 
-    #[token("/", Token::parse_span)]
-    DIV(Span),
+    #[token("/")]
+    DIV,
 
-    #[token("^", Token::parse_span)]
-    POW(Span),
+    #[token("^")]
+    POW,
 
-    #[regex(r"(?i)d", Token::parse_span)]
-    DIE(Span),
+    #[regex(r"(?i)d")]
+    DIE,
 
-    #[token("(", Token::parse_span)]
-    LPAREN(Span),
+    #[token("(")]
+    LPAREN,
 
-    #[token(")", Token::parse_span)]
-    RPAREN(Span),
+    #[token(")")]
+    RPAREN,
 
-    #[token("[", Token::parse_span)]
-    LBRACKET(Span),
+    #[token("[")]
+    LBRACKET,
 
-    #[token("]", Token::parse_span)]
-    RBRACKET(Span),
+    #[token("]")]
+    RBRACKET,
 
-    #[token("{", Token::parse_span)]
-    LBRACE(Span),
+    #[token("{")]
+    LBRACE,
 
-    #[token("}", Token::parse_span)]
-    RBRACE(Span),
+    #[token("}")]
+    RBRACE,
 
-    #[regex("\"", Token::parse_string)]
-    #[regex("r#*\"", Token::parse_rawstring)]
-    String((Span, String)),
+    #[regex("\"", TokenKind::parse_string)]
+    #[regex("r#*\"", TokenKind::parse_rawstring)]
+    String(String),
 
-    #[regex(r"[[:digit:]][[:digit:]_]*", Token::parse_int)]
-    #[regex(r"0b[0-1_]*", Token::parse_int)]
-    #[regex(r"0o[0-7_]*", Token::parse_int)]
-    #[regex(r"0x[[:xdigit:]_]*", Token::parse_int)]
-    Integer((Span, Integer)),
+    #[regex(r"[[:digit:]][[:digit:]_]*", TokenKind::parse_int)]
+    #[regex(r"0b[0-1_]*", TokenKind::parse_int)]
+    #[regex(r"0o[0-7_]*", TokenKind::parse_int)]
+    #[regex(r"0x[[:xdigit:]_]*", TokenKind::parse_int)]
+    Integer(Integer),
 
-    #[regex(r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*", Token::parse_id)]
-    Id((Span, &'input str)),
+    #[regex(
+        r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*",
+        TokenKind::parse_id
+    )]
+    Id(&'input str),
 
     #[regex(r"[ \t\f]+", logos::skip)]
     SKIP,
@@ -109,30 +139,22 @@ pub enum Token<'input> {
     ERROR,
 }
 
-impl<'input> Token<'input> {
-    pub fn vec_to_span(v: &'input Vec<Token<'input>>) -> Option<Span> {
-        Span::reduce(&mut v.iter().map(|x| x.span().clone()))
+impl<'input> TokenKind<'input> {
+    fn parse_id(t: &mut Lexer<'input, TokenKind<'input>>) -> &'input str {
+        t.slice()
     }
 
-    fn parse_span(t: &mut Lexer<'input, Token<'input>>) -> Span {
-        Span(t.span())
-    }
-
-    fn parse_id(t: &mut Lexer<'input, Token<'input>>) -> (Span, &'input str) {
-        (Span(t.span()), t.slice())
-    }
-
-    fn parse_int(t: &mut Lexer<'input, Token<'input>>) -> Result<(Span, Integer), ()> {
+    fn parse_int(t: &mut Lexer<'input, TokenKind<'input>>) -> Result<Integer, ()> {
         match parse_str::<LitInt>(t.slice()) {
             Ok(n) => match n.base10_parse::<Integer>() {
-                Ok(i) => Ok((Span(t.span()), i)),
+                Ok(i) => Ok(i),
                 Err(_) => Err(()),
             },
             Err(_) => Err(()),
         }
     }
 
-    fn parse_string(t: &mut Lexer<'input, Token<'input>>) -> Result<(Span, String), ()> {
+    fn parse_string(t: &mut Lexer<'input, TokenKind<'input>>) -> Result<String, ()> {
         #[derive(Logos, Debug, PartialEq)]
         enum Part<'input> {
             #[token("\"")]
@@ -154,7 +176,7 @@ impl<'input> Token<'input> {
                 Part::Quote => {
                     t.bump(1);
                     return match parse_str::<LitStr>(t.slice()) {
-                        Ok(n) => Ok((Span(t.span()), n.value())),
+                        Ok(n) => Ok(n.value()),
                         Err(_) => Err(()),
                     };
                 }
@@ -166,7 +188,7 @@ impl<'input> Token<'input> {
         Err(())
     }
 
-    fn parse_rawstring(t: &mut Lexer<'input, Token<'input>>) -> Result<(Span, String), ()> {
+    fn parse_rawstring(t: &mut Lexer<'input, TokenKind<'input>>) -> Result<String, ()> {
         #[derive(Logos, Debug, PartialEq)]
         enum Part<'input> {
             #[token("\"")]
@@ -208,7 +230,7 @@ impl<'input> Token<'input> {
                 Some(signal_val) => match (signal_val == guard, token) {
                     (true, Part::Quote) | (true, Part::Hash) => {
                         return match parse_str::<LitStr>(t.slice()) {
-                            Ok(n) => Ok((Span(t.span()), n.value())),
+                            Ok(n) => Ok(n.value()),
                             Err(_) => Err(()),
                         };
                     }
@@ -220,95 +242,61 @@ impl<'input> Token<'input> {
         Err(())
     }
 
-    pub fn span(&self) -> &Span {
-        match self {
-            Token::DELIM(span)
-            | Token::COMMA(span)
-            | Token::FOR(span)
-            | Token::IN(span)
-            | Token::IF(span)
-            | Token::OR(span)
-            | Token::NOT(span)
-            | Token::AND(span)
-            | Token::EQ(span)
-            | Token::NE(span)
-            | Token::LT(span)
-            | Token::LE(span)
-            | Token::GT(span)
-            | Token::GE(span)
-            | Token::ADD(span)
-            | Token::SUB(span)
-            | Token::MOD(span)
-            | Token::MUL(span)
-            | Token::DIV(span)
-            | Token::POW(span)
-            | Token::DIE(span)
-            | Token::LPAREN(span)
-            | Token::RPAREN(span)
-            | Token::LBRACKET(span)
-            | Token::RBRACKET(span)
-            | Token::LBRACE(span)
-            | Token::RBRACE(span)
-            | Token::String((span, _))
-            | Token::Integer((span, _))
-            | Token::Id((span, _)) => span,
-            Token::SKIP | Token::ERROR => &Span(0..0),
-        }
-    }
-
     pub fn space(&self) -> &'static str {
         match self {
-            Token::DIE(_) | Token::POW(_) | Token::MUL(_) | Token::LPAREN(_) | Token::RPAREN(_) => {
-                ""
-            }
+            TokenKind::DIE
+            | TokenKind::POW
+            | TokenKind::MUL
+            | TokenKind::LPAREN
+            | TokenKind::RPAREN => "",
             _ => " ",
         }
     }
 
     pub fn enclose(&self, kind: &Expr<'input>) -> bool {
         match (self, kind) {
-            (Token::DIE(_), Expr::Atom(Atom::Integer(_)))
-            | (Token::DIE(_), Expr::Atom(Atom::Tuple(_)))
-            | (Token::DIE(_), Expr::Atom(Atom::Vector(_))) => true,
+            (TokenKind::DIE, Expr::Atom(Atom::Integer(_)))
+            | (TokenKind::DIE, Expr::Atom(Atom::Tuple(_)))
+            | (TokenKind::DIE, Expr::Atom(Atom::Vector(_))) => true,
             _ => false,
         }
     }
 }
 
-impl fmt::Display for Token<'_> {
+impl fmt::Display for TokenKind<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Token::DELIM(_) => write!(f, "\n"),
-            Token::COMMA(_) => write!(f, ","),
-            Token::FOR(_) => write!(f, "FOR"),
-            Token::IN(_) => write!(f, "IN"),
-            Token::IF(_) => write!(f, "IF"),
-            Token::AND(_) => write!(f, "AND"),
-            Token::OR(_) => write!(f, "OR"),
-            Token::NOT(_) => write!(f, "NOT"),
-            Token::EQ(_) => write!(f, "=="),
-            Token::NE(_) => write!(f, "!="),
-            Token::LT(_) => write!(f, "<"),
-            Token::LE(_) => write!(f, "<="),
-            Token::GT(_) => write!(f, ">"),
-            Token::GE(_) => write!(f, ">="),
-            Token::ADD(_) => write!(f, "+"),
-            Token::SUB(_) => write!(f, "-"),
-            Token::MOD(_) => write!(f, "%"),
-            Token::MUL(_) => write!(f, "*"),
-            Token::DIV(_) => write!(f, "/"),
-            Token::POW(_) => write!(f, "^"),
-            Token::DIE(_) => write!(f, "d"),
-            Token::LPAREN(_) => write!(f, "("),
-            Token::RPAREN(_) => write!(f, ")"),
-            Token::LBRACKET(_) => write!(f, "["),
-            Token::RBRACKET(_) => write!(f, "]"),
-            Token::LBRACE(_) => write!(f, "{{"),
-            Token::RBRACE(_) => write!(f, "}}"),
-            Token::String((_, value)) => write!(f, r#""{}""#, value),
-            Token::Integer((_, value)) => write!(f, "{}", value),
-            Token::Id((_, value)) => write!(f, "{}", value),
-            Token::SKIP | Token::ERROR => write!(f, "{:?}", self),
+            TokenKind::DELIM => write!(f, "\n"),
+            TokenKind::COMMA => write!(f, ","),
+            TokenKind::FOR => write!(f, "FOR"),
+            TokenKind::IN => write!(f, "IN"),
+            TokenKind::IF => write!(f, "IF"),
+            TokenKind::AND => write!(f, "AND"),
+            TokenKind::OR => write!(f, "OR"),
+            TokenKind::NOT => write!(f, "NOT"),
+            TokenKind::EQ => write!(f, "=="),
+            TokenKind::NE => write!(f, "!="),
+            TokenKind::LT => write!(f, "<"),
+            TokenKind::LE => write!(f, "<="),
+            TokenKind::GT => write!(f, ">"),
+            TokenKind::GE => write!(f, ">="),
+            TokenKind::ADD => write!(f, "+"),
+            TokenKind::SUB => write!(f, "-"),
+            TokenKind::MOD => write!(f, "%"),
+            TokenKind::MUL => write!(f, "*"),
+            TokenKind::DIV => write!(f, "/"),
+            TokenKind::POW => write!(f, "^"),
+            TokenKind::DIE => write!(f, "d"),
+            TokenKind::LPAREN => write!(f, "("),
+            TokenKind::RPAREN => write!(f, ")"),
+            TokenKind::LBRACKET => write!(f, "["),
+            TokenKind::RBRACKET => write!(f, "]"),
+            TokenKind::LBRACE => write!(f, "{{"),
+            TokenKind::RBRACE => write!(f, "}}"),
+            TokenKind::String(value) => write!(f, r#""{}""#, value),
+            TokenKind::Integer(value) => write!(f, "{}", value),
+            TokenKind::Id(value) => write!(f, "{}", value),
+            TokenKind::SKIP | TokenKind::ERROR => write!(f, "{:?}", self),
         }
     }
 }

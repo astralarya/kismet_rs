@@ -21,7 +21,7 @@ impl<'input> Node<Atom<'input>> {
         r: Token<'input>,
     ) -> Node<Atom<'input>> {
         return Node {
-            span: l.span().clone() + r.span().clone(),
+            span: l.span.clone() + r.span.clone(),
             kind: Box::new(Atom::Enclosure(l, n, r)),
         };
     }

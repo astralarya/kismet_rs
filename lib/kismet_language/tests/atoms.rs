@@ -1,26 +1,8 @@
-use std::ops::Range;
-
-use kismet_language::{
-    ast::{Expr, Node},
-    parse,
-    types::{Integer, Span},
-};
+use kismet_language::parse;
 
 #[path = "./tests.rs"]
 mod tests;
-use tests::assert_stmt;
-
-pub fn make_integer<'input>(range: Range<usize>, integer: Integer) -> Node<Expr<'input>> {
-    Node::atom(Node::integer((Span(range), integer)))
-}
-
-pub fn make_string<'input>(range: Range<usize>, string: &'input str) -> Node<Expr<'input>> {
-    Node::atom(Node::string((Span(range), String::from(string))))
-}
-
-pub fn make_id<'input>(range: Range<usize>, id: &'input str) -> Node<Expr<'input>> {
-    Node::atom(Node::id((Span(range), id)))
-}
+use tests::*;
 
 #[test]
 fn integer() {
