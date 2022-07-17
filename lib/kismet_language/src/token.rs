@@ -3,8 +3,8 @@ use std::fmt;
 use logos::{Lexer, Logos};
 use syn::{parse_str, LitInt, LitStr};
 
-use super::ast::{Atom, Expr};
-use super::types::{Integer, Span};
+use crate::ast::{Atom, Expr};
+use crate::types::{Integer, Span};
 
 #[derive(Logos, Clone, Debug, PartialEq)]
 pub enum Token<'input> {

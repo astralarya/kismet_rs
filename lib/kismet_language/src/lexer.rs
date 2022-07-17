@@ -2,7 +2,7 @@ use std::fmt;
 
 use logos::{Lexer as LogosLexer, Logos, SpannedIter};
 
-use super::token::Token;
+use crate::token::Token;
 use crate::types::Span;
 
 type ParserStream<'input> = Result<(usize, Token<'input>, usize), LexerError>;
