@@ -7,27 +7,29 @@ use syn::{parse_str, LitInt, LitStr};
 use crate::ast::{Atom, Expr};
 use crate::types::{Integer, Span};
 
+pub type Token<'input> = BaseToken<TokenKind<'input>>;
+
 #[derive(Clone, Debug, PartialEq)]
-pub struct Token<'input> {
+pub struct BaseToken<Kind> {
     pub span: Span,
-    pub kind: TokenKind<'input>,
+    pub kind: Kind,
 }
 
-impl<'input> Token<'input> {
-    pub fn vec_to_span(v: &'input Vec<Token<'input>>) -> Option<Span> {
+impl<'input, Kind> BaseToken<Kind> {
+    pub fn vec_to_span(v: &'input Vec<BaseToken<Kind>>) -> Option<Span> {
         Span::reduce(&mut v.iter().map(|x| x.span.clone()))
     }
 }
 
-impl<'input> Deref for Token<'input> {
-    type Target = TokenKind<'input>;
+impl<Kind> Deref for BaseToken<Kind> {
+    type Target = Kind;
 
     fn deref(&self) -> &Self::Target {
         &self.kind
     }
 }
 
-impl fmt::Display for Token<'_> {
+impl<Kind: std::fmt::Display> fmt::Display for BaseToken<Kind> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.kind)
     }
