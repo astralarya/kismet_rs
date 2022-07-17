@@ -4,10 +4,12 @@ use std::{
     ops::{Deref, Range},
 };
 
-extern crate overload;
+use num_complex::Complex;
 use overload::overload;
 
 pub type Integer = i32;
+pub type Float = f32;
+pub type Imaginary = Complex<f32>;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Span(pub Range<usize>);

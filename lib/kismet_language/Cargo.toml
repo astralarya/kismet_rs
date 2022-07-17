@@ -9,6 +9,8 @@ edition = "2021"
 lalrpop = "0.19.8"
 
 [dependencies]
+ndarray = "0.15.4"
+num-complex = "0.4.2"
 overload = "0.1.1"
 lalrpop-util = "0.19.8"
 logos = "0.12.1"
