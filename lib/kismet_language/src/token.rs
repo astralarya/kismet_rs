@@ -257,8 +257,8 @@ impl<'input> TokenKind<'input> {
         match (self, kind) {
             (TokenKind::DIE, Expr::Atom(Atom::Integer(_)))
             | (TokenKind::DIE, Expr::Atom(Atom::Tuple(_)))
-            | (TokenKind::DIE, Expr::Atom(Atom::Vector(_))) => true,
-            _ => false,
+            | (TokenKind::DIE, Expr::Atom(Atom::Vector(_))) => false,
+            _ => true,
         }
     }
 }
