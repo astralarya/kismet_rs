@@ -9,4 +9,4 @@ pub use parser::parse;
 #[macro_use]
 extern crate lalrpop_util;
 
-lalrpop_mod!(pub kismet);
+lalrpop_mod!(kismet);
