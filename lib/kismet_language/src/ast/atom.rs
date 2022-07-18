@@ -1,13 +1,13 @@
 use std::fmt;
 
-use crate::ast::{Expr, Node};
+use crate::ast::{Expr, Node, SpreadItem};
 use crate::token::Token;
 use crate::types::{Float, Integer, Span};
 
 #[derive(Debug, PartialEq)]
 pub enum Atom<'input> {
     Enclosure(Token<'input>, Node<Expr<'input>>, Token<'input>),
-    Vector(Vec<Node<Expr<'input>>>),
+    ListDisplay(Vec<Node<SpreadItem<'input>>>),
     Tuple(Vec<Node<Expr<'input>>>),
     Id(&'input str),
     String(String),
@@ -27,10 +27,10 @@ impl<'input> Node<Atom<'input>> {
         };
     }
 
-    pub fn vector((span, v): (Span, Vec<Node<Expr<'input>>>)) -> Node<Atom<'input>> {
+    pub fn list_display((span, v): (Span, Vec<Node<SpreadItem<'input>>>)) -> Node<Atom<'input>> {
         return Node {
             span,
-            kind: Box::new(Atom::Vector(v)),
+            kind: Box::new(Atom::ListDisplay(v)),
         };
     }
 
@@ -84,7 +84,7 @@ impl fmt::Display for Atom<'_> {
                     right
                 )
             }
-            Atom::Vector(nodes) => write!(f, "[{}]", Node::vec_to_string(&nodes, ", ")),
+            Atom::ListDisplay(nodes) => write!(f, "[{}]", Node::vec_to_string(&nodes, ", ")),
             Atom::Tuple(nodes) => match nodes.len() {
                 1 => write!(f, "({},)", nodes[0]),
                 _ => write!(f, "({})", Node::vec_to_string(&nodes, ", ")),

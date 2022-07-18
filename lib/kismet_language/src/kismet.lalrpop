@@ -1,4 +1,4 @@
-use crate::ast::{Atom, Expr, Node};
+use crate::ast::{Atom, Expr, Node, SpreadItem};
 use crate::lexer::LexerError;
 use crate::token::{NumberKind, Token, TokenKind};
 use crate::types::{Integer, Float, Span};
@@ -20,7 +20,17 @@ stmt: Node<Expr<'input>> = {
 
 expression_list: (Span, Vec<Node<Expr<'input>>>) = <JoinPlus<COMMA, expression>>;
 
+spread_list = <Join<COMMA, spread_item>>;
+spread_item: Node<SpreadItem<'input>> = {
+  walrus_expression => Node::spread((<>.span, SpreadItem::Expr(*<>.kind))),
+  <t:SPREAD> <n:a_expr> => Node::spread((t.span + n.span.clone(), SpreadItem::Spread(n))),
+}
+
 expression: Node<Expr<'input>> = {
+  walrus_expression,
+}
+
+walrus_expression: Node<Expr<'input>> = {
   or_test,
 }
 
@@ -72,7 +82,7 @@ parenth_form: Node<Atom<'input>> = {
 }
 
 list_display: Node<Atom<'input>> = {
-  LBRACKET <expression_list> RBRACKET => Node::vector(<>),
+  LBRACKET <spread_list> RBRACKET => Node::list_display(<>),
   LBRACKET comprehension RBRACKET => Node::enclosure(<>),
 }
 
@@ -134,6 +144,7 @@ extern {
   enum Token<'input> {
     DELIM => Token { kind: TokenKind::DELIM, .. },
     COMMA => Token { kind: TokenKind::COMMA, .. },
+    SPREAD => Token { kind: TokenKind::SPREAD, .. },
     FOR => Token { kind: TokenKind::FOR, .. },
     IN => Token { kind: TokenKind::IN, .. },
     IF => Token { kind: TokenKind::IF, .. },

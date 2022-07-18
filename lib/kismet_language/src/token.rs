@@ -40,8 +40,11 @@ pub enum TokenKind<'input> {
     #[regex(r"[;\n]")]
     DELIM,
 
-    #[regex(",")]
+    #[token(",")]
     COMMA,
+
+    #[token("...")]
+    SPREAD,
 
     #[regex(r"(?i)for")]
     FOR,
@@ -316,7 +319,7 @@ impl<'input> TokenKind<'input> {
         match (self, kind) {
             (TokenKind::DIE, Expr::Atom(Atom::Integer(_)))
             | (TokenKind::DIE, Expr::Atom(Atom::Tuple(_)))
-            | (TokenKind::DIE, Expr::Atom(Atom::Vector(_))) => false,
+            | (TokenKind::DIE, Expr::Atom(Atom::ListDisplay(_))) => false,
             _ => true,
         }
     }
@@ -327,6 +330,7 @@ impl fmt::Display for TokenKind<'_> {
         match self {
             TokenKind::DELIM => write!(f, "\n"),
             TokenKind::COMMA => write!(f, ","),
+            TokenKind::SPREAD => write!(f, "..."),
             TokenKind::FOR => write!(f, "FOR"),
             TokenKind::IN => write!(f, "IN"),
             TokenKind::IF => write!(f, "IF"),
