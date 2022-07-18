@@ -9,7 +9,10 @@ use super::{CompIter, Expr, KeyDatum, Node, SpreadItem};
 pub enum Atom<'input> {
     Enclosure(Token<'input>, Node<Expr<'input>>, Token<'input>),
     ListDisplay(Vec<Node<SpreadItem<'input>>>),
-    ListComprehension(Node<Expr<'input>>, Vec<Node<CompIter<'input>>>),
+    ListComprehension {
+        value: Node<Expr<'input>>,
+        iter: Vec<Node<CompIter<'input>>>,
+    },
     DictDisplay(Vec<Node<KeyDatum<'input>>>),
     DictComprehension {
         key: Node<Expr<'input>>,
@@ -44,12 +47,12 @@ impl<'input> Node<Atom<'input>> {
 
     pub fn list_comprehension(
         span: Span,
-        expr: Node<Expr<'input>>,
+        value: Node<Expr<'input>>,
         iter: Vec<Node<CompIter<'input>>>,
     ) -> Node<Atom<'input>> {
         return Node {
             span,
-            kind: Box::new(Atom::ListComprehension(expr, iter)),
+            kind: Box::new(Atom::ListComprehension { value, iter }),
         };
     }
 
@@ -123,8 +126,8 @@ impl fmt::Display for Atom<'_> {
                 )
             }
             Atom::ListDisplay(nodes) => write!(f, "[{}]", Node::vec_to_string(&nodes, ", ")),
-            Atom::ListComprehension(node, nodes) => {
-                write!(f, "[{} {}]", node, Node::vec_to_string(&nodes, " "))
+            Atom::ListComprehension { value, iter } => {
+                write!(f, "[{} {}]", value, Node::vec_to_string(&iter, " "))
             }
             Atom::DictDisplay(nodes) => write!(f, "{{{}}}", Node::vec_to_string(&nodes, ", ")),
             Atom::DictComprehension { key, value, iter } => {
