@@ -5,7 +5,7 @@ use crate::types::{Integer, Float, Span};
 
 grammar<'input>;
 
-pub Kismet: Node<Expr<'input>> = {
+pub Kismet = {
   stmts,
   => Node::stmts((Span(0..0), vec![]))
 }
@@ -14,11 +14,11 @@ stmts: Node<Expr<'input>> = {
   JoinFilter<DELIM, stmt> => Node::stmts(<>),
 }
 
-stmt: Node<Expr<'input>> = {
+stmt = {
   expression,
 }
 
-expression_list: (Span, Vec<Node<Expr<'input>>>) = <JoinPlus<COMMA, expression>>;
+expression_list = <JoinPlus<COMMA, expression>>;
 
 spread_list = <Join<COMMA, spread_item>>;
 spread_item: Node<SpreadItem<'input>> = {
@@ -26,18 +26,18 @@ spread_item: Node<SpreadItem<'input>> = {
   <t:SPREAD> <n:a_expr> => Node::spread((t.span + n.span.clone(), SpreadItem::Spread(n))),
 }
 
-expression: Node<Expr<'input>> = {
+expression = {
   walrus_expression,
 }
 
-walrus_expression: Node<Expr<'input>> = {
+walrus_expression = {
   or_test,
 }
 
 or_test = Infix<OR, and_test>;
 and_test = Infix<AND, not_test>;
 
-not_test: Node<Expr<'input>> = {
+not_test = {
   NOT not_test => Node::unary(<>),
   c_expr,
 }
@@ -46,25 +46,25 @@ c_expr = Infix<EQS, a_expr>;
 a_expr = Infix<ADDS, m_expr>;
 m_expr = Infix<MULS, u_expr>;
 
-u_expr: Node<Expr<'input>> = {
+u_expr = {
   ADDS primary => Node::unary(<>),
   power,
 }
 
 power = Infix<POW, coefficient>;
 
-coefficient: Node<Expr<'input>> = {
+coefficient = {
   numeric_literal die => Node::coefficient(<>),
   enclosure die => Node::coefficient(<>),
   die,
 }
 
-die: Node<Expr<'input>> = {
+die = {
   DIE primary => Node::die(<>),
   primary,
 }
 
-primary: Node<Expr<'input>> = {
+primary = {
   atom,
 }
 
@@ -74,7 +74,7 @@ atom: Node<Expr<'input>> = {
   literal => Node::atom(<>),
 }
 
-enclosure: Node<Atom<'input>> = {
+enclosure = {
   parenth_form,
   list_display,
   <l:LBRACE> <v:stmts> <r:RBRACE> => Node::enclosure(<>),
@@ -100,7 +100,7 @@ comp_for: Node<Expr<'input>> = {
     Node::comp_for(l.span + n.span.clone() + o.as_ref().map_or(None, |x| Some(x.span.clone())), t, n, o)
 }
 
-target: Node<Atom<'input>> = {
+target = {
   identifier,
   LPAREN target_list RPAREN => Node::enclosure(<>),
   LBRACKET target_list RBRACKET => Node::enclosure(<>),
@@ -114,7 +114,7 @@ identifier: Node<Atom<'input>> = {
   ID => Node::id(<>),
 }
 
-literal: Node<Atom<'input>> = {
+literal = {
   STRING => Node::string(<>),
   numeric_literal,
 }
@@ -126,7 +126,7 @@ numeric_literal: Node<Atom<'input>> = {
 
 // Tokens
 
-EQS: Token<'input> = {
+EQS = {
   EQ,
   NE,
   LT,
@@ -135,12 +135,12 @@ EQS: Token<'input> = {
   GE,
 }
 
-ADDS: Token<'input> = {
+ADDS = {
   ADD,
   SUB,
 }
 
-MULS: Token<'input> = {
+MULS = {
   MOD,
   MUL,
   DIV,
