@@ -59,18 +59,6 @@ impl<'input> Node<Atom<'input>> {
         };
     }
 
-    pub fn dict_comprehension(
-        span: Span,
-        key: Node<Expr<'input>>,
-        value: Node<Expr<'input>>,
-        iter: Vec<Node<CompIter<'input>>>,
-    ) -> Node<Atom<'input>> {
-        return Node {
-            span,
-            kind: Box::new(Atom::DictComprehension { key, value, iter }),
-        };
-    }
-
     pub fn tuple((span, v): (Span, Vec<Node<Expr<'input>>>)) -> Node<Atom<'input>> {
         return Node {
             span,
