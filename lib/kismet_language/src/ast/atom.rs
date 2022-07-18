@@ -11,6 +11,11 @@ pub enum Atom<'input> {
     ListDisplay(Vec<Node<SpreadItem<'input>>>),
     ListComprehension(Node<Expr<'input>>, Vec<Node<CompIter<'input>>>),
     DictDisplay(Vec<Node<KeyDatum<'input>>>),
+    DictComprehension {
+        key: Node<Expr<'input>>,
+        value: Node<Expr<'input>>,
+        iter: Vec<Node<CompIter<'input>>>,
+    },
     Tuple(Vec<Node<Expr<'input>>>),
     Id(&'input str),
     String(String),
@@ -52,6 +57,18 @@ impl<'input> Node<Atom<'input>> {
         return Node {
             span,
             kind: Box::new(Atom::DictDisplay(v)),
+        };
+    }
+
+    pub fn dict_comprehension(
+        span: Span,
+        key: Node<Expr<'input>>,
+        value: Node<Expr<'input>>,
+        iter: Vec<Node<CompIter<'input>>>,
+    ) -> Node<Atom<'input>> {
+        return Node {
+            span,
+            kind: Box::new(Atom::DictComprehension { key, value, iter }),
         };
     }
 
@@ -110,6 +127,15 @@ impl fmt::Display for Atom<'_> {
                 write!(f, "[{} {}]", node, Node::vec_to_string(&nodes, " "))
             }
             Atom::DictDisplay(nodes) => write!(f, "{{{}}}", Node::vec_to_string(&nodes, ", ")),
+            Atom::DictComprehension { key, value, iter } => {
+                write!(
+                    f,
+                    "{{{}: {} {}}}",
+                    key,
+                    value,
+                    Node::vec_to_string(&iter, ", ")
+                )
+            }
             Atom::Tuple(nodes) => match nodes.len() {
                 1 => write!(f, "({},)", nodes[0]),
                 _ => write!(f, "({})", Node::vec_to_string(&nodes, ", ")),
