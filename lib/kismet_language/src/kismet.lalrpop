@@ -7,11 +7,11 @@ grammar<'input>;
 
 pub Kismet = {
   stmts,
-  => Node::stmts((Span(0..0), vec![]))
+  => Node::new(Span(0..0), Expr::Stmts(vec![]))
 }
 
 stmts: Node<Expr<'input>> = {
-  JoinFilter<DELIM, stmt> => Node::stmts(<>),
+  JoinFilter<DELIM, stmt> => Node::new(<>.0, Expr::Stmts(<>.1)),
 }
 
 stmt = {
@@ -32,7 +32,7 @@ or_test = Infix<OR, and_test>;
 and_test = Infix<AND, not_test>;
 
 not_test = {
-  NOT not_test => Node::unary(<>),
+  <l:NOT> <v:not_test> => Node::new(l.span.clone() + v.span.clone(), Expr::Unary(l, v)),
   c_expr,
 }
 
@@ -41,20 +41,20 @@ a_expr = Infix<ADDS, m_expr>;
 m_expr = Infix<MULS, u_expr>;
 
 u_expr = {
-  ADDS primary => Node::unary(<>),
+  <l:ADDS> <v:primary> => Node::new(l.span.clone() + v.span.clone(), Expr::Unary(l, v)),
   power,
 }
 
 power = Infix<POW, coefficient>;
 
 coefficient = {
-  numeric_literal die => Node::coefficient(<>),
-  enclosure die => Node::coefficient(<>),
+  <l:numeric_literal> <r:die> => Node::new(l.span.clone() + r.span.clone(), Expr::Coefficient(l, r)),
+  <l:enclosure> <r:die> => Node::new(l.span.clone() + r.span.clone(), Expr::Coefficient(l, r)),
   die,
 }
 
 die = {
-  DIE primary => Node::die(<>),
+  <l:DIE> <v:primary> => Node::new(l.span + v.span.clone(), Expr::Die(v)),
   primary,
 }
 
@@ -63,9 +63,9 @@ primary = {
 }
 
 atom: Node<Expr<'input>> = {
-  enclosure => Node::expr_atom(<>),
-  identifier => Node::expr_atom(<>),
-  literal => Node::expr_atom(<>),
+  enclosure => Node::new(<>.span.clone(), Expr::Atom(*<>.kind)),
+  identifier => Node::new(<>.span.clone(), Expr::Atom(*<>.kind)),
+  literal => Node::new(<>.span.clone(), Expr::Atom(*<>.kind)),
 }
 
 enclosure = {
@@ -76,7 +76,7 @@ enclosure = {
 }
 
 parenth_form: Node<Atom<'input>> = {
-  <l:LPAREN> <e:expression_list> <r:RPAREN> => Node::new(l.span + r.span, Atom::Tuple(e.1)),
+  <l:LPAREN> <v:expression_list> <r:RPAREN> => Node::new(l.span + r.span, Atom::Tuple(v.1)),
   <l:LPAREN> <v:expression> <r:RPAREN> => Node::new(l.span + r.span, Atom::Expression(v)),
   <l:LPAREN> <r:RPAREN> => Node::new(l.span + r.span,Atom::Tuple(vec![])),
 }
@@ -90,8 +90,8 @@ list_display: Node<Atom<'input>> = {
 }
 
 list_comprehension: Atom<'input> = {
-  <e:walrus_expression> <mut iter:comp_for> =>
-    Atom::ListComprehension{value: e, iter: {iter.reverse(); iter}}
+  <value:walrus_expression> <mut iter:comp_for> =>
+    Atom::ListComprehension{value, iter: {iter.reverse(); iter}}
 }
 
 dict_display: Node<Atom<'input>> = {
@@ -110,15 +110,15 @@ dict_comprehension: Atom<'input> = {
 spread_list = Join<COMMA, spread_item>;
 spread_item: Node<SpreadItem<'input>> = {
   walrus_expression => Node::new(<>.span, SpreadItem::Expr(*<>.kind)),
-  <t:SPREAD> <n:a_expr> => Node::new(t.span + n.span.clone(), SpreadItem::Spread(n)),
+  <l:SPREAD> <v:a_expr> => Node::new(l.span + v.span.clone(), SpreadItem::Spread(v)),
 }
 
 key_datum_list = Join<COMMA, key_datum>;
 key_datum: Node<KeyDatum<'input>> = {
   <l:expression> COLON <r:expression> =>
     Node::new(l.span.clone() + r.span.clone(), KeyDatum::KeyDatum(l, r)),
-  <o:SPREAD> <e:a_expr> =>
-    Node::new(o.span + e.span.clone(), KeyDatum::Spread(e)),
+  <l:SPREAD> <v:a_expr> =>
+    Node::new(l.span + v.span.clone(), KeyDatum::Spread(v)),
 }
 
 comp_for: Vec<Node<CompIter<'input>>> = {
@@ -234,7 +234,7 @@ extern {
 // Macros
 
 Infix<Op, Next> = {
-  <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::op(<>),
+  <l:Infix<Op, Next>> <v:Op> <r:Next> => Node::new(l.span.clone() + r.span.clone(), Expr::Op(l, v, r)),
   Next
 }
 

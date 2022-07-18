@@ -1,7 +1,6 @@
 use std::fmt;
 
 use crate::token::Token;
-use crate::types::Span;
 
 use super::{atom::Atom, node::Node};
 
@@ -13,61 +12,6 @@ pub enum Expr<'input> {
     Coefficient(Node<Atom<'input>>, Node<Expr<'input>>),
     Die(Node<Expr<'input>>),
     Atom(Atom<'input>),
-}
-
-impl<'input> Node<Expr<'input>> {
-    pub fn expr(span: Span, value: Expr<'input>) -> Node<Expr> {
-        Node {
-            span,
-            kind: Box::new(value),
-        }
-    }
-
-    pub fn stmts((span, v): (Span, Vec<Node<Expr<'input>>>)) -> Node<Expr<'input>> {
-        Node {
-            span,
-            kind: Box::new(Expr::Stmts(v)),
-        }
-    }
-
-    pub fn op(
-        l: Node<Expr<'input>>,
-        o: Token<'input>,
-        r: Node<Expr<'input>>,
-    ) -> Node<Expr<'input>> {
-        Node {
-            span: l.span.clone() + r.span.clone(),
-            kind: Box::new(Expr::Op(l, o, r)),
-        }
-    }
-
-    pub fn unary(o: Token<'input>, r: Node<Expr<'input>>) -> Node<Expr<'input>> {
-        Node {
-            span: o.span.clone() + r.span.clone(),
-            kind: Box::new(Expr::Unary(o, r)),
-        }
-    }
-
-    pub fn coefficient(l: Node<Atom<'input>>, r: Node<Expr<'input>>) -> Node<Expr<'input>> {
-        Node {
-            span: l.span.clone() + r.span.clone(),
-            kind: Box::new(Expr::Coefficient(l, r)),
-        }
-    }
-
-    pub fn die(t: Token<'input>, r: Node<Expr<'input>>) -> Node<Expr<'input>> {
-        Node {
-            span: t.span + r.span.clone(),
-            kind: Box::new(Expr::Die(r)),
-        }
-    }
-
-    pub fn expr_atom(a: Node<Atom<'input>>) -> Node<Expr<'input>> {
-        Node {
-            span: a.span,
-            kind: Box::new(Expr::Atom(*a.kind)),
-        }
-    }
 }
 
 impl fmt::Display for Expr<'_> {

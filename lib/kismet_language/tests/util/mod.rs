@@ -10,24 +10,44 @@ use kismet_language::{
 #[allow(dead_code)]
 pub fn assert_stmt(node: Node<Expr>, str: &str) {
     assert_eq!(
-        Ok(Node::stmts((Span(0..str.len()), vec![node]))),
+        Ok(Node::new(Span(0..str.len()), Expr::Stmts(vec![node]))),
         parse(str)
     )
 }
 
 #[allow(dead_code)]
+pub fn new_op<'input>(
+    l: Node<Expr<'input>>,
+    v: Token<'input>,
+    r: Node<Expr<'input>>,
+) -> Node<Expr<'input>> {
+    Node {
+        span: l.span.clone() + r.span.clone(),
+        kind: Box::new(Expr::Op(l, v, r)),
+    }
+}
+
+#[allow(dead_code)]
+pub fn new_unary<'input>(l: Token<'input>, v: Node<Expr<'input>>) -> Node<Expr<'input>> {
+    Node {
+        span: l.span.clone() + v.span.clone(),
+        kind: Box::new(Expr::Unary(l, v)),
+    }
+}
+
+#[allow(dead_code)]
 pub fn new_integer<'input>(range: Range<usize>, integer: Integer) -> Node<Expr<'input>> {
-    Node::expr_atom(Node::new(Span(range), Atom::Integer(integer)))
+    Node::new(Span(range), Expr::Atom(Atom::Integer(integer)))
 }
 
 #[allow(dead_code)]
 pub fn new_string<'input>(range: Range<usize>, string: &'input str) -> Node<Expr<'input>> {
-    Node::expr_atom(Node::new(Span(range), Atom::String(String::from(string))))
+    Node::new(Span(range), Expr::Atom(Atom::String(String::from(string))))
 }
 
 #[allow(dead_code)]
 pub fn new_id<'input>(range: Range<usize>, id: &'input str) -> Node<Expr<'input>> {
-    Node::expr_atom(Node::new(Span(range), Atom::Id(id)))
+    Node::new(Span(range), Expr::Atom(Atom::Id(id)))
 }
 
 #[allow(dead_code)]
