@@ -63,7 +63,7 @@ impl<'input> Node<Expr<'input>> {
         }
     }
 
-    pub fn atom(a: Node<Atom<'input>>) -> Node<Expr<'input>> {
+    pub fn expr_atom(a: Node<Atom<'input>>) -> Node<Expr<'input>> {
         Node {
             span: a.span,
             kind: Box::new(Expr::Atom(*a.kind)),

@@ -20,7 +20,7 @@ stmt = {
 
 expression_list = <JoinPlus<COMMA, expression>>;
 
-spread_list = <Join<COMMA, spread_item>>;
+spread_list = Join<COMMA, spread_item>;
 spread_item: Node<SpreadItem<'input>> = {
   walrus_expression => Node::spread_item((<>.span, SpreadItem::Expr(*<>.kind))),
   <t:SPREAD> <n:a_expr> => Node::spread_item((t.span + n.span.clone(), SpreadItem::Spread(n))),
@@ -69,9 +69,9 @@ primary = {
 }
 
 atom: Node<Expr<'input>> = {
-  enclosure => Node::atom(<>),
-  identifier => Node::atom(<>),
-  literal => Node::atom(<>),
+  enclosure => Node::expr_atom(<>),
+  identifier => Node::expr_atom(<>),
+  literal => Node::expr_atom(<>),
 }
 
 enclosure = {
@@ -90,12 +90,14 @@ parenth_form: Node<Atom<'input>> = {
 list_display: Node<Atom<'input>> = {
   <l:LBRACKET> <v:spread_list> <r:RBRACKET> =>
     Node::list_display((l.span + r.span, v.1)),
-  list_comprehension,
+  <l:LBRACKET> <v:list_comprehension> <r:RBRACKET> =>
+    Node::atom(l.span + r.span, v),
+  <l:LBRACKET> <r:RBRACKET> => Node::list_display((l.span + r.span,vec![])),
 }
 
-list_comprehension: Node<Atom<'input>> = {
-  <l:LBRACKET> <e:walrus_expression> <mut iter:comp_for> <r:RBRACKET> =>
-    Node::list_comprehension(l.span + r.span, e, {iter.reverse(); iter}),
+list_comprehension: Atom<'input> = {
+  <e:walrus_expression> <mut iter:comp_for> =>
+    Atom::ListComprehension{value: e, iter: {iter.reverse(); iter}}
 }
 
 dict_display = {

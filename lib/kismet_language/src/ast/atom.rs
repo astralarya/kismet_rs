@@ -27,6 +27,13 @@ pub enum Atom<'input> {
 }
 
 impl<'input> Node<Atom<'input>> {
+    pub fn atom(span: Span, value: Atom<'input>) -> Node<Atom<'input>> {
+        return Node {
+            span,
+            kind: Box::new(value),
+        };
+    }
+
     pub fn enclosure(
         l: Token<'input>,
         n: Node<Expr<'input>>,
@@ -42,17 +49,6 @@ impl<'input> Node<Atom<'input>> {
         return Node {
             span,
             kind: Box::new(Atom::ListDisplay(v)),
-        };
-    }
-
-    pub fn list_comprehension(
-        span: Span,
-        value: Node<Expr<'input>>,
-        iter: Vec<Node<CompIter<'input>>>,
-    ) -> Node<Atom<'input>> {
-        return Node {
-            span,
-            kind: Box::new(Atom::ListComprehension { value, iter }),
         };
     }
 
