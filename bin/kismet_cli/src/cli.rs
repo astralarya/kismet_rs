@@ -1,10 +1,17 @@
+use clap::ArgEnum;
 use kismet_language::parse;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
 pub struct State {
-    pub print_display: bool,
-    pub print_debug: bool,
+    pub print: PrintLevel,
+}
+
+#[derive(Clone, Debug, ArgEnum)]
+pub enum PrintLevel {
+    None,
+    Output,
+    Debug,
 }
 
 pub fn run(state: &mut State) {
@@ -27,14 +34,11 @@ pub fn run(state: &mut State) {
                     break;
                 } else {
                     match parse(&line) {
-                        Ok(x) => {
-                            if state.print_debug {
-                                println!("{:?}", x)
-                            }
-                            if state.print_display {
-                                println!("{}", x)
-                            }
-                        }
+                        Ok(x) => match state.print {
+                            PrintLevel::Debug => println!("{:#?}\n{}", x, x),
+                            PrintLevel::Output => println!("{}", x),
+                            PrintLevel::None => (),
+                        },
                         Err(e) => eprintln!("{}", e),
                     }
                 }

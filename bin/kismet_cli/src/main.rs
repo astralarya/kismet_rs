@@ -1,26 +1,21 @@
 use clap::Parser;
 
 mod cli;
+use cli::PrintLevel;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
 pub struct Args {
-    #[clap(default_value_t = true, long, action)]
-    print_display: bool,
-
-    #[clap(long, action)]
-    print_debug: bool,
+    #[clap(arg_enum, default_value_t = PrintLevel::Output, long, action)]
+    print: PrintLevel,
 }
 
 fn main() {
     let args = Args::parse();
-    if args.print_debug {
+    if let PrintLevel::Debug = args.print {
         println!("{:?}", args);
     }
 
-    let mut state = cli::State {
-        print_display: true,
-        print_debug: args.print_debug,
-    };
+    let mut state = cli::State { print: args.print };
     cli::run(&mut state);
 }
