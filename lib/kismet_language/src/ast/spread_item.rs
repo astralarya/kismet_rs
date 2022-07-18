@@ -1,7 +1,8 @@
 use std::fmt;
 
-use crate::ast::{Expr, Node};
 use crate::types::Span;
+
+use crate::ast::{Expr, Node};
 
 #[derive(Debug, PartialEq)]
 pub enum SpreadItem<'input> {

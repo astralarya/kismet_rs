@@ -1,9 +1,8 @@
 use std::fmt;
 
-use crate::{
-    ast::{Expr, Node},
-    types::Span,
-};
+use crate::types::Span;
+
+use super::{Expr, Node};
 
 #[derive(Debug, PartialEq)]
 pub enum KeyDatum<'input> {
