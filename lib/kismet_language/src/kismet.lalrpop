@@ -88,7 +88,8 @@ parenth_form: Node<Atom<'input>> = {
 }
 
 list_display: Node<Atom<'input>> = {
-  LBRACKET <spread_list> RBRACKET => Node::list_display(<>),
+  <l:LBRACKET> <v:spread_list> <r:RBRACKET> =>
+    Node::list_display((l.span + r.span, v.1)),
   LBRACKET comprehension RBRACKET => Node::enclosure(<>),
 }
 
