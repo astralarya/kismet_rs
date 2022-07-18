@@ -17,8 +17,8 @@ trait Parser {
 }
 
 macro_rules! declare_parser {
-    ($parser: ident) => {
-        pub struct $parser(lalrpop::$parser);
+    ($visibility:vis $parser:ident) => {
+        $visibility struct $parser(lalrpop::$parser);
 
         impl $parser {
             fn new() -> Self {
@@ -32,4 +32,4 @@ macro_rules! declare_parser {
     };
 }
 
-declare_parser!(KismetParser);
+declare_parser!(pub KismetParser);
