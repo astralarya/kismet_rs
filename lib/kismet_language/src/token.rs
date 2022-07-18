@@ -320,7 +320,8 @@ impl<'input> TokenKind<'input> {
             (TokenKind::DIE, Expr::Atom(Atom::Integer(_)))
             | (TokenKind::DIE, Expr::Atom(Atom::Tuple(_)))
             | (TokenKind::DIE, Expr::Atom(Atom::ListDisplay(_))) => false,
-            _ => true,
+            (TokenKind::DIE, _) => true,
+            _ => false,
         }
     }
 }
