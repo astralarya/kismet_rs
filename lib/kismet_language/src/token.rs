@@ -4,7 +4,6 @@ use std::ops::Deref;
 use logos::{Lexer, Logos};
 use syn::{parse_str, LitFloat, LitInt, LitStr};
 
-use crate::ast::{Atom, Expr};
 use crate::types::{Float, Integer, Span};
 
 pub type Token<'input> = BaseToken<TokenKind<'input>>;
