@@ -48,7 +48,7 @@ impl<'input> Iterator for LexerIterator<'input> {
 
 #[derive(Debug, PartialEq)]
 pub struct LexerError {
-    loc: Span,
+    pub loc: Span,
 }
 
 impl fmt::Display for LexerError {

@@ -1,5 +1,6 @@
 use crate::ast::*;
 use crate::lexer::LexerError;
+use crate::parser::ParseError;
 use crate::token::{NumberKind, Token, TokenKind};
 use crate::types::{Integer, Float, Span};
 
@@ -138,8 +139,14 @@ dict_comprehension: Atom<'input> = {
 
 key_datum_list = Join<COMMA, key_datum>;
 key_datum: Node<KeyDatum<'input>> = {
-    <lhs:expression> COLON <rhs:expression> =>
-        Node::new(lhs.span.clone() + rhs.span.clone(), KeyDatum::KeyDatum(lhs, rhs)),
+    <key:expression> COLON <val:expression> =>? match *key.kind {
+        Expr::Primary(Primary::Atom(Atom::Id(key_name))) =>
+            Ok(Node::new(
+                key.span.clone() + val.span.clone(),
+                KeyDatum::KeyDatum{key: Node::new(key.span, key_name), val}
+            )),
+        _ => Err(ParseError::User { error: LexerError {loc: key.span + val.span}})
+    },
     <lhs:SPREAD> <val:a_expr> =>
         Node::new(lhs.span + val.span.clone(), KeyDatum::Spread(val)),
 }
