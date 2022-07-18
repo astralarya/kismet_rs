@@ -90,7 +90,7 @@ enclosure = {
 
 parenth_form: Node<Atom<'input>> = {
     <lhs:LPAREN> <val:expression_list> <rhs:RPAREN> => Node::new(lhs.span + rhs.span, Atom::Tuple(val.1)),
-    <lhs:LPAREN> <val:expression> <rhs:RPAREN> => Node::new(lhs.span + rhs.span, Atom::Expression(val)),
+    <lhs:LPAREN> <val:expression> <rhs:RPAREN> => Node::new(lhs.span + rhs.span, Atom::Parentheses(val)),
     <lhs:LPAREN> <rhs:RPAREN> => Node::new(lhs.span + rhs.span,Atom::Tuple(vec![])),
 }
 

@@ -6,7 +6,7 @@ use super::{CompIter, Expr, KeyDatum, Node, SpreadItem};
 
 #[derive(Debug, PartialEq)]
 pub enum Atom<'input> {
-    Expression(Node<Expr<'input>>),
+    Parentheses(Node<Expr<'input>>),
     Statements(Node<Expr<'input>>),
     ListDisplay(Vec<Node<SpreadItem<'input>>>),
     ListComprehension {
@@ -29,7 +29,7 @@ pub enum Atom<'input> {
 impl fmt::Display for Atom<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            Atom::Expression(val) => {
+            Atom::Parentheses(val) => {
                 write!(f, "({})", val)
             }
             Atom::Statements(val) => {
