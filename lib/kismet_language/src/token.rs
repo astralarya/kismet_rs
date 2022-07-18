@@ -182,7 +182,7 @@ impl<'input> TokenKind<'input> {
                     exp = true;
                     dot = false;
                 }
-                (x, y, z) => {
+                _ => {
                     break;
                 }
             }
