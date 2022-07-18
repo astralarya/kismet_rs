@@ -48,12 +48,12 @@ u_expr = {
 }
 
 coefficient = {
-    <lhs:coefficient_factor> <rhs:expr_node> =>
+    <lhs:coefficient_factor> <rhs:die> =>
         Node::new(
             lhs.span.clone() + rhs.span.clone(),
             Expr::Coefficient(lhs, rhs)
         ),
-    expr_node,
+    die,
 }
 
 coefficient_factor = {
@@ -61,13 +61,9 @@ coefficient_factor = {
     enclosure,
 }
 
-expr_node: Node<Expr<'input>> = {
-    die => Node::new(<>.span.clone(), Expr::Primary(*<>.kind)),
-}
-
-die = {
-    <lhs:DIE> <val:atom> => Node::new(lhs.span + val.span.clone(), Primary::Die(val)),
-    primary,
+die: Node<Expr<'input>> = {
+    <lhs:DIE> <val:atom> => Node::new(lhs.span + val.span.clone(), Expr::Die(val)),
+    primary => Node::new(<>.span.clone(), Expr::Primary(*<>.kind)),
 }
 
 primary = {
