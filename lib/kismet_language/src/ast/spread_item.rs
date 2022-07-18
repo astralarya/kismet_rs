@@ -11,8 +11,8 @@ pub enum SpreadItem<'input> {
 impl fmt::Display for SpreadItem<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            SpreadItem::Expr(e) => write!(f, "{}", e),
-            SpreadItem::Spread(n) => write!(f, "...{}", n),
+            SpreadItem::Expr(val) => write!(f, "{}", val),
+            SpreadItem::Spread(val) => write!(f, "...{}", val),
         }
     }
 }

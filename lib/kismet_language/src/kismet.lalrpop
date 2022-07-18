@@ -90,8 +90,8 @@ list_display: Node<Atom<'input>> = {
 }
 
 list_comprehension: Atom<'input> = {
-  <value:walrus_expression> <mut iter:comp_for> =>
-    Atom::ListComprehension{value, iter: {iter.reverse(); iter}}
+  <val:walrus_expression> <mut iter:comp_for> =>
+    Atom::ListComprehension{val, iter: {iter.reverse(); iter}}
 }
 
 dict_display: Node<Atom<'input>> = {
@@ -103,8 +103,8 @@ dict_display: Node<Atom<'input>> = {
 }
 
 dict_comprehension: Atom<'input> = {
-  <key:expression> COLON <value:expression> <mut iter:comp_for> =>
-    Atom::DictComprehension{key, value, iter: {iter.reverse(); iter}},
+  <key:expression> COLON <val:expression> <mut iter:comp_for> =>
+    Atom::DictComprehension{key, val, iter: {iter.reverse(); iter}},
 }
 
 spread_list = Join<COMMA, spread_item>;
@@ -122,8 +122,8 @@ key_datum: Node<KeyDatum<'input>> = {
 }
 
 comp_for: Vec<Node<CompIter<'input>>> = {
-  <l:FOR> <target:target_list> IN <expr:or_test> <iter:comp_iter?> => {
-    let node = Node::new(l.span + expr.span.clone(), CompIter::For{target: target.1, expr});
+  <l:FOR> <target:target_list> IN <val:or_test> <iter:comp_iter?> => {
+    let node = Node::new(l.span + val.span.clone(), CompIter::For{target: target.1, val});
     match iter {
       Some(mut v) => {v.push(node); v},
       None => vec![node],

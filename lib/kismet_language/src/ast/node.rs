@@ -26,8 +26,8 @@ impl<T: std::fmt::Display> Node<T> {
             .join(delim)
     }
 
-    pub fn vec_to_span(v: &Vec<Node<T>>) -> Option<Span> {
-        Span::reduce(&mut v.iter().map(|x| x.span.clone()))
+    pub fn vec_to_span(nodes: &Vec<Node<T>>) -> Option<Span> {
+        Span::reduce(&mut nodes.iter().map(|x| x.span.clone()))
     }
 }
 

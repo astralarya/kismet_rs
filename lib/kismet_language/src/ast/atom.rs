@@ -10,13 +10,13 @@ pub enum Atom<'input> {
     Statements(Node<Expr<'input>>),
     ListDisplay(Vec<Node<SpreadItem<'input>>>),
     ListComprehension {
-        value: Node<Expr<'input>>,
+        val: Node<Expr<'input>>,
         iter: Vec<Node<CompIter<'input>>>,
     },
     DictDisplay(Vec<Node<KeyDatum<'input>>>),
     DictComprehension {
         key: Node<Expr<'input>>,
-        value: Node<Expr<'input>>,
+        val: Node<Expr<'input>>,
         iter: Vec<Node<CompIter<'input>>>,
     },
     Tuple(Vec<Node<Expr<'input>>>),
@@ -29,34 +29,34 @@ pub enum Atom<'input> {
 impl fmt::Display for Atom<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            Atom::Expression(node) => {
-                write!(f, "({})", node,)
+            Atom::Expression(val) => {
+                write!(f, "({})", val)
             }
-            Atom::Statements(node) => {
-                write!(f, "{{{}}}", node,)
+            Atom::Statements(val) => {
+                write!(f, "{{{}}}", val)
             }
             Atom::ListDisplay(nodes) => write!(f, "[{}]", Node::vec_to_string(&nodes, ", ")),
-            Atom::ListComprehension { value, iter } => {
-                write!(f, "[{} {}]", value, Node::vec_to_string(&iter, " "))
+            Atom::ListComprehension { val, iter } => {
+                write!(f, "[{} {}]", val, Node::vec_to_string(&iter, " "))
             }
-            Atom::DictDisplay(nodes) => write!(f, "{{{}}}", Node::vec_to_string(&nodes, ", ")),
-            Atom::DictComprehension { key, value, iter } => {
+            Atom::DictDisplay(val) => write!(f, "{{{}}}", Node::vec_to_string(&val, ", ")),
+            Atom::DictComprehension { key, val, iter } => {
                 write!(
                     f,
                     "{{{}: {} {}}}",
                     key,
-                    value,
+                    val,
                     Node::vec_to_string(&iter, ", ")
                 )
             }
-            Atom::Tuple(nodes) => match nodes.len() {
-                1 => write!(f, "({},)", nodes[0]),
-                _ => write!(f, "({})", Node::vec_to_string(&nodes, ", ")),
+            Atom::Tuple(val) => match val.len() {
+                1 => write!(f, "({},)", val[0]),
+                _ => write!(f, "({})", Node::vec_to_string(&val, ", ")),
             },
-            Atom::String(s) => write!(f, r#""{}""#, s),
-            Atom::Float(n) => write!(f, "{}", n),
-            Atom::Integer(n) => write!(f, "{}", n),
-            Atom::Id(s) => write!(f, "{}", s),
+            Atom::String(val) => write!(f, r#""{}""#, val),
+            Atom::Float(val) => write!(f, "{}", val),
+            Atom::Integer(val) => write!(f, "{}", val),
+            Atom::Id(val) => write!(f, "{}", val),
         }
     }
 }

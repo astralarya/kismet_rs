@@ -6,7 +6,7 @@ use super::{Expr, Node, Target};
 pub enum CompIter<'input> {
     For {
         target: Vec<Node<Target<'input>>>,
-        expr: Node<Expr<'input>>,
+        val: Node<Expr<'input>>,
     },
     If(Node<Expr<'input>>),
 }
@@ -14,10 +14,10 @@ pub enum CompIter<'input> {
 impl fmt::Display for CompIter<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            CompIter::For { target, expr } => {
-                write!(f, "for {} in {}", Node::vec_to_string(&target, ", "), expr)
+            CompIter::For { target, val } => {
+                write!(f, "for {} in {}", Node::vec_to_string(&target, ", "), val)
             }
-            CompIter::If(node) => write!(f, "if {}", node),
+            CompIter::If(val) => write!(f, "if {}", val),
         }
     }
 }

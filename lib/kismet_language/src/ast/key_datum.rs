@@ -12,7 +12,7 @@ impl fmt::Display for KeyDatum<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
             KeyDatum::KeyDatum(l, r) => write!(f, "{}: {}", l, r),
-            KeyDatum::Spread(n) => write!(f, "...{}", n),
+            KeyDatum::Spread(v) => write!(f, "...{}", v),
         }
     }
 }
