@@ -11,8 +11,8 @@ pub enum KeyDatum<'input> {
 impl fmt::Display for KeyDatum<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            KeyDatum::KeyDatum(l, r) => write!(f, "{}: {}", l, r),
-            KeyDatum::Spread(v) => write!(f, "...{}", v),
+            KeyDatum::KeyDatum(lhs, rhs) => write!(f, "{}: {}", lhs, rhs),
+            KeyDatum::Spread(val) => write!(f, "...{}", val),
         }
     }
 }

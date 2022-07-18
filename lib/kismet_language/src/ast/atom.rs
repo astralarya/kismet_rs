@@ -35,7 +35,7 @@ impl fmt::Display for Atom<'_> {
             Atom::Statements(val) => {
                 write!(f, "{{{}}}", val)
             }
-            Atom::ListDisplay(nodes) => write!(f, "[{}]", Node::vec_to_string(&nodes, ", ")),
+            Atom::ListDisplay(val) => write!(f, "[{}]", Node::vec_to_string(&val, ", ")),
             Atom::ListComprehension { val, iter } => {
                 write!(f, "[{} {}]", val, Node::vec_to_string(&iter, " "))
             }
