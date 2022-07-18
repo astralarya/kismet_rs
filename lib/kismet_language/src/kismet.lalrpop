@@ -116,9 +116,9 @@ spread_item: Node<SpreadItem<'input>> = {
 key_datum_list = Join<COMMA, key_datum>;
 key_datum: Node<KeyDatum<'input>> = {
   <l:expression> COLON <r:expression> =>
-    Node::key_datum((l.span.clone() + r.span.clone(), KeyDatum::KeyDatum(l, r))),
+    Node::new(l.span.clone() + r.span.clone(), KeyDatum::KeyDatum(l, r)),
   <o:SPREAD> <e:a_expr> =>
-    Node::key_datum((o.span + e.span.clone(), KeyDatum::Spread(e))),
+    Node::new(o.span + e.span.clone(), KeyDatum::Spread(e)),
 }
 
 comp_for: Vec<Node<CompIter<'input>>> = {

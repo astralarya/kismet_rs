@@ -1,22 +1,11 @@
 use std::fmt;
 
-use crate::types::Span;
-
 use super::{Expr, Node};
 
 #[derive(Debug, PartialEq)]
 pub enum KeyDatum<'input> {
     KeyDatum(Node<Expr<'input>>, Node<Expr<'input>>),
     Spread(Node<Expr<'input>>),
-}
-
-impl<'input> Node<KeyDatum<'input>> {
-    pub fn key_datum((span, value): (Span, KeyDatum<'input>)) -> Node<KeyDatum<'input>> {
-        Node {
-            span,
-            kind: Box::new(value),
-        }
-    }
 }
 
 impl fmt::Display for KeyDatum<'_> {
