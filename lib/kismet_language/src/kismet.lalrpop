@@ -122,8 +122,8 @@ key_datum: Node<KeyDatum<'input>> = {
 }
 
 comp_for: Vec<Node<CompIter<'input>>> = {
-  <l:FOR> <t:target_list> IN <n:or_test> <iter:comp_iter?> => {
-    let node = Node::comp_for(l.span + n.span.clone(), t.1, n);
+  <l:FOR> <target:target_list> IN <expr:or_test> <iter:comp_iter?> => {
+    let node = Node::new(l.span + expr.span.clone(), CompIter::For{target: target.1, expr});
     match iter {
       Some(mut v) => {v.push(node); v},
       None => vec![node],
@@ -137,8 +137,8 @@ comp_iter = {
 }
 
 comp_if: Vec<Node<CompIter<'input>>> = {
-  <l:IF> <n:or_test> <iter:comp_iter?> => {
-    let node = Node::comp_if(l.span + n.span.clone(), n);
+  <l:IF> <expr:or_test> <iter:comp_iter?> => {
+    let node = Node::new(l.span + expr.span.clone(), CompIter::If(expr));
     match iter {
       Some(mut v) => {v.push(node); v},
       None => vec![node],

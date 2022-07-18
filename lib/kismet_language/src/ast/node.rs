@@ -3,9 +3,18 @@ use std::fmt;
 use crate::types::Span;
 
 #[derive(Debug, PartialEq)]
-pub struct Node<Kind> {
+pub struct Node<T> {
     pub span: Span,
-    pub kind: Box<Kind>,
+    pub kind: Box<T>,
+}
+
+impl<T> Node<T> {
+    pub fn new(span: Span, val: T) -> Node<T> {
+        Node {
+            span,
+            kind: Box::new(val),
+        }
+    }
 }
 
 impl<T: std::fmt::Display> Node<T> {

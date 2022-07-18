@@ -1,7 +1,5 @@
 use std::fmt;
 
-use crate::types::Span;
-
 use super::{Expr, Node, Target};
 
 #[derive(Debug, PartialEq)]
@@ -11,26 +9,6 @@ pub enum CompIter<'input> {
         expr: Node<Expr<'input>>,
     },
     If(Node<Expr<'input>>),
-}
-
-impl<'input> Node<CompIter<'input>> {
-    pub fn comp_for(
-        span: Span,
-        target: Vec<Node<Target<'input>>>,
-        expr: Node<Expr<'input>>,
-    ) -> Node<CompIter<'input>> {
-        Node {
-            span,
-            kind: Box::new(CompIter::For { target, expr }),
-        }
-    }
-
-    pub fn comp_if(span: Span, expr: Node<Expr<'input>>) -> Node<CompIter<'input>> {
-        Node {
-            span,
-            kind: Box::new(CompIter::If(expr)),
-        }
-    }
 }
 
 impl fmt::Display for CompIter<'_> {
