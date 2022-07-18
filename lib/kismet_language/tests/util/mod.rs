@@ -8,46 +8,46 @@ use kismet_language::{
 };
 
 #[allow(dead_code)]
-pub fn assert_stmt(node: Node<Expr>, str: &str) {
+pub fn assert_stmt(node: Node<Expr>, input: &str) {
     assert_eq!(
-        Ok(Node::new(Span(0..str.len()), Expr::Stmts(vec![node]))),
-        parse(str)
+        Ok(Node::new(Span(0..input.len()), Expr::Stmts(vec![node]))),
+        parse(input)
     )
 }
 
 #[allow(dead_code)]
 pub fn new_op<'input>(
-    l: Node<Expr<'input>>,
-    v: Token<'input>,
-    r: Node<Expr<'input>>,
+    lhs: Node<Expr<'input>>,
+    val: Token<'input>,
+    rhs: Node<Expr<'input>>,
 ) -> Node<Expr<'input>> {
     Node {
-        span: l.span.clone() + r.span.clone(),
-        kind: Box::new(Expr::Op(l, v, r)),
+        span: lhs.span.clone() + rhs.span.clone(),
+        kind: Box::new(Expr::Op(lhs, val, rhs)),
     }
 }
 
 #[allow(dead_code)]
-pub fn new_unary<'input>(l: Token<'input>, v: Node<Expr<'input>>) -> Node<Expr<'input>> {
+pub fn new_unary<'input>(lhs: Token<'input>, val: Node<Expr<'input>>) -> Node<Expr<'input>> {
     Node {
-        span: l.span.clone() + v.span.clone(),
-        kind: Box::new(Expr::Unary(l, v)),
+        span: lhs.span.clone() + val.span.clone(),
+        kind: Box::new(Expr::Unary(lhs, val)),
     }
 }
 
 #[allow(dead_code)]
-pub fn new_integer<'input>(range: Range<usize>, integer: Integer) -> Node<Expr<'input>> {
-    Node::new(Span(range), Expr::Atom(Atom::Integer(integer)))
+pub fn new_integer<'input>(range: Range<usize>, val: Integer) -> Node<Expr<'input>> {
+    Node::new(Span(range), Expr::Atom(Atom::Integer(val)))
 }
 
 #[allow(dead_code)]
-pub fn new_string<'input>(range: Range<usize>, string: &'input str) -> Node<Expr<'input>> {
-    Node::new(Span(range), Expr::Atom(Atom::String(String::from(string))))
+pub fn new_string<'input>(range: Range<usize>, val: &'input str) -> Node<Expr<'input>> {
+    Node::new(Span(range), Expr::Atom(Atom::String(String::from(val))))
 }
 
 #[allow(dead_code)]
-pub fn new_id<'input>(range: Range<usize>, id: &'input str) -> Node<Expr<'input>> {
-    Node::new(Span(range), Expr::Atom(Atom::Id(id)))
+pub fn new_id<'input>(range: Range<usize>, val: &'input str) -> Node<Expr<'input>> {
+    Node::new(Span(range), Expr::Atom(Atom::Id(val)))
 }
 
 #[allow(dead_code)]
