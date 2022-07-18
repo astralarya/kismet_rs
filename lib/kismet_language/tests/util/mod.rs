@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use kismet_language::{
-    ast::{Expr, Node},
+    ast::{Atom, Expr, Node},
     parse,
     token::{Token, TokenKind},
     types::{Integer, Span},
@@ -17,17 +17,17 @@ pub fn assert_stmt(node: Node<Expr>, str: &str) {
 
 #[allow(dead_code)]
 pub fn new_integer<'input>(range: Range<usize>, integer: Integer) -> Node<Expr<'input>> {
-    Node::expr_atom(Node::integer((Span(range), integer)))
+    Node::expr_atom(Node::new(Span(range), Atom::Integer(integer)))
 }
 
 #[allow(dead_code)]
 pub fn new_string<'input>(range: Range<usize>, string: &'input str) -> Node<Expr<'input>> {
-    Node::expr_atom(Node::string((Span(range), String::from(string))))
+    Node::expr_atom(Node::new(Span(range), Atom::String(String::from(string))))
 }
 
 #[allow(dead_code)]
 pub fn new_id<'input>(range: Range<usize>, id: &'input str) -> Node<Expr<'input>> {
-    Node::expr_atom(Node::id((Span(range), id)))
+    Node::expr_atom(Node::new(Span(range), Atom::Id(id)))
 }
 
 #[allow(dead_code)]

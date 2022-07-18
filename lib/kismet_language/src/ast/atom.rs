@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::types::{Float, Integer, Span};
+use crate::types::{Float, Integer};
 
 use super::{CompIter, Expr, KeyDatum, Node, SpreadItem};
 
@@ -24,64 +24,6 @@ pub enum Atom<'input> {
     String(String),
     Float(Float),
     Integer(Integer),
-}
-
-impl<'input> Node<Atom<'input>> {
-    pub fn atom(span: Span, value: Atom<'input>) -> Node<Atom<'input>> {
-        return Node {
-            span,
-            kind: Box::new(value),
-        };
-    }
-
-    pub fn list_display((span, v): (Span, Vec<Node<SpreadItem<'input>>>)) -> Node<Atom<'input>> {
-        return Node {
-            span,
-            kind: Box::new(Atom::ListDisplay(v)),
-        };
-    }
-
-    pub fn dict_display((span, v): (Span, Vec<Node<KeyDatum<'input>>>)) -> Node<Atom<'input>> {
-        return Node {
-            span,
-            kind: Box::new(Atom::DictDisplay(v)),
-        };
-    }
-
-    pub fn tuple((span, v): (Span, Vec<Node<Expr<'input>>>)) -> Node<Atom<'input>> {
-        return Node {
-            span,
-            kind: Box::new(Atom::Tuple(v)),
-        };
-    }
-
-    pub fn id((span, string): (Span, &'input str)) -> Node<Atom<'input>> {
-        return Node {
-            span,
-            kind: Box::new(Atom::Id(string)),
-        };
-    }
-
-    pub fn string((span, string): (Span, String)) -> Node<Atom<'input>> {
-        return Node {
-            span,
-            kind: Box::new(Atom::String(string)),
-        };
-    }
-
-    pub fn float((span, value): (Span, Float)) -> Node<Atom<'input>> {
-        return Node {
-            span,
-            kind: Box::new(Atom::Float(value)),
-        };
-    }
-
-    pub fn integer((span, value): (Span, Integer)) -> Node<Atom<'input>> {
-        return Node {
-            span,
-            kind: Box::new(Atom::Integer(value)),
-        };
-    }
 }
 
 impl fmt::Display for Atom<'_> {

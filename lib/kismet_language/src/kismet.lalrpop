@@ -72,21 +72,21 @@ enclosure = {
   parenth_form,
   list_display,
   dict_display,
-  <l:LBRACE> <v:stmts> <r:RBRACE> => Node::atom(l.span + r.span, Atom::Statements(v)),
+  <l:LBRACE> <v:stmts> <r:RBRACE> => Node::new(l.span + r.span, Atom::Statements(v)),
 }
 
 parenth_form: Node<Atom<'input>> = {
-  <l:LPAREN> <e:expression_list> <r:RPAREN> => Node::tuple((l.span + r.span, e.1)),
-  <l:LPAREN> <v:expression> <r:RPAREN> => Node::atom(l.span + r.span, Atom::Expression(v)),
-  <l:LPAREN> <r:RPAREN> => Node::tuple((l.span + r.span,vec![])),
+  <l:LPAREN> <e:expression_list> <r:RPAREN> => Node::new(l.span + r.span, Atom::Tuple(e.1)),
+  <l:LPAREN> <v:expression> <r:RPAREN> => Node::new(l.span + r.span, Atom::Expression(v)),
+  <l:LPAREN> <r:RPAREN> => Node::new(l.span + r.span,Atom::Tuple(vec![])),
 }
 
 list_display: Node<Atom<'input>> = {
   <l:LBRACKET> <v:spread_list> <r:RBRACKET> =>
-    Node::list_display((l.span + r.span, v.1)),
+    Node::new(l.span + r.span, Atom::ListDisplay(v.1)),
   <l:LBRACKET> <v:list_comprehension> <r:RBRACKET> =>
-    Node::atom(l.span + r.span, v),
-  <l:LBRACKET> <r:RBRACKET> => Node::list_display((l.span + r.span,vec![])),
+    Node::new(l.span + r.span, v),
+  <l:LBRACKET> <r:RBRACKET> => Node::new(l.span + r.span, Atom::ListDisplay(vec![])),
 }
 
 list_comprehension: Atom<'input> = {
@@ -96,10 +96,10 @@ list_comprehension: Atom<'input> = {
 
 dict_display: Node<Atom<'input>> = {
   <l:LBRACE> <v:key_datum_list> <r:RBRACE> =>
-    Node::dict_display((l.span + r.span, v.1)),
+    Node::new(l.span + r.span, Atom::DictDisplay(v.1)),
   <l:LBRACE> <v:dict_comprehension> <r:RBRACE> =>
-    Node::atom(l.span + r.span, v),
-  <l:LBRACE> <r:RBRACE> => Node::dict_display((l.span + r.span,vec![])),
+    Node::new(l.span + r.span, v),
+  <l:LBRACE> <r:RBRACE> => Node::new(l.span + r.span, Atom::DictDisplay(vec![])),
 }
 
 dict_comprehension: Atom<'input> = {
@@ -155,17 +155,17 @@ target: Node<Target<'input>> = {
 target_list = Join<COMMA, target>;
 
 identifier: Node<Atom<'input>> = {
-  ID => Node::id(<>),
+  ID => Node::new(<>.0, Atom::Id(<>.1)),
 }
 
 literal = {
-  STRING => Node::string(<>),
+  STRING => Node::new(<>.0, Atom::String(<>.1)),
   numeric_literal,
 }
 
 numeric_literal: Node<Atom<'input>> = {
-  FLOAT => Node::float(<>),
-  INT => Node::integer(<>),
+  FLOAT => Node::new(<>.0, Atom::Float(<>.1)),
+  INT => Node::new(<>.0, Atom::Integer(<>.1)),
 }
 
 // Tokens
