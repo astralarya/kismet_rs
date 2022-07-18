@@ -109,8 +109,8 @@ dict_comprehension: Atom<'input> = {
 
 spread_list = Join<COMMA, spread_item>;
 spread_item: Node<SpreadItem<'input>> = {
-  walrus_expression => Node::spread_item((<>.span, SpreadItem::Expr(*<>.kind))),
-  <t:SPREAD> <n:a_expr> => Node::spread_item((t.span + n.span.clone(), SpreadItem::Spread(n))),
+  walrus_expression => Node::new(<>.span, SpreadItem::Expr(*<>.kind)),
+  <t:SPREAD> <n:a_expr> => Node::new(t.span + n.span.clone(), SpreadItem::Spread(n)),
 }
 
 key_datum_list = Join<COMMA, key_datum>;
