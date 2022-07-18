@@ -183,7 +183,6 @@ impl<'input> TokenKind<'input> {
                     dot = false;
                 }
                 (x, y, z) => {
-                    println!("{:?},{},{}", x, y, z);
                     break;
                 }
             }

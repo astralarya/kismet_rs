@@ -22,7 +22,7 @@ macro_rules! declare_parser {
 
         impl $parser {
             fn new() -> Self {
-                KismetParser(lalrpop::$parser::new())
+                $parser(lalrpop::$parser::new())
             }
 
             fn parse<'input>(&self, input: &'input str) -> ParseResult<'input> {
