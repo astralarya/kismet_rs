@@ -51,11 +51,15 @@ u_expr: Node<Expr<'input>> = {
   power,
 }
 
-power = Infix<POW, die>;
+power = Infix<POW, coefficient>;
+
+coefficient: Node<Expr<'input>> = {
+  atom die => Node::coefficient(<>),
+  die,
+}
 
 die: Node<Expr<'input>> = {
-  primary DIE primary => Node::op(<>),
-  DIE primary => Node::unary(<>),
+  DIE primary => Node::die(<>),
   primary,
 }
 

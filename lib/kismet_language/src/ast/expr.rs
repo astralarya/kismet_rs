@@ -18,6 +18,8 @@ pub enum Expr<'input> {
     TargetList(Vec<Node<Atom<'input>>>),
     Op(Node<Expr<'input>>, Token<'input>, Node<Expr<'input>>),
     Unary(Token<'input>, Node<Expr<'input>>),
+    Coefficient(Node<Expr<'input>>, Node<Expr<'input>>),
+    Die(Node<Expr<'input>>),
     Atom(Atom<'input>),
 }
 
@@ -76,6 +78,20 @@ impl<'input> Node<Expr<'input>> {
         }
     }
 
+    pub fn coefficient(l: Node<Expr<'input>>, r: Node<Expr<'input>>) -> Node<Expr<'input>> {
+        Node {
+            span: l.span.clone() + r.span.clone(),
+            kind: Box::new(Expr::Coefficient(l, r)),
+        }
+    }
+
+    pub fn die(t: Token<'input>, r: Node<Expr<'input>>) -> Node<Expr<'input>> {
+        Node {
+            span: t.span + r.span.clone(),
+            kind: Box::new(Expr::Die(r)),
+        }
+    }
+
     pub fn atom(a: Node<Atom<'input>>) -> Node<Expr<'input>> {
         Node {
             span: a.span,
@@ -95,24 +111,17 @@ impl fmt::Display for Expr<'_> {
             },
             Expr::TargetList(v) => write!(f, "{}", Node::vec_to_string(&v, ", ")),
             Expr::Op(left, op, right) => {
-                match (op.enclose(&*left.kind), op.enclose(&*right.kind)) {
-                    (true, true) => {
-                        write!(f, "({}){}{}{}({})", left, op.space(), op, op.space(), right)
-                    }
-                    (true, false) => {
-                        write!(f, "({}){}{}{}{}", left, op.space(), op, op.space(), right)
-                    }
-                    (false, true) => {
-                        write!(f, "{}{}{}{}({})", left, op.space(), op, op.space(), right)
-                    }
-                    (false, false) => {
-                        write!(f, "{}{}{}{}{}", left, op.space(), op, op.space(), right)
-                    }
-                }
+                write!(f, "{}{}{}{}{}", left, op.space(), op, op.space(), right)
             }
-            Expr::Unary(op, right) => match op.enclose(&*right.kind) {
-                true => write!(f, "{}{}({})", op, op.space(), right),
-                false => write!(f, "{}{}{}", op, op.space(), right),
+            Expr::Unary(op, right) => write!(f, "{}{}{}", op, op.space(), right),
+            Expr::Coefficient(l, r) => write!(f, "{}{}", l, r),
+            Expr::Die(node) => match *node.kind {
+                Expr::Atom(Atom::Integer(_))
+                | Expr::Atom(Atom::Tuple(_))
+                | Expr::Atom(Atom::ListDisplay(_)) => {
+                    write!(f, "d{}", node)
+                }
+                _ => write!(f, "d({})", node),
             },
             Expr::Atom(a) => write!(f, "{}", a),
         }

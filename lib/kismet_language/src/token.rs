@@ -314,16 +314,6 @@ impl<'input> TokenKind<'input> {
             _ => " ",
         }
     }
-
-    pub fn enclose(&self, kind: &Expr<'input>) -> bool {
-        match (self, kind) {
-            (TokenKind::DIE, Expr::Atom(Atom::Integer(_)))
-            | (TokenKind::DIE, Expr::Atom(Atom::Tuple(_)))
-            | (TokenKind::DIE, Expr::Atom(Atom::ListDisplay(_))) => false,
-            (TokenKind::DIE, _) => true,
-            _ => false,
-        }
-    }
 }
 
 impl fmt::Display for TokenKind<'_> {
