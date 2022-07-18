@@ -22,8 +22,8 @@ expression_list = <JoinPlus<COMMA, expression>>;
 
 spread_list = <Join<COMMA, spread_item>>;
 spread_item: Node<SpreadItem<'input>> = {
-  walrus_expression => Node::spread((<>.span, SpreadItem::Expr(*<>.kind))),
-  <t:SPREAD> <n:a_expr> => Node::spread((t.span + n.span.clone(), SpreadItem::Spread(n))),
+  walrus_expression => Node::spread_item((<>.span, SpreadItem::Expr(*<>.kind))),
+  <t:SPREAD> <n:a_expr> => Node::spread_item((t.span + n.span.clone(), SpreadItem::Spread(n))),
 }
 
 expression = {

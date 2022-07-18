@@ -10,7 +10,7 @@ pub enum SpreadItem<'input> {
 }
 
 impl<'input> Node<SpreadItem<'input>> {
-    pub fn spread((span, value): (Span, SpreadItem<'input>)) -> Node<SpreadItem<'input>> {
+    pub fn spread_item((span, value): (Span, SpreadItem<'input>)) -> Node<SpreadItem<'input>> {
         Node {
             span,
             kind: Box::new(value),
