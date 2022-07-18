@@ -147,9 +147,9 @@ comp_if: Vec<Node<CompIter<'input>>> = {
 }
 
 target: Node<Target<'input>> = {
-  ID => Node::target(<>.0, Target::Id(<>.1)),
-  <l:LPAREN> <v:target_list> <r:RPAREN> => Node::target(l.span + r.span, Target::TargetTuple(v.1)),
-  <l:LBRACKET> <v:target_list> <r:RBRACKET> => Node::target(l.span + r.span, Target::TargetList(v.1)),
+  ID => Node::new(<>.0, Target::Id(<>.1)),
+  <l:LPAREN> <v:target_list> <r:RPAREN> => Node::new(l.span + r.span, Target::TargetTuple(v.1)),
+  <l:LBRACKET> <v:target_list> <r:RBRACKET> => Node::new(l.span + r.span, Target::TargetList(v.1)),
 }
 
 target_list = Join<COMMA, target>;
