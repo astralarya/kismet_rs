@@ -18,7 +18,7 @@ pub enum Expr<'input> {
     TargetList(Vec<Node<Atom<'input>>>),
     Op(Node<Expr<'input>>, Token<'input>, Node<Expr<'input>>),
     Unary(Token<'input>, Node<Expr<'input>>),
-    Coefficient(Node<Expr<'input>>, Node<Expr<'input>>),
+    Coefficient(Node<Atom<'input>>, Node<Expr<'input>>),
     Die(Node<Expr<'input>>),
     Atom(Atom<'input>),
 }
@@ -78,7 +78,7 @@ impl<'input> Node<Expr<'input>> {
         }
     }
 
-    pub fn coefficient(l: Node<Expr<'input>>, r: Node<Expr<'input>>) -> Node<Expr<'input>> {
+    pub fn coefficient(l: Node<Atom<'input>>, r: Node<Expr<'input>>) -> Node<Expr<'input>> {
         Node {
             span: l.span.clone() + r.span.clone(),
             kind: Box::new(Expr::Coefficient(l, r)),

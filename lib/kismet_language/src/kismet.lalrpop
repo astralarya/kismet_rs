@@ -54,7 +54,8 @@ u_expr: Node<Expr<'input>> = {
 power = Infix<POW, coefficient>;
 
 coefficient: Node<Expr<'input>> = {
-  atom die => Node::coefficient(<>),
+  numeric_literal die => Node::coefficient(<>),
+  enclosure die => Node::coefficient(<>),
   die,
 }
 
@@ -115,6 +116,10 @@ identifier: Node<Atom<'input>> = {
 
 literal: Node<Atom<'input>> = {
   STRING => Node::string(<>),
+  numeric_literal,
+}
+
+numeric_literal: Node<Atom<'input>> = {
   FLOAT => Node::float(<>),
   INT => Node::integer(<>),
 }
