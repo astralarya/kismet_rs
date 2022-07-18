@@ -3,6 +3,12 @@ use std::fmt;
 use super::Node;
 
 #[derive(Debug, PartialEq)]
+pub enum TargetList<'input> {
+    Target(Target<'input>),
+    List(Vec<Node<Target<'input>>>),
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Target<'input> {
     Id(&'input str),
     TargetTuple(Vec<Node<Target<'input>>>),
@@ -17,6 +23,18 @@ pub enum TargetDictItem<'input> {
         key: Node<&'input str>,
         val: Node<Target<'input>>,
     },
+}
+
+impl fmt::Display for TargetList<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TargetList::Target(val) => write!(f, "{}", val),
+            TargetList::List(val) => match val.len() {
+                1 => write!(f, "{},", Node::vec_to_string(val, ", ")),
+                _ => write!(f, "{}", Node::vec_to_string(val, ", ")),
+            },
+        }
+    }
 }
 
 impl fmt::Display for Target<'_> {

@@ -135,8 +135,8 @@ key_datum: Node<KeyDatum<'input>> = {
 }
 
 comp_for: Vec<Node<CompIter<'input>>> = {
-    <lhs:FOR> <target:target_list> IN <val:or_test> <iter:comp_iter?> => {
-        let node = Node::new(lhs.span + val.span.clone(), CompIter::For{target: target.1, val});
+    <lhs:FOR> <target:target> IN <val:or_test> <iter:comp_iter?> => {
+        let node = Node::new(lhs.span + val.span.clone(), CompIter::For{target, val});
         match iter {
             Some(mut val) => {val.push(node); val},
             None => vec![node],
@@ -159,7 +159,12 @@ comp_if: Vec<Node<CompIter<'input>>> = {
     }
 }
 
-target: Node<Target<'input>> = {
+target: Node<TargetList<'input>> = {
+    JoinPlus<COMMA, target_item> => Node::new(<>.0, TargetList::List(<>.1)),
+    target_item => Node::new(<>.span.clone(), TargetList::Target(*<>.kind)),
+}
+
+target_item: Node<Target<'input>> = {
     ID => Node::new(<>.0, Target::Id(<>.1)),
     <lhs:LPAREN> <val:target_list> <rhs:RPAREN> =>
         Node::new(lhs.span + rhs.span, Target::TargetTuple(val.1)),
@@ -169,11 +174,11 @@ target: Node<Target<'input>> = {
         Node::new(lhs.span + rhs.span, Target::TargetDict(val.1)),
 }
 
-target_list = Join<COMMA, target>;
+target_list = Join<COMMA, target_item>;
 
 target_key = Join<COMMA, target_key_item>;
 target_key_item: Node<TargetDictItem<'input>> = {
-    <key:ID> COLON <val:target> =>
+    <key:ID> COLON <val:target_item> =>
         Node::new(key.0.clone() + val.span.clone(), TargetDictItem::Pair{key: Node::new(key.0, key.1), val}),
     ID => Node::new(<>.0.clone(), TargetDictItem::Shorthand(<>.1)),
 }
