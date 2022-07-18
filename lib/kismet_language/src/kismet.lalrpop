@@ -1,7 +1,7 @@
 use crate::ast::{Atom, Expr, Node};
 use crate::lexer::LexerError;
-use crate::token::{Token, TokenKind};
-use crate::types::{Integer, Span};
+use crate::token::{NumberKind, Token, TokenKind};
+use crate::types::{Integer, Float, Span};
 
 grammar<'input>;
 
@@ -101,6 +101,7 @@ identifier: Node<Atom<'input>> = {
 
 literal: Node<Atom<'input>> = {
   STRING => Node::string(<>),
+  FLOAT => Node::float(<>),
   INT => Node::integer(<>),
 }
 
@@ -159,7 +160,8 @@ extern {
     LBRACE => Token { kind: TokenKind::LBRACE, .. },
     RBRACE => Token { kind: TokenKind::RBRACE, .. },
     STRING => Token {span: <Span>, kind: TokenKind::String(<String>) },
-    INT => Token {span: <Span>, kind: TokenKind::Integer(<Integer>) },
+    INT => Token {span: <Span>, kind: TokenKind::Number(NumberKind::Integer(<Integer>)) },
+    FLOAT => Token {span: <Span>, kind: TokenKind::Number(NumberKind::Float(<Float>)) },
     ID => Token {span: <Span>, kind: TokenKind::Id(<&'input str>) },
   }
 }

@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::ast::{Expr, Node};
 use crate::token::Token;
-use crate::types::{Integer, Span};
+use crate::types::{Float, Integer, Span};
 
 #[derive(Debug, PartialEq)]
 pub enum Atom<'input> {
@@ -11,6 +11,7 @@ pub enum Atom<'input> {
     Tuple(Vec<Node<Expr<'input>>>),
     Id(&'input str),
     String(String),
+    Float(Float),
     Integer(Integer),
 }
 
@@ -54,6 +55,13 @@ impl<'input> Node<Atom<'input>> {
         };
     }
 
+    pub fn float((span, value): (Span, Float)) -> Node<Atom<'input>> {
+        return Node {
+            span,
+            kind: Box::new(Atom::Float(value)),
+        };
+    }
+
     pub fn integer((span, value): (Span, Integer)) -> Node<Atom<'input>> {
         return Node {
             span,
@@ -82,6 +90,7 @@ impl fmt::Display for Atom<'_> {
                 _ => write!(f, "({})", Node::vec_to_string(&nodes, ", ")),
             },
             Atom::String(s) => write!(f, r#""{}""#, s),
+            Atom::Float(n) => write!(f, "{}", n),
             Atom::Integer(n) => write!(f, "{}", n),
             Atom::Id(s) => write!(f, "{}", s),
         }
