@@ -105,6 +105,9 @@ pub enum TokenKind<'input> {
     #[regex(r"(?i)d")]
     DIE,
 
+    #[token(".")]
+    DOT,
+
     #[token("(")]
     LPAREN,
 
@@ -344,6 +347,7 @@ impl fmt::Display for TokenKind<'_> {
             TokenKind::DIV => write!(f, "/"),
             TokenKind::POW => write!(f, "^"),
             TokenKind::DIE => write!(f, "d"),
+            TokenKind::DOT => write!(f, "."),
             TokenKind::LPAREN => write!(f, "("),
             TokenKind::RPAREN => write!(f, ")"),
             TokenKind::LBRACKET => write!(f, "["),

@@ -60,12 +60,20 @@ die = {
 
 primary = {
   atom,
+  attributeref,
 }
 
 atom: Node<Expr<'input>> = {
   enclosure => Node::new(<>.span.clone(), Expr::Atom(*<>.kind)),
   identifier => Node::new(<>.span.clone(), Expr::Atom(*<>.kind)),
   literal => Node::new(<>.span.clone(), Expr::Atom(*<>.kind)),
+}
+
+attributeref: Node<Expr<'input>> = {
+  <l:primary> DOT <r:ID> =>
+    Node::new(l.span.clone() + r.0.clone(), Expr::Attribute(l, Node::new(r.0.clone(), r.1))),
+  <l:DIE> DOT <r:ID> =>
+    Node::new(l.span.clone() + r.0.clone(), Expr::Attribute(Node::new(l.span, Expr::Atom(Atom::Id("d"))), Node::new(r.0.clone(), r.1))),
 }
 
 enclosure = {
@@ -218,6 +226,7 @@ extern {
     DIV => Token { kind: TokenKind::DIV, .. },
     POW => Token { kind: TokenKind::POW, .. },
     DIE => Token { kind: TokenKind::DIE, .. },
+    DOT => Token { kind: TokenKind::DOT, .. },
     LPAREN => Token { kind: TokenKind::LPAREN, .. },
     RPAREN => Token { kind: TokenKind::RPAREN, .. },
     LBRACKET => Token { kind: TokenKind::LBRACKET, .. },

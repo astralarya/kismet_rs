@@ -11,6 +11,7 @@ pub enum Expr<'input> {
     Unary(Token<'input>, Node<Expr<'input>>),
     Coefficient(Node<Atom<'input>>, Node<Expr<'input>>),
     Die(Node<Expr<'input>>),
+    Attribute(Node<Expr<'input>>, Node<&'input str>),
     Atom(Atom<'input>),
 }
 
@@ -23,6 +24,7 @@ impl fmt::Display for Expr<'_> {
             }
             Expr::Unary(lhs, val) => write!(f, "{}{}{}", lhs, lhs.space(), val),
             Expr::Coefficient(lhs, rhs) => write!(f, "{}{}", lhs, rhs),
+            Expr::Attribute(lhs, rhs) => write!(f, "{}.{}", lhs, rhs),
             Expr::Die(val) => match *val.kind {
                 Expr::Atom(Atom::Integer(_))
                 | Expr::Atom(Atom::Tuple(_))
