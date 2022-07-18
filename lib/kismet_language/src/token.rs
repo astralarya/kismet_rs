@@ -42,6 +42,9 @@ pub enum TokenKind<'input> {
     #[token(",")]
     COMMA,
 
+    #[token(":")]
+    COLON,
+
     #[token("...")]
     SPREAD,
 
@@ -320,6 +323,7 @@ impl fmt::Display for TokenKind<'_> {
         match self {
             TokenKind::DELIM => write!(f, "\n"),
             TokenKind::COMMA => write!(f, ","),
+            TokenKind::COLON => write!(f, ":"),
             TokenKind::SPREAD => write!(f, "..."),
             TokenKind::FOR => write!(f, "FOR"),
             TokenKind::IN => write!(f, "IN"),

@@ -1,10 +1,8 @@
 use std::fmt;
 
-use crate::ast::Atom;
+use crate::ast::{Atom, Node};
 use crate::token::Token;
 use crate::types::Span;
-
-use super::node::Node;
 
 #[derive(Debug, PartialEq)]
 pub enum Expr<'input> {

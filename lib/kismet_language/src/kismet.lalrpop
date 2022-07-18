@@ -1,4 +1,4 @@
-use crate::ast::{Atom, Expr, Node, SpreadItem};
+use crate::ast::{Atom, Expr, KeyDatum, Node, SpreadItem};
 use crate::lexer::LexerError;
 use crate::token::{NumberKind, Token, TokenKind};
 use crate::types::{Integer, Float, Span};
@@ -77,6 +77,7 @@ atom: Node<Expr<'input>> = {
 enclosure = {
   parenth_form,
   list_display,
+  dict_display,
   <l:LBRACE> <v:stmts> <r:RBRACE> => Node::enclosure(<>),
 }
 
@@ -98,6 +99,19 @@ comprehension: Node<Expr<'input>> = {
 comp_for: Node<Expr<'input>> = {
   <l:FOR> <t:target_list> IN <n:or_test> <o:(IF <or_test>)?> =>
     Node::comp_for(l.span + n.span.clone() + o.as_ref().map_or(None, |x| Some(x.span.clone())), t, n, o)
+}
+
+dict_display: Node<Atom<'input>> = {
+  <l:LBRACE> <v:key_datum_list> <r:RBRACE> =>
+    Node::dict_display((l.span + r.span, v.1)),
+}
+
+key_datum_list = Join<COMMA, key_datum>;
+key_datum: Node<KeyDatum<'input>> = {
+  <l:expression> COLON <r:expression> =>
+    Node::key_datum((l.span.clone() + r.span.clone(), KeyDatum::KeyDatum(l, r))),
+  <o:SPREAD> <e:a_expr> =>
+    Node::key_datum((o.span + e.span.clone(), KeyDatum::Spread(e))),
 }
 
 target = {
@@ -153,6 +167,7 @@ extern {
   enum Token<'input> {
     DELIM => Token { kind: TokenKind::DELIM, .. },
     COMMA => Token { kind: TokenKind::COMMA, .. },
+    COLON => Token { kind: TokenKind::COLON, .. },
     SPREAD => Token { kind: TokenKind::SPREAD, .. },
     FOR => Token { kind: TokenKind::FOR, .. },
     IN => Token { kind: TokenKind::IN, .. },

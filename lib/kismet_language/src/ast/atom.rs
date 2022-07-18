@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::{Expr, Node, SpreadItem};
+use crate::ast::{Expr, KeyDatum, Node, SpreadItem};
 use crate::token::Token;
 use crate::types::{Float, Integer, Span};
 
@@ -8,6 +8,7 @@ use crate::types::{Float, Integer, Span};
 pub enum Atom<'input> {
     Enclosure(Token<'input>, Node<Expr<'input>>, Token<'input>),
     ListDisplay(Vec<Node<SpreadItem<'input>>>),
+    DictDisplay(Vec<Node<KeyDatum<'input>>>),
     Tuple(Vec<Node<Expr<'input>>>),
     Id(&'input str),
     String(String),
@@ -31,6 +32,13 @@ impl<'input> Node<Atom<'input>> {
         return Node {
             span,
             kind: Box::new(Atom::ListDisplay(v)),
+        };
+    }
+
+    pub fn dict_display((span, v): (Span, Vec<Node<KeyDatum<'input>>>)) -> Node<Atom<'input>> {
+        return Node {
+            span,
+            kind: Box::new(Atom::DictDisplay(v)),
         };
     }
 
@@ -85,6 +93,7 @@ impl fmt::Display for Atom<'_> {
                 )
             }
             Atom::ListDisplay(nodes) => write!(f, "[{}]", Node::vec_to_string(&nodes, ", ")),
+            Atom::DictDisplay(nodes) => write!(f, "{{{}}}", Node::vec_to_string(&nodes, ", ")),
             Atom::Tuple(nodes) => match nodes.len() {
                 1 => write!(f, "({},)", nodes[0]),
                 _ => write!(f, "({})", Node::vec_to_string(&nodes, ", ")),
