@@ -94,8 +94,8 @@ list_display: Node<Atom<'input>> = {
 }
 
 list_comprehension: Node<Atom<'input>> = {
-  <l:LBRACKET> <e:walrus_expression> <i:comp_for> <r:RBRACKET> =>
-    Node::list_comprehension(l.span + r.span, e, i),
+  <l:LBRACKET> <e:walrus_expression> <mut iter:comp_for> <r:RBRACKET> =>
+    Node::list_comprehension(l.span + r.span, e, {iter.reverse(); iter}),
 }
 
 comp_for: Vec<Node<CompIter<'input>>> = {
