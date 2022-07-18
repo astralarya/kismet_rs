@@ -165,9 +165,18 @@ target: Node<Target<'input>> = {
         Node::new(lhs.span + rhs.span, Target::TargetTuple(val.1)),
     <lhs:LBRACKET> <val:target_list> <rhs:RBRACKET> =>
         Node::new(lhs.span + rhs.span, Target::TargetList(val.1)),
+    <lhs:LBRACE> <val:target_key> <rhs:RBRACE> =>
+        Node::new(lhs.span + rhs.span, Target::TargetDict(val.1)),
 }
 
 target_list = Join<COMMA, target>;
+
+target_key = Join<COMMA, target_key_item>;
+target_key_item: Node<TargetDictItem<'input>> = {
+    <key:ID> COLON <val:target> =>
+        Node::new(key.0.clone() + val.span.clone(), TargetDictItem::Pair{key: Node::new(key.0, key.1), val}),
+    ID => Node::new(<>.0.clone(), TargetDictItem::Shorthand(<>.1)),
+}
 
 identifier: Node<Atom<'input>> = {
     ID => Node::new(<>.0, Atom::Id(<>.1)),
