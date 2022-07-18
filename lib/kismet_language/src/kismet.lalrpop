@@ -32,7 +32,7 @@ or_test = Infix<OR, and_test>;
 and_test = Infix<AND, not_test>;
 
 not_test = {
-  <l:NOT> <v:not_test> => Node::new(l.span.clone() + v.span.clone(), Expr::Unary(l, v)),
+  <lhs:NOT> <val:not_test> => Node::new(lhs.span.clone() + val.span.clone(), Expr::Unary(lhs, val)),
   c_expr,
 }
 
@@ -41,20 +41,22 @@ a_expr = Infix<ADDS, m_expr>;
 m_expr = Infix<MULS, u_expr>;
 
 u_expr = {
-  <l:ADDS> <v:primary> => Node::new(l.span.clone() + v.span.clone(), Expr::Unary(l, v)),
+  <lhs:ADDS> <val:primary> => Node::new(lhs.span.clone() + val.span.clone(), Expr::Unary(lhs, val)),
   power,
 }
 
 power = Infix<POW, coefficient>;
 
 coefficient = {
-  <l:numeric_literal> <r:die> => Node::new(l.span.clone() + r.span.clone(), Expr::Coefficient(l, r)),
-  <l:enclosure> <r:die> => Node::new(l.span.clone() + r.span.clone(), Expr::Coefficient(l, r)),
+  <lhs:numeric_literal> <rhs:die> =>
+    Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Coefficient(lhs, rhs)),
+  <lhs:enclosure> <rhs:die> =>
+    Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Coefficient(lhs, rhs)),
   die,
 }
 
 die = {
-  <l:DIE> <v:primary> => Node::new(l.span + v.span.clone(), Expr::Die(v)),
+  <lhs:DIE> <val:primary> => Node::new(lhs.span + val.span.clone(), Expr::Die(val)),
   primary,
 }
 
@@ -70,31 +72,34 @@ atom: Node<Expr<'input>> = {
 }
 
 attributeref: Node<Expr<'input>> = {
-  <l:primary> DOT <r:ID> =>
-    Node::new(l.span.clone() + r.0.clone(), Expr::Attribute(l, Node::new(r.0.clone(), r.1))),
-  <l:DIE> DOT <r:ID> =>
-    Node::new(l.span.clone() + r.0.clone(), Expr::Attribute(Node::new(l.span, Expr::Atom(Atom::Id("d"))), Node::new(r.0.clone(), r.1))),
+  <lhs:primary> DOT <rhs:ID> =>
+    Node::new(lhs.span.clone() + rhs.0.clone(), Expr::Attribute(lhs, Node::new(rhs.0.clone(), rhs.1))),
+  <lhs:DIE> DOT <rhs:ID> =>
+    Node::new(
+      lhs.span.clone() + rhs.0.clone(),
+      Expr::Attribute(Node::new(lhs.span, Expr::Atom(Atom::Id("d"))), Node::new(rhs.0.clone(), rhs.1))
+    ),
 }
 
 enclosure = {
   parenth_form,
   list_display,
   dict_display,
-  <l:LBRACE> <v:stmts> <r:RBRACE> => Node::new(l.span + r.span, Atom::Statements(v)),
+  <lhs:LBRACE> <val:stmts> <rhs:RBRACE> => Node::new(lhs.span + rhs.span, Atom::Statements(val)),
 }
 
 parenth_form: Node<Atom<'input>> = {
-  <l:LPAREN> <v:expression_list> <r:RPAREN> => Node::new(l.span + r.span, Atom::Tuple(v.1)),
-  <l:LPAREN> <v:expression> <r:RPAREN> => Node::new(l.span + r.span, Atom::Expression(v)),
-  <l:LPAREN> <r:RPAREN> => Node::new(l.span + r.span,Atom::Tuple(vec![])),
+  <lhs:LPAREN> <val:expression_list> <rhs:RPAREN> => Node::new(lhs.span + rhs.span, Atom::Tuple(val.1)),
+  <lhs:LPAREN> <val:expression> <rhs:RPAREN> => Node::new(lhs.span + rhs.span, Atom::Expression(val)),
+  <lhs:LPAREN> <rhs:RPAREN> => Node::new(lhs.span + rhs.span,Atom::Tuple(vec![])),
 }
 
 list_display: Node<Atom<'input>> = {
-  <l:LBRACKET> <v:spread_list> <r:RBRACKET> =>
-    Node::new(l.span + r.span, Atom::ListDisplay(v.1)),
-  <l:LBRACKET> <v:list_comprehension> <r:RBRACKET> =>
-    Node::new(l.span + r.span, v),
-  <l:LBRACKET> <r:RBRACKET> => Node::new(l.span + r.span, Atom::ListDisplay(vec![])),
+  <lhs:LBRACKET> <val:spread_list> <rhs:RBRACKET> =>
+    Node::new(lhs.span + rhs.span, Atom::ListDisplay(val.1)),
+  <lhs:LBRACKET> <val:list_comprehension> <rhs:RBRACKET> =>
+    Node::new(lhs.span + rhs.span, val),
+  <lhs:LBRACKET> <rhs:RBRACKET> => Node::new(lhs.span + rhs.span, Atom::ListDisplay(vec![])),
 }
 
 list_comprehension: Atom<'input> = {
@@ -103,11 +108,11 @@ list_comprehension: Atom<'input> = {
 }
 
 dict_display: Node<Atom<'input>> = {
-  <l:LBRACE> <v:key_datum_list> <r:RBRACE> =>
-    Node::new(l.span + r.span, Atom::DictDisplay(v.1)),
-  <l:LBRACE> <v:dict_comprehension> <r:RBRACE> =>
-    Node::new(l.span + r.span, v),
-  <l:LBRACE> <r:RBRACE> => Node::new(l.span + r.span, Atom::DictDisplay(vec![])),
+  <lhs:LBRACE> <val:key_datum_list> <rhs:RBRACE> =>
+    Node::new(lhs.span + rhs.span, Atom::DictDisplay(val.1)),
+  <lhs:LBRACE> <val:dict_comprehension> <rhs:RBRACE> =>
+    Node::new(lhs.span + rhs.span, val),
+  <lhs:LBRACE> <rhs:RBRACE> => Node::new(lhs.span + rhs.span, Atom::DictDisplay(vec![])),
 }
 
 dict_comprehension: Atom<'input> = {
@@ -118,22 +123,22 @@ dict_comprehension: Atom<'input> = {
 spread_list = Join<COMMA, spread_item>;
 spread_item: Node<SpreadItem<'input>> = {
   walrus_expression => Node::new(<>.span, SpreadItem::Expr(*<>.kind)),
-  <l:SPREAD> <v:a_expr> => Node::new(l.span + v.span.clone(), SpreadItem::Spread(v)),
+  <lhs:SPREAD> <val:a_expr> => Node::new(lhs.span + val.span.clone(), SpreadItem::Spread(val)),
 }
 
 key_datum_list = Join<COMMA, key_datum>;
 key_datum: Node<KeyDatum<'input>> = {
-  <l:expression> COLON <r:expression> =>
-    Node::new(l.span.clone() + r.span.clone(), KeyDatum::KeyDatum(l, r)),
-  <l:SPREAD> <v:a_expr> =>
-    Node::new(l.span + v.span.clone(), KeyDatum::Spread(v)),
+  <lhs:expression> COLON <rhs:expression> =>
+    Node::new(lhs.span.clone() + rhs.span.clone(), KeyDatum::KeyDatum(lhs, rhs)),
+  <lhs:SPREAD> <val:a_expr> =>
+    Node::new(lhs.span + val.span.clone(), KeyDatum::Spread(val)),
 }
 
 comp_for: Vec<Node<CompIter<'input>>> = {
-  <l:FOR> <target:target_list> IN <val:or_test> <iter:comp_iter?> => {
-    let node = Node::new(l.span + val.span.clone(), CompIter::For{target: target.1, val});
+  <lhs:FOR> <target:target_list> IN <val:or_test> <iter:comp_iter?> => {
+    let node = Node::new(lhs.span + val.span.clone(), CompIter::For{target: target.1, val});
     match iter {
-      Some(mut v) => {v.push(node); v},
+      Some(mut val) => {val.push(node); val},
       None => vec![node],
     }
   }
@@ -145,10 +150,10 @@ comp_iter = {
 }
 
 comp_if: Vec<Node<CompIter<'input>>> = {
-  <l:IF> <expr:or_test> <iter:comp_iter?> => {
-    let node = Node::new(l.span + expr.span.clone(), CompIter::If(expr));
+  <lhs:IF> <expr:or_test> <iter:comp_iter?> => {
+    let node = Node::new(lhs.span + expr.span.clone(), CompIter::If(expr));
     match iter {
-      Some(mut v) => {v.push(node); v},
+      Some(mut val) => {val.push(node); val},
       None => vec![node],
     }
   }
@@ -156,8 +161,10 @@ comp_if: Vec<Node<CompIter<'input>>> = {
 
 target: Node<Target<'input>> = {
   ID => Node::new(<>.0, Target::Id(<>.1)),
-  <l:LPAREN> <v:target_list> <r:RPAREN> => Node::new(l.span + r.span, Target::TargetTuple(v.1)),
-  <l:LBRACKET> <v:target_list> <r:RBRACKET> => Node::new(l.span + r.span, Target::TargetList(v.1)),
+  <lhs:LPAREN> <val:target_list> <rhs:RPAREN> =>
+    Node::new(lhs.span + rhs.span, Target::TargetTuple(val.1)),
+  <lhs:LBRACKET> <val:target_list> <rhs:RBRACKET> =>
+    Node::new(lhs.span + rhs.span, Target::TargetList(val.1)),
 }
 
 target_list = Join<COMMA, target>;
@@ -243,56 +250,57 @@ extern {
 // Macros
 
 Infix<Op, Next> = {
-  <l:Infix<Op, Next>> <v:Op> <r:Next> => Node::new(l.span.clone() + r.span.clone(), Expr::Op(l, v, r)),
+  <lhs:Infix<Op, Next>> <val:Op> <rhs:Next> =>
+    Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Op(lhs, val, rhs)),
   Next
 }
 
 Join<Delim, Child>: (Span, Vec<Child>) = {
-  <v:JoinInner<Delim, Child>> <d:Delim?> => match d {
-    None => v,
+  <val:JoinInner<Delim, Child>> <d:Delim?> => match d {
+    None => val,
     Some(d) => {
-      (v.0 + d.span, v.1)
+      (val.0 + d.span, val.1)
     }
   },
 }
 
 JoinInner<Delim, Child>: (Span, Vec<Child>) = {
-  <mut v:JoinInner<Delim, Child>> Delim <c:Child> => {
-    (v.0 + c.span.clone(), {v.1.push(c); v.1})
+  <mut val:JoinInner<Delim, Child>> Delim <c:Child> => {
+    (val.0 + c.span.clone(), {val.1.push(c); val.1})
   },
   Child => (<>.span.clone(), vec![<>])
 }
 
 JoinPlus<Delim, Child>: (Span, Vec<Child>) = {
-  <mut v:JoinPlusInner<Delim, Child>> <e:Child?> => match e {
-    None => v,
+  <mut val:JoinPlusInner<Delim, Child>> <e:Child?> => match e {
+    None => val,
     Some(e) => {
-      (v.0 + e.span.clone(), {v.1.push(e); v.1})
+      (val.0 + e.span.clone(), {val.1.push(e); val.1})
     }
   },
 }
 
 JoinPlusInner<Delim, Child>: (Span, Vec<Child>) = {
-  <mut v:JoinPlusInner<Delim, Child>> <c:Child> <d:Delim> => {
-    (v.0 + d.span, {v.1.push(c); v.1})
+  <mut val:JoinPlusInner<Delim, Child>> <c:Child> <d:Delim> => {
+    (val.0 + d.span, {val.1.push(c); val.1})
   },
   <c:Child> <d:Delim>=> (c.span.clone() + d.span, vec![c])
 }
 
 JoinFilter<Delim, Child>: (Span, Vec<Child>) = {
-  <l:Delim*> <v:JoinFilterInner<Delim, Child>> <r:Delim*> =>
+  <lhs:Delim*> <val:JoinFilterInner<Delim, Child>> <rhs:Delim*> =>
     (
-      v.0 + Span::add_option(
-        Token::vec_to_span(&r),
-        Token::vec_to_span(&l),
+      val.0 + Span::add_option(
+        Token::vec_to_span(&rhs),
+        Token::vec_to_span(&lhs),
       ),
-      v.1,
+      val.1,
     )
 }
 
 JoinFilterInner<Delim, Child>: (Span, Vec<Child>) = {
-  <mut v:JoinFilterInner<Delim, Child>> Delim+ <c:Child> => {
-    (v.0 + c.span.clone(), {v.1.push(c); v.1})
+  <mut val:JoinFilterInner<Delim, Child>> Delim+ <c:Child> => {
+    (val.0 + c.span.clone(), {val.1.push(c); val.1})
   },
   Child => (<>.span.clone(), vec![<>])
 }
