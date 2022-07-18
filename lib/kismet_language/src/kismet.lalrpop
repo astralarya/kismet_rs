@@ -97,14 +97,9 @@ parenth_form: Node<Atom<'input>> = {
 list_display: Node<Atom<'input>> = {
     <lhs:LBRACKET> <val:spread_list> <rhs:RBRACKET> =>
         Node::new(lhs.span + rhs.span, Atom::ListDisplay(val.1)),
-    <lhs:LBRACKET> <val:list_comprehension> <rhs:RBRACKET> =>
+    <lhs:LBRACKET> <val:comprehension> <rhs:RBRACKET> =>
         Node::new(lhs.span + rhs.span, val),
     <lhs:LBRACKET> <rhs:RBRACKET> => Node::new(lhs.span + rhs.span, Atom::ListDisplay(vec![])),
-}
-
-list_comprehension: Atom<'input> = {
-    <val:walrus_expression> <mut iter:comp_for> =>
-        Atom::ListComprehension{val, iter: {iter.reverse(); iter}}
 }
 
 dict_display: Node<Atom<'input>> = {
@@ -115,15 +110,20 @@ dict_display: Node<Atom<'input>> = {
     <lhs:LBRACE> <rhs:RBRACE> => Node::new(lhs.span + rhs.span, Atom::DictDisplay(vec![])),
 }
 
-dict_comprehension: Atom<'input> = {
-    <key:expression> COLON <val:expression> <mut iter:comp_for> =>
-        Atom::DictComprehension{key, val, iter: {iter.reverse(); iter}},
-}
-
 spread_list = Join<COMMA, spread_item>;
 spread_item: Node<SpreadItem<'input>> = {
     walrus_expression => Node::new(<>.span, SpreadItem::Expr(*<>.kind)),
     <lhs:SPREAD> <val:a_expr> => Node::new(lhs.span + val.span.clone(), SpreadItem::Spread(val)),
+}
+
+comprehension: Atom<'input> = {
+    <val:walrus_expression> <mut iter:comp_for> =>
+        Atom::ListComprehension{val, iter: {iter.reverse(); iter}}
+}
+
+dict_comprehension: Atom<'input> = {
+    <key:expression> COLON <val:expression> <mut iter:comp_for> =>
+        Atom::DictComprehension{key, val, iter: {iter.reverse(); iter}},
 }
 
 key_datum_list = Join<COMMA, key_datum>;

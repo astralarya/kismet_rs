@@ -1,4 +1,4 @@
-use kismet_language::{ast::Node, token::TokenKind};
+use kismet_language::token::TokenKind;
 
 mod util;
 use util::{assert_stmt, new_integer, new_op, new_token, new_unary};
