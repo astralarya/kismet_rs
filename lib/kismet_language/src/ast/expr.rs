@@ -8,7 +8,6 @@ use super::{atom::Atom, node::Node};
 #[derive(Debug, PartialEq)]
 pub enum Expr<'input> {
     Stmts(Vec<Node<Expr<'input>>>),
-    TargetList(Vec<Node<Atom<'input>>>),
     Op(Node<Expr<'input>>, Token<'input>, Node<Expr<'input>>),
     Unary(Token<'input>, Node<Expr<'input>>),
     Coefficient(Node<Atom<'input>>, Node<Expr<'input>>),
@@ -17,17 +16,17 @@ pub enum Expr<'input> {
 }
 
 impl<'input> Node<Expr<'input>> {
+    pub fn expr(span: Span, value: Expr<'input>) -> Node<Expr> {
+        Node {
+            span,
+            kind: Box::new(value),
+        }
+    }
+
     pub fn stmts((span, v): (Span, Vec<Node<Expr<'input>>>)) -> Node<Expr<'input>> {
         Node {
             span,
             kind: Box::new(Expr::Stmts(v)),
-        }
-    }
-
-    pub fn target_list((span, vector): (Span, Vec<Node<Atom<'input>>>)) -> Node<Expr<'input>> {
-        Node {
-            span,
-            kind: Box::new(Expr::TargetList(vector)),
         }
     }
 
@@ -75,7 +74,6 @@ impl fmt::Display for Expr<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Expr::Stmts(nodes) => write!(f, "{}", Node::vec_to_string(&nodes, "\n")),
-            Expr::TargetList(v) => write!(f, "{}", Node::vec_to_string(&v, ", ")),
             Expr::Op(left, op, right) => {
                 write!(f, "{}{}{}{}{}", left, op.space(), op, op.space(), right)
             }

@@ -1,13 +1,13 @@
 use std::fmt;
 
-use crate::token::Token;
 use crate::types::{Float, Integer, Span};
 
 use super::{CompIter, Expr, KeyDatum, Node, SpreadItem};
 
 #[derive(Debug, PartialEq)]
 pub enum Atom<'input> {
-    Enclosure(Token<'input>, Node<Expr<'input>>, Token<'input>),
+    Expression(Node<Expr<'input>>),
+    Statements(Node<Expr<'input>>),
     ListDisplay(Vec<Node<SpreadItem<'input>>>),
     ListComprehension {
         value: Node<Expr<'input>>,
@@ -31,17 +31,6 @@ impl<'input> Node<Atom<'input>> {
         return Node {
             span,
             kind: Box::new(value),
-        };
-    }
-
-    pub fn enclosure(
-        l: Token<'input>,
-        n: Node<Expr<'input>>,
-        r: Token<'input>,
-    ) -> Node<Atom<'input>> {
-        return Node {
-            span: l.span.clone() + r.span.clone(),
-            kind: Box::new(Atom::Enclosure(l, n, r)),
         };
     }
 
@@ -98,16 +87,11 @@ impl<'input> Node<Atom<'input>> {
 impl fmt::Display for Atom<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            Atom::Enclosure(left, op, right) => {
-                write!(
-                    f,
-                    "{}{}{}{}{}",
-                    left,
-                    left.space(),
-                    op,
-                    right.space(),
-                    right
-                )
+            Atom::Expression(node) => {
+                write!(f, "({})", node,)
+            }
+            Atom::Statements(node) => {
+                write!(f, "{{{}}}", node,)
             }
             Atom::ListDisplay(nodes) => write!(f, "[{}]", Node::vec_to_string(&nodes, ", ")),
             Atom::ListComprehension { value, iter } => {

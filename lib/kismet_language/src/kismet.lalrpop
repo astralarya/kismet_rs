@@ -1,4 +1,4 @@
-use crate::ast::{Atom, CompIter, Expr, KeyDatum, Node, SpreadItem};
+use crate::ast::*;
 use crate::lexer::LexerError;
 use crate::token::{NumberKind, Token, TokenKind};
 use crate::types::{Integer, Float, Span};
@@ -72,12 +72,12 @@ enclosure = {
   parenth_form,
   list_display,
   dict_display,
-  <l:LBRACE> <v:stmts> <r:RBRACE> => Node::enclosure(<>),
+  <l:LBRACE> <v:stmts> <r:RBRACE> => Node::atom(l.span + r.span, Atom::Statements(v)),
 }
 
 parenth_form: Node<Atom<'input>> = {
   <l:LPAREN> <e:expression_list> <r:RPAREN> => Node::tuple((l.span + r.span, e.1)),
-  <l:LPAREN> <e:expression> <r:RPAREN> => Node::enclosure(<>),
+  <l:LPAREN> <v:expression> <r:RPAREN> => Node::atom(l.span + r.span, Atom::Expression(v)),
   <l:LPAREN> <r:RPAREN> => Node::tuple((l.span + r.span,vec![])),
 }
 
@@ -123,7 +123,7 @@ key_datum: Node<KeyDatum<'input>> = {
 
 comp_for: Vec<Node<CompIter<'input>>> = {
   <l:FOR> <t:target_list> IN <n:or_test> <iter:comp_iter?> => {
-    let node = Node::comp_for(l.span + n.span.clone(), t, n);
+    let node = Node::comp_for(l.span + n.span.clone(), t.1, n);
     match iter {
       Some(mut v) => {v.push(node); v},
       None => vec![node],
@@ -146,15 +146,13 @@ comp_if: Vec<Node<CompIter<'input>>> = {
   }
 }
 
-target = {
-  identifier,
-  LPAREN target_list RPAREN => Node::enclosure(<>),
-  LBRACKET target_list RBRACKET => Node::enclosure(<>),
+target: Node<Target<'input>> = {
+  ID => Node::target(<>.0, Target::Id(<>.1)),
+  <l:LPAREN> <v:target_list> <r:RPAREN> => Node::target(l.span + r.span, Target::TargetTuple(v.1)),
+  <l:LBRACKET> <v:target_list> <r:RBRACKET> => Node::target(l.span + r.span, Target::TargetList(v.1)),
 }
 
-target_list: Node<Expr<'input>> = {
-  Join<COMMA, target> => Node::target_list(<>),
-}
+target_list = Join<COMMA, target>;
 
 identifier: Node<Atom<'input>> = {
   ID => Node::id(<>),
