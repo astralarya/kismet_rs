@@ -7,12 +7,6 @@ use crate::types::Span;
 #[derive(Debug, PartialEq)]
 pub enum Expr<'input> {
     Stmts(Vec<Node<Expr<'input>>>),
-    Comprehension(Node<Expr<'input>>, Vec<Node<Expr<'input>>>),
-    CompFor(
-        Node<Expr<'input>>,
-        Node<Expr<'input>>,
-        Option<Node<Expr<'input>>>,
-    ),
     TargetList(Vec<Node<Atom<'input>>>),
     Op(Node<Expr<'input>>, Token<'input>, Node<Expr<'input>>),
     Unary(Token<'input>, Node<Expr<'input>>),
@@ -26,16 +20,6 @@ impl<'input> Node<Expr<'input>> {
         Node {
             span,
             kind: Box::new(Expr::Stmts(v)),
-        }
-    }
-
-    pub fn comprehension(
-        expr: Node<Expr<'input>>,
-        iter: Vec<Node<Expr<'input>>>,
-    ) -> Node<Expr<'input>> {
-        Node {
-            span: expr.span.clone() + Node::vec_to_span(&iter),
-            kind: Box::new(Expr::Comprehension(expr, iter)),
         }
     }
 
@@ -90,11 +74,6 @@ impl fmt::Display for Expr<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Expr::Stmts(nodes) => write!(f, "{}", Node::vec_to_string(&nodes, "\n")),
-            Expr::Comprehension(e, i) => write!(f, "{} {}", e, Node::vec_to_string(&i, " ")),
-            Expr::CompFor(item, iter, expr) => match expr {
-                Some(node) => write!(f, "FOR {} IN {} IF {}", item, iter, node),
-                None => write!(f, "FOR {} IN {}", item, iter),
-            },
             Expr::TargetList(v) => write!(f, "{}", Node::vec_to_string(&v, ", ")),
             Expr::Op(left, op, right) => {
                 write!(f, "{}{}{}{}{}", left, op.space(), op, op.space(), right)
