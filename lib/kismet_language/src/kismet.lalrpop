@@ -39,13 +39,18 @@ not_test = {
 
 c_expr = Infix<EQS, a_expr>;
 a_expr = Infix<ADDS, m_expr>;
-m_expr = Infix<MULS, u_expr>;
+m_expr = Infix<MULS, power>;
 
-power = Infix<POW, coefficient>;
+power = Infix<POW, u_expr>;
 
 u_expr = {
-    <lhs:ADDS> <val:coefficient> => Node::new(lhs.span.clone() + val.span.clone(), Expr::Unary(lhs, val)),
-    power,
+    <lhs:ADDS> <val:expr_node> => Node::new(lhs.span.clone() + val.span.clone(), Expr::Unary(lhs, val)),
+    expr_node,
+}
+
+expr_node = {
+    primary => Node::new(<>.span.clone(), Expr::Primary(*<>.kind)),
+    coefficient,
 }
 
 coefficient = {
@@ -58,13 +63,17 @@ coefficient = {
 }
 
 coefficient_factor = {
-    numeric_literal,
     enclosure,
+    numeric_literal,
 }
 
 die: Node<Expr<'input>> = {
-    <lhs:DIE> <val:atom> => Node::new(lhs.span + val.span.clone(), Expr::Die(val)),
-    primary => Node::new(<>.span.clone(), Expr::Primary(*<>.kind)),
+    <lhs:DIE> <val:die_val> => Node::new(lhs.span + val.span.clone(), Expr::Die(val)),
+}
+
+die_val = {
+    enclosure,
+    numeric_literal,
 }
 
 primary = {
