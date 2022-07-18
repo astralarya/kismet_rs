@@ -20,12 +20,6 @@ stmt = {
 
 expression_list = <JoinPlus<COMMA, expression>>;
 
-spread_list = Join<COMMA, spread_item>;
-spread_item: Node<SpreadItem<'input>> = {
-  walrus_expression => Node::spread_item((<>.span, SpreadItem::Expr(*<>.kind))),
-  <t:SPREAD> <n:a_expr> => Node::spread_item((t.span + n.span.clone(), SpreadItem::Spread(n))),
-}
-
 expression = {
   walrus_expression,
 }
@@ -106,17 +100,23 @@ dict_display = {
   dict_comprehension,
 }
 
+dict_comprehension: Node<Atom<'input>> = {
+  <l:LBRACE> <key:expression> COLON <value:expression> <mut iter:comp_for> <r:RBRACE> =>
+    Node::dict_comprehension(l.span + r.span, key, value, {iter.reverse(); iter}),
+}
+
+spread_list = Join<COMMA, spread_item>;
+spread_item: Node<SpreadItem<'input>> = {
+  walrus_expression => Node::spread_item((<>.span, SpreadItem::Expr(*<>.kind))),
+  <t:SPREAD> <n:a_expr> => Node::spread_item((t.span + n.span.clone(), SpreadItem::Spread(n))),
+}
+
 key_datum_list = Join<COMMA, key_datum>;
 key_datum: Node<KeyDatum<'input>> = {
   <l:expression> COLON <r:expression> =>
     Node::key_datum((l.span.clone() + r.span.clone(), KeyDatum::KeyDatum(l, r))),
   <o:SPREAD> <e:a_expr> =>
     Node::key_datum((o.span + e.span.clone(), KeyDatum::Spread(e))),
-}
-
-dict_comprehension: Node<Atom<'input>> = {
-  <l:LBRACE> <key:expression> COLON <value:expression> <mut iter:comp_for> <r:RBRACE> =>
-    Node::dict_comprehension(l.span + r.span, key, value, {iter.reverse(); iter}),
 }
 
 comp_for: Vec<Node<CompIter<'input>>> = {
