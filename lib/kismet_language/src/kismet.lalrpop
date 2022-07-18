@@ -51,7 +51,7 @@ coefficient = {
     <lhs:coefficient_factor> <rhs:expr_node> =>
         Node::new(
             lhs.span.clone() + rhs.span.clone(),
-            Expr::Coefficient(Node::new(lhs.span.clone(), Primary::Atom(*lhs.kind)), rhs)
+            Expr::Coefficient(lhs, rhs)
         ),
     expr_node,
 }

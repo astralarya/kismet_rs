@@ -2,14 +2,14 @@ use std::fmt;
 
 use crate::token::Token;
 
-use super::{Node, Primary};
+use super::{Atom, Node, Primary};
 
 #[derive(Debug, PartialEq)]
 pub enum Expr<'input> {
     Stmts(Vec<Node<Expr<'input>>>),
     Op(Node<Expr<'input>>, Token<'input>, Node<Expr<'input>>),
     Unary(Token<'input>, Node<Expr<'input>>),
-    Coefficient(Node<Primary<'input>>, Node<Expr<'input>>),
+    Coefficient(Node<Atom<'input>>, Node<Expr<'input>>),
     Primary(Primary<'input>),
 }
 
