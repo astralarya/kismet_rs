@@ -39,18 +39,6 @@ impl<'input> Node<Expr<'input>> {
         }
     }
 
-    pub fn comp_for(
-        span: Span,
-        item: Node<Expr<'input>>,
-        iter: Node<Expr<'input>>,
-        ifnode: Option<Node<Expr<'input>>>,
-    ) -> Node<Expr<'input>> {
-        Node {
-            span,
-            kind: Box::new(Expr::CompFor(item, iter, ifnode)),
-        }
-    }
-
     pub fn target_list((span, vector): (Span, Vec<Node<Atom<'input>>>)) -> Node<Expr<'input>> {
         Node {
             span,

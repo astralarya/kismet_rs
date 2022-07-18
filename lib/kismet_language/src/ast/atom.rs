@@ -1,13 +1,15 @@
 use std::fmt;
 
-use crate::ast::{Expr, KeyDatum, Node, SpreadItem};
 use crate::token::Token;
 use crate::types::{Float, Integer, Span};
+
+use super::{CompIter, Expr, KeyDatum, Node, SpreadItem};
 
 #[derive(Debug, PartialEq)]
 pub enum Atom<'input> {
     Enclosure(Token<'input>, Node<Expr<'input>>, Token<'input>),
     ListDisplay(Vec<Node<SpreadItem<'input>>>),
+    ListComprehension(Node<Expr<'input>>, Vec<Node<CompIter<'input>>>),
     DictDisplay(Vec<Node<KeyDatum<'input>>>),
     Tuple(Vec<Node<Expr<'input>>>),
     Id(&'input str),
@@ -32,6 +34,17 @@ impl<'input> Node<Atom<'input>> {
         return Node {
             span,
             kind: Box::new(Atom::ListDisplay(v)),
+        };
+    }
+
+    pub fn list_comprehension(
+        span: Span,
+        expr: Node<Expr<'input>>,
+        iter: Vec<Node<CompIter<'input>>>,
+    ) -> Node<Atom<'input>> {
+        return Node {
+            span,
+            kind: Box::new(Atom::ListComprehension(expr, iter)),
         };
     }
 
@@ -93,6 +106,9 @@ impl fmt::Display for Atom<'_> {
                 )
             }
             Atom::ListDisplay(nodes) => write!(f, "[{}]", Node::vec_to_string(&nodes, ", ")),
+            Atom::ListComprehension(node, nodes) => {
+                write!(f, "[{} {}]", node, Node::vec_to_string(&nodes, " "))
+            }
             Atom::DictDisplay(nodes) => write!(f, "{{{}}}", Node::vec_to_string(&nodes, ", ")),
             Atom::Tuple(nodes) => match nodes.len() {
                 1 => write!(f, "({},)", nodes[0]),

@@ -1,4 +1,4 @@
-use crate::ast::{Atom, Expr, KeyDatum, Node, SpreadItem};
+use crate::ast::{Atom, CompIter, Expr, KeyDatum, Node, SpreadItem};
 use crate::lexer::LexerError;
 use crate::token::{NumberKind, Token, TokenKind};
 use crate::types::{Integer, Float, Span};
@@ -90,16 +90,37 @@ parenth_form: Node<Atom<'input>> = {
 list_display: Node<Atom<'input>> = {
   <l:LBRACKET> <v:spread_list> <r:RBRACKET> =>
     Node::list_display((l.span + r.span, v.1)),
-  LBRACKET comprehension RBRACKET => Node::enclosure(<>),
+  list_comprehension,
 }
 
-comprehension: Node<Expr<'input>> = {
-  expression comp_for+ => Node::comprehension(<>)
+list_comprehension: Node<Atom<'input>> = {
+  <l:LBRACKET> <e:walrus_expression> <i:comp_for> <r:RBRACKET> =>
+    Node::list_comprehension(l.span + r.span, e, i),
 }
 
-comp_for: Node<Expr<'input>> = {
-  <l:FOR> <t:target_list> IN <n:or_test> <o:(IF <or_test>)?> =>
-    Node::comp_for(l.span + n.span.clone() + o.as_ref().map_or(None, |x| Some(x.span.clone())), t, n, o)
+comp_for: Vec<Node<CompIter<'input>>> = {
+  <l:FOR> <t:target_list> IN <n:or_test> <iter:comp_iter?> => {
+    let node = Node::comp_for(l.span + n.span.clone(), t, n);
+    match iter {
+      Some(mut v) => {v.push(node); v},
+      None => vec![node],
+    }
+  }
+}
+
+comp_iter = {
+  comp_for,
+  comp_if,
+}
+
+comp_if: Vec<Node<CompIter<'input>>> = {
+  <l:IF> <n:or_test> <iter:comp_iter?> => {
+    let node = Node::comp_if(l.span + n.span.clone(), n);
+    match iter {
+      Some(mut v) => {v.push(node); v},
+      None => vec![node],
+    }
+  }
 }
 
 dict_display: Node<Atom<'input>> = {
