@@ -15,12 +15,12 @@ stmts: Node<Expr<'input>> = {
 }
 
 stmt: Node<Expr<'input>> = {
-  expr,
+  expression,
 }
 
-exprs: (Span, Vec<Node<Expr<'input>>>) = <JoinPlus<COMMA, expr>>;
+expression_list: (Span, Vec<Node<Expr<'input>>>) = <JoinPlus<COMMA, expression>>;
 
-expr: Node<Expr<'input>> = {
+expression: Node<Expr<'input>> = {
   or_test,
 }
 
@@ -66,18 +66,18 @@ enclosure: Node<Atom<'input>> = {
 }
 
 parenth_form: Node<Atom<'input>> = {
-  <l:LPAREN> <e:exprs> <r:RPAREN> => Node::tuple((l.span + r.span, e.1)),
-  <l:LPAREN> <e:expr> <r:RPAREN> => Node::enclosure(<>),
+  <l:LPAREN> <e:expression_list> <r:RPAREN> => Node::tuple((l.span + r.span, e.1)),
+  <l:LPAREN> <e:expression> <r:RPAREN> => Node::enclosure(<>),
   <l:LPAREN> <r:RPAREN> => Node::tuple((l.span + r.span,vec![])),
 }
 
 list_display: Node<Atom<'input>> = {
-  LBRACKET <exprs> RBRACKET => Node::vector(<>),
+  LBRACKET <expression_list> RBRACKET => Node::vector(<>),
   LBRACKET comprehension RBRACKET => Node::enclosure(<>),
 }
 
 comprehension: Node<Expr<'input>> = {
-  expr comp_for+ => Node::comprehension(<>)
+  expression comp_for+ => Node::comprehension(<>)
 }
 
 comp_for: Node<Expr<'input>> = {
