@@ -188,7 +188,7 @@ extern {
 
 // Macros
 
-Infix<Op, Next>: Node<Expr<'input>> = {
+Infix<Op, Next> = {
   <l:Infix<Op, Next>> <o:Op> <r:Next> => Node::op(<>),
   Next
 }
