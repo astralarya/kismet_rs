@@ -2,17 +2,15 @@ use std::fmt;
 
 use crate::token::Token;
 
-use super::{atom::Atom, node::Node};
+use super::{Node, Primary};
 
 #[derive(Debug, PartialEq)]
 pub enum Expr<'input> {
     Stmts(Vec<Node<Expr<'input>>>),
     Op(Node<Expr<'input>>, Token<'input>, Node<Expr<'input>>),
     Unary(Token<'input>, Node<Expr<'input>>),
-    Coefficient(Node<Atom<'input>>, Node<Expr<'input>>),
-    Die(Node<Expr<'input>>),
-    Attribute(Node<Expr<'input>>, Node<&'input str>),
-    Atom(Atom<'input>),
+    Coefficient(Node<Primary<'input>>, Node<Expr<'input>>),
+    Primary(Primary<'input>),
 }
 
 impl fmt::Display for Expr<'_> {
@@ -24,16 +22,7 @@ impl fmt::Display for Expr<'_> {
             }
             Expr::Unary(lhs, val) => write!(f, "{}{}{}", lhs, lhs.space(), val),
             Expr::Coefficient(lhs, rhs) => write!(f, "{}{}", lhs, rhs),
-            Expr::Attribute(lhs, rhs) => write!(f, "{}.{}", lhs, rhs),
-            Expr::Die(val) => match *val.kind {
-                Expr::Atom(Atom::Integer(_))
-                | Expr::Atom(Atom::Tuple(_))
-                | Expr::Atom(Atom::ListDisplay(_)) => {
-                    write!(f, "d{}", val)
-                }
-                _ => write!(f, "d({})", val),
-            },
-            Expr::Atom(val) => write!(f, "{}", val),
+            Expr::Primary(val) => write!(f, "{}", val),
         }
     }
 }

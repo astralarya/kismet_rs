@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use kismet_language::{
-    ast::{Atom, Expr, Node},
+    ast::*,
     parse,
     token::{Token, TokenKind},
     types::{Integer, Span},
@@ -36,18 +36,23 @@ pub fn new_unary<'input>(lhs: Token<'input>, val: Node<Expr<'input>>) -> Node<Ex
 }
 
 #[allow(dead_code)]
+pub fn new_atom<'input>(range: Range<usize>, val: Atom<'input>) -> Node<Expr<'input>> {
+    Node::new(Span(range), Expr::Primary(Primary::Atom(val)))
+}
+
+#[allow(dead_code)]
 pub fn new_integer<'input>(range: Range<usize>, val: Integer) -> Node<Expr<'input>> {
-    Node::new(Span(range), Expr::Atom(Atom::Integer(val)))
+    new_atom(range, Atom::Integer(val))
 }
 
 #[allow(dead_code)]
 pub fn new_string<'input>(range: Range<usize>, val: &'input str) -> Node<Expr<'input>> {
-    Node::new(Span(range), Expr::Atom(Atom::String(String::from(val))))
+    new_atom(range, Atom::String(String::from(val)))
 }
 
 #[allow(dead_code)]
 pub fn new_id<'input>(range: Range<usize>, val: &'input str) -> Node<Expr<'input>> {
-    Node::new(Span(range), Expr::Atom(Atom::Id(val)))
+    new_atom(range, Atom::Id(val))
 }
 
 #[allow(dead_code)]

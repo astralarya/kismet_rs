@@ -40,44 +40,58 @@ c_expr = Infix<EQS, a_expr>;
 a_expr = Infix<ADDS, m_expr>;
 m_expr = Infix<MULS, u_expr>;
 
+power = Infix<POW, coefficient>;
+
 u_expr = {
-    <lhs:ADDS> <val:primary> => Node::new(lhs.span.clone() + val.span.clone(), Expr::Unary(lhs, val)),
+    <lhs:ADDS> <val:coefficient> => Node::new(lhs.span.clone() + val.span.clone(), Expr::Unary(lhs, val)),
     power,
 }
 
-power = Infix<POW, coefficient>;
-
 coefficient = {
-    <lhs:numeric_literal> <rhs:die> =>
-        Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Coefficient(lhs, rhs)),
-    <lhs:enclosure> <rhs:die> =>
-        Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Coefficient(lhs, rhs)),
-    die,
+    <lhs:coefficient_factor> <rhs:expr_node> =>
+        Node::new(
+            lhs.span.clone() + rhs.span.clone(),
+            Expr::Coefficient(Node::new(lhs.span.clone(), Primary::Atom(*lhs.kind)), rhs)
+        ),
+    expr_node,
+}
+
+coefficient_factor = {
+    numeric_literal,
+    enclosure,
+}
+
+expr_node: Node<Expr<'input>> = {
+    die => Node::new(<>.span.clone(), Expr::Primary(*<>.kind)),
 }
 
 die = {
-    <lhs:DIE> <val:primary> => Node::new(lhs.span + val.span.clone(), Expr::Die(val)),
+    <lhs:DIE> <val:primary> => Node::new(lhs.span + val.span.clone(), Primary::Die(val)),
     primary,
 }
 
 primary = {
-    atom,
     attributeref,
+    primary_node,
 }
 
-atom: Node<Expr<'input>> = {
-    enclosure => Node::new(<>.span.clone(), Expr::Atom(*<>.kind)),
-    identifier => Node::new(<>.span.clone(), Expr::Atom(*<>.kind)),
-    literal => Node::new(<>.span.clone(), Expr::Atom(*<>.kind)),
+primary_node: Node<Primary<'input>> = {
+    atom => Node::new(<>.span.clone(), Primary::Atom(*<>.kind)),
 }
 
-attributeref: Node<Expr<'input>> = {
+atom = {
+    enclosure,
+    identifier,
+    literal,
+}
+
+attributeref: Node<Primary<'input>> = {
     <lhs:primary> DOT <rhs:ID> =>
-        Node::new(lhs.span.clone() + rhs.0.clone(), Expr::Attribute(lhs, Node::new(rhs.0.clone(), rhs.1))),
+        Node::new(lhs.span.clone() + rhs.0.clone(), Primary::Attribute(lhs, Node::new(rhs.0.clone(), rhs.1))),
     <lhs:DIE> DOT <rhs:ID> =>
         Node::new(
             lhs.span.clone() + rhs.0.clone(),
-            Expr::Attribute(Node::new(lhs.span, Expr::Atom(Atom::Id("d"))), Node::new(rhs.0.clone(), rhs.1))
+            Primary::Attribute(Node::new(lhs.span, Primary::Atom(Atom::Id("d"))), Node::new(rhs.0.clone(), rhs.1))
         ),
 }
 
