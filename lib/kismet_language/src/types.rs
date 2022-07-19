@@ -84,7 +84,7 @@ impl SliceSpan for RangeTo<usize> {
 impl Index<RangeFull> for Span {
     type Output = Span;
 
-    fn index(&self, index: RangeFull) -> &Self::Output {
+    fn index(&self, _: RangeFull) -> &Self::Output {
         &self
     }
 }
