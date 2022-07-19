@@ -9,7 +9,8 @@ pub fn numeric_literal<'input>(
     input: Node<&'input str>,
 ) -> KResult<Node<&'input str>, Node<Atom<'input>>> {
     token_action(|x| match *x.data {
-        Token::Number(NumberKind::Integer(i)) => Some(Node::new(x.span, Atom::Integer(i))),
+        Token::Number(NumberKind::Integer(y)) => Some(Node::new(x.span, Atom::Integer(y))),
+        Token::Number(NumberKind::Float(y)) => Some(Node::new(x.span, Atom::Float(y))),
         _ => None,
     })(input)
 }
