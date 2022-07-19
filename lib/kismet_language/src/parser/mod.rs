@@ -1,3 +1,4 @@
+mod atom;
 mod expr;
 mod token;
 
@@ -24,6 +25,7 @@ pub enum ErrorKind {
     Eof,
     Lex,
     Incomplete(Needed),
+    Predicate,
 }
 
 pub fn parse<'input>(input: &'input str) -> Result<Node<Expr<'input>>, Error<Node<&'input str>>> {

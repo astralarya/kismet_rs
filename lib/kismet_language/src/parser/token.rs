@@ -32,6 +32,23 @@ pub fn token<'input>(input: Node<&'input str>) -> KResult<Node<&'input str>, Nod
     }
 }
 
+pub fn token_if<'input, P>(
+    input: Node<&'input str>,
+    predicate: P,
+) -> KResult<Node<&'input str>, Node<Token<'input>>>
+where
+    P: Fn(Node<Token>) -> bool,
+{
+    let (tail, head) = token(input.clone())?;
+    match predicate(head.clone()) {
+        true => Ok((tail, head)),
+        false => Err(Err::Error(Error {
+            input,
+            code: ErrorKind::Predicate,
+        })),
+    }
+}
+
 #[derive(Logos, Clone, Debug, PartialEq)]
 pub enum Token<'input> {
     #[regex(r"[;\n]")]
