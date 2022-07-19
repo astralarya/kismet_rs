@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::token::Token;
+use crate::parser::Token;
 
 use super::{Atom, Node, Primary};
 

@@ -1,10 +1,9 @@
-pub mod token;
-
 use nom::{error::Error, Err, Parser};
 
-use token::Token;
-
 use crate::{ast::Node, types::Span};
+
+mod token;
+pub use token::Token;
 
 pub type ParseResult<I, O> = Result<Node<O>, Err<Error<Node<I>>>>;
 
