@@ -24,6 +24,6 @@ pub fn skip<'input>(i: Node<&'input str>) -> IResult<Node<&'input str>, Node<&'i
 }
 
 pub fn delim<'input>(i: Node<&'input str>) -> IResult<Node<&'input str>, Node<Token<'input>>> {
-    let (lhs, rhs) = delimited(skip, tag(";"), skip)(i)?;
-    Ok((rhs, Node::new(lhs.span, Token::DELIM)))
+    let (suffix, prefix) = delimited(skip, tag(";"), skip)(i)?;
+    Ok((suffix, Node::new(prefix.span, Token::DELIM)))
 }

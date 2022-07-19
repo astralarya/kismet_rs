@@ -136,23 +136,25 @@ impl<T: InputLength> InputLength for Node<T> {
     }
 }
 
-impl<T: InputTake> InputTake for Node<T> {
+impl<T: InputTake + InputLength> InputTake for Node<T> {
     fn take(&self, count: usize) -> Self {
+        let start = self.span.len() - self.data.input_len();
         Node {
-            span: self.span.slice(..count),
+            span: self.span.slice(start..start + count),
             data: Box::new(self.data.take(count)),
         }
     }
     fn take_split(&self, count: usize) -> (Self, Self) {
-        let (lhs, rhs) = self.data.take_split(count);
+        let start = self.span.len() - self.data.input_len();
+        let (suffix, prefix) = self.data.take_split(count);
         (
             Node {
-                span: self.span.slice(..count),
-                data: Box::new(lhs),
+                span: self.span.slice(start + count..),
+                data: Box::new(suffix),
             },
             Node {
-                span: self.span.slice(count..),
-                data: Box::new(rhs),
+                span: self.span.slice(start..start + count),
+                data: Box::new(prefix),
             },
         )
     }
@@ -166,16 +168,17 @@ impl<'input, T: InputTakeAtPosition + InputLength> InputTakeAtPosition for Node<
         P: Fn(Self::Item) -> bool,
     {
         match self.data.split_at_position::<P, ()>(predicate) {
-            Ok((lhs, rhs)) => {
-                let loc = lhs.input_len();
+            Ok((suffix, prefix)) => {
+                let start = self.span.len() - self.data.input_len();
+                let count = prefix.input_len();
                 Ok((
                     Node {
-                        span: self.span.slice(..loc),
-                        data: Box::new(lhs),
+                        span: self.span.slice(start + count..),
+                        data: Box::new(suffix),
                     },
                     Node {
-                        span: self.span.slice(loc..),
-                        data: Box::new(rhs),
+                        span: self.span.slice(start..start + count),
+                        data: Box::new(prefix),
                     },
                 ))
             }
@@ -192,16 +195,17 @@ impl<'input, T: InputTakeAtPosition + InputLength> InputTakeAtPosition for Node<
         P: Fn(Self::Item) -> bool,
     {
         match self.data.split_at_position1::<P, ()>(predicate, e) {
-            Ok((lhs, rhs)) => {
-                let loc = lhs.input_len();
+            Ok((suffix, prefix)) => {
+                let start = self.span.len() - self.data.input_len();
+                let count = prefix.input_len();
                 Ok((
                     Node {
-                        span: self.span.slice(..loc),
-                        data: Box::new(lhs),
+                        span: self.span.slice(start + count..),
+                        data: Box::new(suffix),
                     },
                     Node {
-                        span: self.span.slice(loc..),
-                        data: Box::new(rhs),
+                        span: self.span.slice(start..start + count),
+                        data: Box::new(prefix),
                     },
                 ))
             }
@@ -217,16 +221,17 @@ impl<'input, T: InputTakeAtPosition + InputLength> InputTakeAtPosition for Node<
         P: Fn(Self::Item) -> bool,
     {
         match self.data.split_at_position_complete::<P, ()>(predicate) {
-            Ok((lhs, rhs)) => {
-                let loc = lhs.input_len();
+            Ok((suffix, prefix)) => {
+                let start = self.span.len() - self.data.input_len();
+                let count = prefix.input_len();
                 Ok((
                     Node {
-                        span: self.span.slice(..loc),
-                        data: Box::new(lhs),
+                        span: self.span.slice(start + count..),
+                        data: Box::new(suffix),
                     },
                     Node {
-                        span: self.span.slice(loc..),
-                        data: Box::new(rhs),
+                        span: self.span.slice(start..start + count),
+                        data: Box::new(prefix),
                     },
                 ))
             }
@@ -243,16 +248,17 @@ impl<'input, T: InputTakeAtPosition + InputLength> InputTakeAtPosition for Node<
         P: Fn(Self::Item) -> bool,
     {
         match self.data.split_at_position1_complete::<P, ()>(predicate, e) {
-            Ok((lhs, rhs)) => {
-                let loc = lhs.input_len();
+            Ok((suffix, prefix)) => {
+                let start = self.span.len() - self.data.input_len();
+                let count = prefix.input_len();
                 Ok((
                     Node {
-                        span: self.span.slice(..loc),
-                        data: Box::new(lhs),
+                        span: self.span.slice(start + count..),
+                        data: Box::new(suffix),
                     },
                     Node {
-                        span: self.span.slice(loc..),
-                        data: Box::new(rhs),
+                        span: self.span.slice(start..start + count),
+                        data: Box::new(prefix),
                     },
                 ))
             }

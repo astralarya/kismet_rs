@@ -51,6 +51,10 @@ impl Span {
     pub fn slice<T: SliceSpan>(&self, range: T) -> Self {
         range.slice_span(&self)
     }
+
+    pub fn len(&self) -> usize {
+        self.end - self.start
+    }
 }
 
 pub trait SliceSpan {
