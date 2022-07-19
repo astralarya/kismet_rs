@@ -7,7 +7,7 @@ use nom::{
 
 use crate::types::Span;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Node<T> {
     pub span: Span,
     pub data: Box<T>,

@@ -2,15 +2,14 @@ use std::ops::Range;
 
 use kismet_language::{
     ast::*,
-    parse,
-    token::{Token, TokenKind},
+    parser::{parse, Token},
     types::{Integer, Span},
 };
 
 #[allow(dead_code)]
 pub fn assert_stmt(node: Node<Expr>, input: &str) {
     assert_eq!(
-        Ok(Node::new(Span(0..input.len()), Expr::Stmts(vec![node]))),
+        Ok(Node::new(Span::from(input), Expr::Stmts(vec![node]))),
         parse(input)
     )
 }
@@ -18,26 +17,23 @@ pub fn assert_stmt(node: Node<Expr>, input: &str) {
 #[allow(dead_code)]
 pub fn new_op<'input>(
     lhs: Node<Expr<'input>>,
-    val: Token<'input>,
+    val: Node<Token<'input>>,
     rhs: Node<Expr<'input>>,
 ) -> Node<Expr<'input>> {
     Node {
         span: lhs.span.clone() + rhs.span.clone(),
-        kind: Box::new(Expr::Op(lhs, val, rhs)),
+        data: Box::new(Expr::Op(lhs, val, rhs)),
     }
 }
 
 #[allow(dead_code)]
-pub fn new_unary<'input>(lhs: Token<'input>, val: Node<Expr<'input>>) -> Node<Expr<'input>> {
-    Node {
-        span: lhs.span.clone() + val.span.clone(),
-        kind: Box::new(Expr::Unary(lhs, val)),
-    }
+pub fn new_unary<'input>(lhs: Node<Token<'input>>, val: Node<Expr<'input>>) -> Node<Expr<'input>> {
+    Node::new(lhs.span.clone() + val.span.clone(), Expr::Unary(lhs, val))
 }
 
 #[allow(dead_code)]
 pub fn new_atom<'input>(range: Range<usize>, val: Atom<'input>) -> Node<Expr<'input>> {
-    Node::new(Span(range), Expr::Primary(Primary::Atom(val)))
+    Node::new(Span::new(range), Expr::Primary(Primary::Atom(val)))
 }
 
 #[allow(dead_code)]
@@ -56,9 +52,6 @@ pub fn new_id<'input>(range: Range<usize>, val: &'input str) -> Node<Expr<'input
 }
 
 #[allow(dead_code)]
-pub fn new_token(range: Range<usize>, kind: TokenKind) -> Token {
-    Token {
-        span: Span(range),
-        kind,
-    }
+pub fn new_token<'input>(range: Range<usize>, token: Token<'input>) -> Node<Token<'input>> {
+    Node::new(Span::new(range), token)
 }

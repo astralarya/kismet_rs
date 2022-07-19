@@ -40,7 +40,7 @@ pub fn run(state: &mut State) {
                             // PrintLevel::Output => println!("{}", x),
                             PrintLevel::None => (),
                         },
-                        Err(e) => eprintln!("{}", e),
+                        Err(e) => eprintln!("{:#?}", e),
                     }
                 }
             }

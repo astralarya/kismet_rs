@@ -1,12 +1,7 @@
 use std::fmt;
 
 use logos::{Lexer, Logos};
-use nom::{
-    bytes::complete::{tag, take_while},
-    error::Error,
-    sequence::delimited,
-    IResult, Parser,
-};
+use nom::Err;
 use syn::{parse_str, LitFloat, LitInt, LitStr};
 
 use crate::{
@@ -14,31 +9,27 @@ use crate::{
     types::{Float, Integer},
 };
 
-pub fn skip<'input>(i: Node<&'input str>) -> IResult<Node<&'input str>, Node<&'input str>> {
-    let chars = " \t\r";
-    take_while(move |c| chars.contains(c))(i)
-}
+use super::{Error, ErrorKind, KResult};
 
-pub fn token<'input, P>(
-    parser: P,
-    token: impl Fn(Node<&'input str>) -> Token<'input>,
-) -> impl FnMut(Node<&'input str>) -> IResult<Node<&'input str>, Node<Token<'input>>>
-where
-    P: Parser<Node<&'input str>, Node<&'input str>, Error<Node<&'input str>>>,
-{
-    let mut curry = delimited(skip, parser, skip);
-    move |i: Node<&'input str>| {
-        let (tail, head) = curry(i)?;
-        Ok((tail, Node::new(head.span, token(head))))
+pub fn token<'input>(input: Node<&'input str>) -> KResult<Node<&'input str>, Node<Token<'input>>> {
+    let mut lexer = Token::lexer(&input.data);
+    match lexer.next() {
+        Some(Token::ERROR) => Err(Err::Error(Error {
+            input,
+            code: ErrorKind::Lex,
+        })),
+        Some(val) => {
+            let start = input.span.len() - lexer.remainder().len();
+            Ok((
+                Node::new(input.span.slice(start..), lexer.remainder()),
+                Node::new(input.span.slice(..start), val),
+            ))
+        }
+        None => Err(Err::Error(Error {
+            input: input,
+            code: ErrorKind::Eof,
+        })),
     }
-}
-
-pub fn delim<'input>(i: Node<&'input str>) -> IResult<Node<&'input str>, Node<Token<'input>>> {
-    token(tag(";"), |_| Token::DELIM)(i)
-}
-
-pub fn comma<'input>(i: Node<&'input str>) -> IResult<Node<&'input str>, Node<Token<'input>>> {
-    token(tag(","), |_| Token::COMMA)(i)
 }
 
 #[derive(Logos, Clone, Debug, PartialEq)]
