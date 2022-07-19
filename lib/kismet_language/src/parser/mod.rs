@@ -6,7 +6,7 @@ use token::Token;
 
 use crate::{ast::Node, types::Span};
 
-type ParseResult<I, O> = Result<Node<O>, Err<Error<Node<I>>>>;
+pub type ParseResult<I, O> = Result<Node<O>, Err<Error<Node<I>>>>;
 
 pub fn parse<'input>(input: &'input str) -> ParseResult<&'input str, Token<'input>> {
     run_parser(&mut token::delim, input)
