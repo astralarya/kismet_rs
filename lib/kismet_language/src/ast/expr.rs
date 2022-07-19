@@ -12,6 +12,7 @@ pub enum Expr<'input> {
     Coefficient(Node<Atom<'input>>, Node<Expr<'input>>),
     Die(Node<Atom<'input>>),
     Primary(Primary<'input>),
+    Token(Token<'input>),
 }
 
 impl fmt::Display for Expr<'_> {
@@ -36,6 +37,7 @@ impl fmt::Display for Expr<'_> {
                 _ => write!(f, "d{}", val),
             },
             Expr::Primary(val) => write!(f, "{}", val),
+            Expr::Token(val) => write!(f, "{}", val),
         }
     }
 }
