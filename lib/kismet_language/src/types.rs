@@ -1,7 +1,6 @@
 use std::{
     cmp::{max, min},
-    ops,
-    ops::{Deref, Range},
+    ops::{self, Index, Range, RangeFrom, RangeFull, RangeTo},
 };
 
 use num_complex::Complex;
@@ -11,8 +10,11 @@ pub type Integer = i32;
 pub type Float = f32;
 pub type Imaginary = Complex<f32>;
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Span(pub Range<usize>);
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Span {
+    pub start: usize,
+    pub end: usize,
+}
 
 impl Span {
     pub fn add_option(lhs: Option<Span>, rhs: Option<Span>) -> Option<Span> {
@@ -38,15 +40,57 @@ impl Span {
     }
 }
 
-impl Deref for Span {
-    type Target = Range<usize>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl Span {
+    pub fn new(range: Range<usize>) -> Self {
+        Span {
+            start: range.start,
+            end: range.end,
+        }
+    }
+
+    pub fn slice<T: SliceSpan>(&self, range: T) -> Self {
+        range.slice_span(&self)
+    }
+}
+
+pub trait SliceSpan {
+    fn slice_span(&self, span: &Span) -> Span;
+}
+
+impl SliceSpan for usize {
+    fn slice_span(&self, span: &Span) -> Span {
+        Span::new(span.start + self..span.start + self)
+    }
+}
+
+impl SliceSpan for Range<usize> {
+    fn slice_span(&self, span: &Span) -> Span {
+        Span::new(span.start + self.start..span.start + self.end)
+    }
+}
+
+impl SliceSpan for RangeFrom<usize> {
+    fn slice_span(&self, span: &Span) -> Span {
+        Span::new(span.start + self.start..span.end)
+    }
+}
+
+impl SliceSpan for RangeTo<usize> {
+    fn slice_span(&self, span: &Span) -> Span {
+        Span::new(span.start..span.start + self.end)
+    }
+}
+
+impl Index<RangeFull> for Span {
+    type Output = Span;
+
+    fn index(&self, index: RangeFull) -> &Self::Output {
+        &self
     }
 }
 
 overload!((l: ?Span) + (r: ?Span) -> Span {
-    Span(min(l.start, r.start)..max(l.end, r.end))
+    Span::new(min(l.start, r.start)..max(l.end, r.end))
 });
 
 overload!((l: ?Span) + (r: ?Option<Span>) -> Span {

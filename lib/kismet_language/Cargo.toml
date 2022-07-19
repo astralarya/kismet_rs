@@ -10,6 +10,8 @@ lalrpop = "0.19.8"
 
 [dependencies]
 ndarray = "0.15.4"
+nom = "7.1.1"
+nom_locate = "4.0.0"
 num-complex = "0.4.2"
 overload = "0.1.1"
 lalrpop-util = "0.19.8"
