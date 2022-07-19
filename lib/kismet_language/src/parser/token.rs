@@ -33,19 +33,55 @@ pub fn token<'input>(input: Node<&'input str>) -> KResult<Node<&'input str>, Nod
 }
 
 pub fn token_if<'input, P>(
-    input: Node<&'input str>,
     predicate: P,
-) -> KResult<Node<&'input str>, Node<Token<'input>>>
+) -> impl FnMut(Node<&'input str>) -> KResult<Node<&'input str>, Node<Token<'input>>>
 where
     P: Fn(Node<Token>) -> bool,
 {
-    let (tail, head) = token(input.clone())?;
-    match predicate(head.clone()) {
-        true => Ok((tail, head)),
-        false => Err(Err::Error(Error {
-            input,
-            code: ErrorKind::Predicate,
-        })),
+    move |input: Node<&'input str>| {
+        let (tail, head) = token(input.clone())?;
+        match predicate(head.clone()) {
+            true => Ok((tail, head)),
+            false => Err(Err::Error(Error {
+                input,
+                code: ErrorKind::Predicate,
+            })),
+        }
+    }
+}
+
+pub fn token_tag<'input>(
+    tag: Token<'static>,
+) -> impl FnMut(Node<&'input str>) -> KResult<Node<&'input str>, Node<Token<'input>>>
+where
+{
+    move |input: Node<&'input str>| {
+        let (tail, head) = token(input.clone())?;
+        match *head.data == tag {
+            true => Ok((tail, head)),
+            false => Err(Err::Error(Error {
+                input,
+                code: ErrorKind::Predicate,
+            })),
+        }
+    }
+}
+
+pub fn token_action<'input, T, Q>(
+    action: Q,
+) -> impl FnMut(Node<&'input str>) -> KResult<Node<&'input str>, T>
+where
+    Q: Fn(Node<Token>) -> Option<T>,
+{
+    move |input: Node<&'input str>| {
+        let (tail, head) = token(input.clone())?;
+        match action(head) {
+            Some(t) => Ok((tail, t)),
+            None => Err(Err::Error(Error {
+                input,
+                code: ErrorKind::Predicate,
+            })),
+        }
     }
 }
 
