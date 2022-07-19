@@ -4,9 +4,10 @@ use nom::{
     IResult,
 };
 
-use crate::types::{Float, Integer};
-
-use super::Spanned;
+use crate::{
+    ast::Node,
+    types::{Float, Integer},
+};
 
 #[derive(Debug)]
 pub enum Token<'input> {
@@ -17,22 +18,12 @@ pub enum Token<'input> {
     Id(&'input str),
 }
 
-pub fn skip<'input>(
-    i: Spanned<&'input str>,
-) -> IResult<Spanned<&'input str>, Spanned<&'input str>> {
+pub fn skip<'input>(i: Node<&'input str>) -> IResult<Node<&'input str>, Node<&'input str>> {
     let chars = " \t\r";
     take_while(move |c| chars.contains(c))(i)
 }
 
-pub fn delim<'input>(
-    i: Spanned<&'input str>,
-) -> IResult<Spanned<&'input str>, Spanned<Token<'input>>> {
+pub fn delim<'input>(i: Node<&'input str>) -> IResult<Node<&'input str>, Node<Token<'input>>> {
     let (lhs, rhs) = delimited(skip, tag(";"), skip)(i)?;
-    Ok((
-        rhs,
-        Spanned {
-            span: lhs.span,
-            data: Token::DELIM,
-        },
-    ))
+    Ok((rhs, Node::new(lhs.span, Token::DELIM)))
 }

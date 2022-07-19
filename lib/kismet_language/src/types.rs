@@ -114,3 +114,21 @@ overload!((l: ?Span) + (r: ?Option<&Span>) -> Span {
 overload!((l: ?Option<&Span>) + (r: ?Span) -> Span {
     r + l
 });
+
+impl<'input> From<&'input str> for Span {
+    fn from(input: &'input str) -> Self {
+        Span::new(0..input.len())
+    }
+}
+
+impl From<String> for Span {
+    fn from(input: String) -> Self {
+        Span::new(0..input.len())
+    }
+}
+
+impl<T> From<Vec<T>> for Span {
+    fn from(input: Vec<T>) -> Self {
+        Span::new(0..input.len())
+    }
+}

@@ -23,7 +23,7 @@ impl fmt::Display for Expr<'_> {
             }
             Expr::Unary(lhs, val) => write!(f, "{}{}{}", lhs, lhs.space(), val),
             Expr::Coefficient(lhs, rhs) => write!(f, "{}{}", lhs, rhs),
-            Expr::Die(val) => match *val.kind {
+            Expr::Die(val) => match *val.data {
                 Atom::Id(_) => write!(f, "d({})", val),
                 _ => write!(f, "d{}", val),
             },
