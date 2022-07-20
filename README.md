@@ -1,6 +1,6 @@
 # kismet
 
-Kismet is..
+Kismet is...
 * a dice roll parser
 * stochastic linear algebra language
 * chat bot with personality ;D
