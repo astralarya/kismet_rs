@@ -6,7 +6,7 @@ mod token;
 use nom::{Err, IResult, Parser};
 
 use crate::{
-    ast::{Atom, Expr, Node},
+    ast::{Expr, Node},
     types::Span,
 };
 
@@ -17,8 +17,8 @@ pub use token::*;
 
 pub type KResult<I, O, E = Error<I>> = IResult<I, O, E>;
 
-pub fn parse<'input>(input: &'input str) -> Result<Node<Atom<'input>>, Error<Node<&'input str>>> {
-    run_parser(&mut numeric_literal, input)
+pub fn parse<'input>(input: &'input str) -> Result<Node<Expr<'input>>, Error<Node<&'input str>>> {
+    run_parser(&mut expr, input)
 }
 
 pub fn run_parser<I, O, P>(parser: &mut P, i: I) -> Result<O, Error<Node<I>>>
@@ -32,7 +32,7 @@ where
         Ok((_, result)) => Ok(result),
         Err(Err::Error(e)) | Err(Err::Failure(e)) => Err(e),
         Err(Err::Incomplete(e)) => Err(Error {
-            input: input,
+            input,
             code: ErrorKind::Incomplete(e),
         }),
     }
