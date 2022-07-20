@@ -34,7 +34,7 @@ pub fn token<'input>(input: Node<&'input str>) -> KResult<Node<&'input str>, Nod
 
 pub fn token_if<'input, P>(
     predicate: P,
-) -> impl FnMut(Node<&'input str>) -> KResult<Node<&'input str>, Node<Token<'input>>>
+) -> impl Fn(Node<&'input str>) -> KResult<Node<&'input str>, Node<Token<'input>>>
 where
     P: Fn(Node<Token>) -> bool,
 {
@@ -52,7 +52,7 @@ where
 
 pub fn token_tag<'input>(
     tag: Token<'static>,
-) -> impl FnMut(Node<&'input str>) -> KResult<Node<&'input str>, Node<Token<'input>>>
+) -> impl Fn(Node<&'input str>) -> KResult<Node<&'input str>, Node<Token<'input>>>
 where
 {
     move |input: Node<&'input str>| {
@@ -69,7 +69,7 @@ where
 
 pub fn token_action<'input, T, Q>(
     action: Q,
-) -> impl FnMut(Node<&'input str>) -> KResult<Node<&'input str>, T>
+) -> impl Fn(Node<&'input str>) -> KResult<Node<&'input str>, T>
 where
     Q: Fn(Node<Token>) -> Option<T>,
 {
