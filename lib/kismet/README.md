@@ -5,6 +5,4 @@ Kismet is..
 * stochastic linear algebra language
 * chat bot with personality ;D
 
-This monorepo contains code for:
-* [Language Implementation](lib/kismet/)
-* [Command Line Interface](bin/kismet_cli/)
+This package contains the language implementation
