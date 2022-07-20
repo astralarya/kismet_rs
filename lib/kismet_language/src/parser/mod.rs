@@ -1,6 +1,7 @@
 mod atom;
 mod error;
 mod expr;
+mod stmt;
 mod token;
 
 use nom::{Err, IResult, Parser};
@@ -13,12 +14,13 @@ use crate::{
 pub use atom::*;
 pub use error::*;
 pub use expr::*;
+pub use stmt::*;
 pub use token::*;
 
 pub type KResult<I, O, E = Error<I>> = IResult<I, O, E>;
 
 pub fn parse<'input>(input: &'input str) -> Result<Node<Expr<'input>>, Error<Node<&'input str>>> {
-    run_parser(&mut expr, input)
+    run_parser(&mut stmts, input)
 }
 
 pub fn run_parser<I, O, P>(parser: &mut P, i: I) -> Result<O, Error<Node<I>>>

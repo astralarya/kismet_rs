@@ -4,8 +4,8 @@ use crate::ast::{Expr, Node, Primary};
 
 use super::{atom, token_if, token_tag, KResult, Token};
 
-pub fn expr<'input>(input: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
-    a_expr(input)
+pub fn expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
+    a_expr(i)
 }
 
 pub fn a_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
