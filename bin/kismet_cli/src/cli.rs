@@ -35,9 +35,8 @@ pub fn run(state: &mut State) {
                 } else {
                     match parse(&line) {
                         Ok(x) => match state.print {
-                            PrintLevel::Debug | PrintLevel::Output => println!("{:#?}", x),
-                            // PrintLevel::Debug => println!("{:#?}\n{}", x, x),
-                            // PrintLevel::Output => println!("{}", x),
+                            PrintLevel::Debug => println!("{:#?}\n{}", x, x),
+                            PrintLevel::Output => println!("{}", x),
                             PrintLevel::None => (),
                         },
                         Err(e) => eprintln!("{:#?}", e),
