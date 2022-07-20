@@ -1,6 +1,6 @@
 use nom::branch::alt;
 
-use crate::ast::{Atom, Expr, Node};
+use crate::ast::{Atom, Node};
 
 use super::{token_action, KResult, NumberKind, Token};
 
