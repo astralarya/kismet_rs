@@ -10,8 +10,8 @@ pub fn expr<'input>(input: Node<&'input str>) -> KResult<Node<&'input str>, Node
 
 pub fn a_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
     let (i, lhs) = m_expr(i)?;
-    let (i, head1) = opt(nom_tuple((adds, a_expr)))(i)?;
-    match head1 {
+    let (i, rhs) = opt(nom_tuple((adds, a_expr)))(i)?;
+    match rhs {
         Some((op, rhs)) => Ok((
             i,
             Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Op(lhs, op, rhs)),
@@ -22,8 +22,8 @@ pub fn a_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<E
 
 pub fn m_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
     let (i, lhs) = p_expr(i)?;
-    let (i, head1) = opt(nom_tuple((muls, a_expr)))(i)?;
-    match head1 {
+    let (i, rhs) = opt(nom_tuple((muls, p_expr)))(i)?;
+    match rhs {
         Some((op, rhs)) => Ok((
             i,
             Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Op(lhs, op, rhs)),
@@ -33,9 +33,9 @@ pub fn m_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<E
 }
 
 pub fn p_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
-    let (i, lhs) = expr_node(i)?;
-    let (i, head1) = opt(nom_tuple((token_tag(Token::POW), a_expr)))(i)?;
-    match head1 {
+    let (i, lhs) = u_expr(i)?;
+    let (i, rhs) = opt(nom_tuple((token_tag(Token::POW), u_expr)))(i)?;
+    match rhs {
         Some((op, rhs)) => Ok((
             i,
             Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Op(lhs, op, rhs)),
@@ -46,13 +46,13 @@ pub fn p_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<E
 
 pub fn u_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
     let (i, op) = opt(adds)(i)?;
-    let (i, val) = coefficient(i)?;
+    let (i, rhs) = coefficient(i)?;
     match op {
         Some(op) => Ok((
             i,
-            Node::new(op.span.clone() + val.span.clone(), Expr::Unary(op, val)),
+            Node::new(op.span.clone() + rhs.span.clone(), Expr::Unary(op, rhs)),
         )),
-        None => Ok((i, val)),
+        None => Ok((i, rhs)),
     }
 }
 
