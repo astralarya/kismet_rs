@@ -1,9 +1,12 @@
+use nom::branch::alt;
+
 use crate::ast::{Atom, Expr, Node};
 
 use super::{token_action, KResult, NumberKind, Token};
 
-// pub fn atom<'input>(input: Node<&'input str>) -> KResult<Node<&'input str>, Node<Atom<'input>>> {
-// }
+pub fn atom<'input>(input: Node<&'input str>) -> KResult<Node<&'input str>, Node<Atom<'input>>> {
+    alt((numeric_literal, string_literal))(input)
+}
 
 pub fn string_literal<'input>(
     input: Node<&'input str>,

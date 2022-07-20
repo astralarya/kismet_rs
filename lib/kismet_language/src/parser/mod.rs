@@ -1,8 +1,9 @@
 mod atom;
+mod error;
 mod expr;
 mod token;
 
-use nom::{Err, IResult, Needed, Parser};
+use nom::{Err, IResult, Parser};
 
 use crate::{
     ast::{Atom, Expr, Node},
@@ -10,24 +11,11 @@ use crate::{
 };
 
 pub use atom::*;
+pub use error::*;
 pub use expr::*;
 pub use token::*;
 
 pub type KResult<I, O, E = Error<I>> = IResult<I, O, E>;
-
-#[derive(Debug, PartialEq)]
-pub struct Error<I> {
-    pub input: I,
-    pub code: ErrorKind,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ErrorKind {
-    Eof,
-    Lex,
-    Incomplete(Needed),
-    Predicate,
-}
 
 pub fn parse<'input>(input: &'input str) -> Result<Node<Atom<'input>>, Error<Node<&'input str>>> {
     run_parser(&mut numeric_literal, input)
