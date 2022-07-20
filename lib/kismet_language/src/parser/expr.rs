@@ -10,41 +10,54 @@ pub fn expr<'input>(input: Node<&'input str>) -> KResult<Node<&'input str>, Node
 
 pub fn a_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
     let (i, lhs) = m_expr(i)?;
-    let tail0 = i.clone();
     let (i, head1) = opt(nom_tuple((adds, a_expr)))(i)?;
     match head1 {
         Some((op, rhs)) => Ok((
             i,
             Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Op(lhs, op, rhs)),
         )),
-        None => Ok((tail0, lhs)),
+        None => Ok((i, lhs)),
     }
 }
 
 pub fn m_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
     let (i, lhs) = p_expr(i)?;
-    let tail0 = i.clone();
     let (i, head1) = opt(nom_tuple((muls, a_expr)))(i)?;
     match head1 {
         Some((op, rhs)) => Ok((
             i,
             Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Op(lhs, op, rhs)),
         )),
-        None => Ok((tail0, lhs)),
+        None => Ok((i, lhs)),
     }
 }
 
 pub fn p_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
     let (i, lhs) = expr_node(i)?;
-    let tail0 = i.clone();
     let (i, head1) = opt(nom_tuple((token_tag(Token::POW), a_expr)))(i)?;
     match head1 {
         Some((op, rhs)) => Ok((
             i,
             Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Op(lhs, op, rhs)),
         )),
-        None => Ok((tail0, lhs)),
+        None => Ok((i, lhs)),
     }
+}
+
+pub fn u_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
+    let (i, op) = opt(adds)(i)?;
+    let (i, val) = coefficient(i)?;
+    match op {
+        Some(op) => Ok((
+            i,
+            Node::new(op.span.clone() + val.span.clone(), Expr::Unary(op, val)),
+        )),
+        None => Ok((i, val)),
+    }
+}
+
+pub fn coefficient<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
+    expr_node(i)
 }
 
 pub fn expr_node<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
