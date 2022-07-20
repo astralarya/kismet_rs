@@ -1,4 +1,4 @@
-use kismet_language::parser::Token;
+use kismet::parser::Token;
 
 mod util;
 use util::{assert_stmt, new_integer, new_op, new_token, new_unary};

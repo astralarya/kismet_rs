@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use kismet_language::{
+use kismet::{
     ast::*,
     parser::{parse, Token},
     types::{Integer, Span},

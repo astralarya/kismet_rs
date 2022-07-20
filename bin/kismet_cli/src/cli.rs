@@ -1,5 +1,5 @@
 use clap::ArgEnum;
-use kismet_language::parse;
+use kismet::parse;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 

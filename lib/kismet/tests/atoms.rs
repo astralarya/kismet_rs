@@ -1,4 +1,4 @@
-use kismet_language::parse;
+use kismet::parse;
 
 mod util;
 use util::{assert_stmt, new_id, new_integer, new_string};

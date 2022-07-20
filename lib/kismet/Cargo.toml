@@ -1,5 +1,5 @@
 [package]
-name = "kismet_language"
+name = "kismet"
 version = "0.1.0"
 edition = "2021"
 
