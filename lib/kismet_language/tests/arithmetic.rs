@@ -15,15 +15,27 @@ fn arithmetic() {
     );
     assert_stmt(
         new_op(
+            new_integer(0..1, 2),
+            new_token(1..2, Token::ADD),
+            new_op(
+                new_integer(2..3, 3),
+                new_token(3..4, Token::ADD),
+                new_integer(4..5, 4),
+            ),
+        ),
+        r###"2+3+4"###,
+    );
+    assert_stmt(
+        new_op(
             new_op(
                 new_integer(0..1, 2),
-                new_token(1..2, Token::ADD),
+                new_token(1..2, Token::MUL),
                 new_integer(2..3, 3),
             ),
             new_token(3..4, Token::ADD),
             new_integer(4..5, 4),
         ),
-        r###"2+3+4"###,
+        r###"2*3+4"###,
     );
     assert_stmt(
         new_op(
