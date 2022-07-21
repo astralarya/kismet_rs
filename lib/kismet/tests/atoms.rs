@@ -34,7 +34,6 @@ fn string() {
     );
 }
 
-#[ignore]
 #[test]
 fn identifier() {
     assert_stmt(new_id(0..5, "ababa"), r###"ababa"###);

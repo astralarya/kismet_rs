@@ -36,7 +36,7 @@ pub fn token_if<'input, P>(
     predicate: P,
 ) -> impl Fn(Node<&'input str>) -> KResult<Node<&'input str>, Node<Token<'input>>>
 where
-    P: Fn(Node<Token>) -> bool,
+    P: Fn(Node<Token<'input>>) -> bool,
 {
     move |input: Node<&'input str>| {
         let (tail, head) = token(input.clone())?;
@@ -71,7 +71,7 @@ pub fn token_action<'input, T, Q>(
     action: Q,
 ) -> impl Fn(Node<&'input str>) -> KResult<Node<&'input str>, T>
 where
-    Q: Fn(Node<Token>) -> Option<T>,
+    Q: Fn(Node<Token<'input>>) -> Option<T>,
 {
     move |input: Node<&'input str>| {
         let (tail, head) = token(input.clone())?;
