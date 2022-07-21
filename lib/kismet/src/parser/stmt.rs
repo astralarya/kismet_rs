@@ -23,9 +23,9 @@ pub fn stmts<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Ex
     Ok((
         i,
         Node::new(
-            match Node::vec_to_span(&val) {
-                Some(span) => span,
-                None => Span::new(i_range),
+            match Span::try_from(&val) {
+                Ok(span) => span,
+                Err(_) => Span::new(i_range),
             },
             Expr::Stmts(val),
         ),

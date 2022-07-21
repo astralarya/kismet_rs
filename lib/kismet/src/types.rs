@@ -16,27 +16,21 @@ pub struct Span {
     pub end: usize,
 }
 
-impl Span {
-    pub fn add_option(lhs: Option<Span>, rhs: Option<Span>) -> Option<Span> {
-        match (lhs, rhs) {
-            (Some(l), Some(r)) => Some(l + r),
-            (Some(l), None) => Some(l.clone()),
-            (None, Some(r)) => Some(r.clone()),
-            (None, None) => None,
-        }
+impl<'input> From<Range<usize>> for Span {
+    fn from(input: Range<usize>) -> Self {
+        Span::new(input.start..input.end)
     }
+}
 
-    pub fn add_option_ref(lhs: Option<&Span>, rhs: Option<&Span>) -> Option<Span> {
-        match (lhs, rhs) {
-            (Some(l), Some(r)) => Some(l + r),
-            (Some(l), None) => Some(l.clone()),
-            (None, Some(r)) => Some(r.clone()),
-            (None, None) => None,
-        }
+impl<'input> From<&'input str> for Span {
+    fn from(input: &'input str) -> Self {
+        Span::new(0..input.len())
     }
+}
 
-    pub fn reduce(iter: &mut dyn Iterator<Item = Span>) -> Option<Span> {
-        iter.reduce(|acc, next| acc + next)
+impl From<String> for Span {
+    fn from(input: String) -> Self {
+        Span::new(0..input.len())
     }
 }
 
@@ -54,6 +48,24 @@ impl Span {
 
     pub fn len(&self) -> usize {
         self.end - self.start
+    }
+
+    pub fn add_option(lhs: Option<Span>, rhs: Option<Span>) -> Option<Span> {
+        match (lhs, rhs) {
+            (Some(l), Some(r)) => Some(l + r),
+            (Some(l), None) => Some(l.clone()),
+            (None, Some(r)) => Some(r.clone()),
+            (None, None) => None,
+        }
+    }
+
+    pub fn add_option_ref(lhs: Option<&Span>, rhs: Option<&Span>) -> Option<Span> {
+        match (lhs, rhs) {
+            (Some(l), Some(r)) => Some(l + r),
+            (Some(l), None) => Some(l.clone()),
+            (None, Some(r)) => Some(r.clone()),
+            (None, None) => None,
+        }
     }
 }
 
@@ -118,21 +130,3 @@ overload!((l: ?Span) + (r: ?Option<&Span>) -> Span {
 overload!((l: ?Option<&Span>) + (r: ?Span) -> Span {
     r + l
 });
-
-impl<'input> From<&'input str> for Span {
-    fn from(input: &'input str) -> Self {
-        Span::new(0..input.len())
-    }
-}
-
-impl From<String> for Span {
-    fn from(input: String) -> Self {
-        Span::new(0..input.len())
-    }
-}
-
-impl<T> From<Vec<T>> for Span {
-    fn from(input: Vec<T>) -> Self {
-        Span::new(0..input.len())
-    }
-}

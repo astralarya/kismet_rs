@@ -29,7 +29,7 @@ where
     Span: From<I>,
     I: Copy,
 {
-    let input = Node::new(Span::from(i), i);
+    let input = Node::from(i);
     match parser.parse(input.clone()) {
         Ok((_, result)) => Ok(result),
         Err(Err::Error(e)) | Err(Err::Failure(e)) => Err(e),

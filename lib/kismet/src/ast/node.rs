@@ -14,9 +14,9 @@ pub struct Node<T> {
 }
 
 impl<T> Node<T> {
-    pub fn new(span: Span, val: T) -> Node<T> {
+    pub fn new<S>(range: S, val: T) -> Node<T> where Span: From<S> {
         Node {
-            span,
+            span: Span::from(range),
             data: Box::new(val),
         }
     }
@@ -28,8 +28,31 @@ where
     T: Copy,
 {
     fn from(input: T) -> Self {
-        let span = Span::from(input);
-        Node::new(span, input)
+        Node::new(input, input)
+    }
+}
+
+impl<T> From<Node<T>> for Span {
+    fn from(item: Node<T>) -> Self {
+        item.span
+    }
+}
+
+impl<T> From<&Node<T>> for Span {
+    fn from(item: &Node<T>) -> Self {
+        item.span
+    }
+}
+
+impl<T> TryFrom<&Vec<Node<T>>> for Span
+{
+    type Error = ();
+
+    fn try_from(value: &Vec<Node<T>>) -> Result<Self, Self::Error> {
+        match value.iter().map(|x| x.span.clone()).reduce(|acc, next| acc + next ) {
+            Some(span) => Ok(span),
+            None => Err(())
+        }
     }
 }
 
@@ -40,10 +63,6 @@ impl<T: std::fmt::Display> Node<T> {
             .map(|node| node.to_string())
             .collect::<Vec<String>>()
             .join(delim)
-    }
-
-    pub fn vec_to_span(nodes: &Vec<Node<T>>) -> Option<Span> {
-        Span::reduce(&mut nodes.iter().map(|x| x.span.clone()))
     }
 }
 
