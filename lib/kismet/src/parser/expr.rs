@@ -1,9 +1,9 @@
-use nom::{combinator::opt, sequence::tuple as nom_tuple};
+use nom::{Err, combinator::opt, sequence::tuple as nom_tuple};
 
 use crate::ast::{Expr, Primary};
 use crate::types::Node;
 
-use super::{atom, token_if, token_tag, KResult, Token};
+use super::{atom, token_if, token_tag, KResult, Token, numeric_literal, ErrorKind, Error};
 
 pub fn expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
     a_expr(i)
@@ -58,6 +58,26 @@ pub fn u_expr<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<E
 }
 
 pub fn coefficient<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
+    let (i, lhs) = opt(numeric_literal)(i)?;
+    let (i, rhs) = opt(die)(i)?;
+    match (lhs, rhs) {
+        (Some(lhs), Some(rhs)) => Ok((
+            i,
+            Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Coefficient(lhs, rhs)),
+        )),
+        (Some(lhs), None) => Ok((
+            i,
+            Node::new(lhs.span.clone(), Expr::Primary(Primary::Atom(*lhs.data))),
+        )),
+        (None, Some(rhs)) => Ok((
+            i,
+            rhs,
+        )),
+        (None, None) => Err(Err::Error(Error {input: i, code: ErrorKind::Grammar}))
+    }
+}
+
+pub fn die<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
     expr_node(i)
 }
 

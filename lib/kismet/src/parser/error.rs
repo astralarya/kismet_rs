@@ -13,6 +13,7 @@ pub enum ErrorKind<I> {
     Incomplete(Needed),
     Nom(nom::error::ErrorKind),
     Predicate,
+    Grammar,
     Chain(Box<ErrorKind<I>>, Box<Error<I>>),
 }
 
