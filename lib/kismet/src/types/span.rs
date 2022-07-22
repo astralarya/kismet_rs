@@ -3,12 +3,7 @@ use std::{
     ops::{self, Index, Range, RangeFrom, RangeFull, RangeTo},
 };
 
-use num_complex::Complex;
 use overload::overload;
-
-pub type Integer = i32;
-pub type Float = f32;
-pub type Imaginary = Complex<f32>;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Span {
