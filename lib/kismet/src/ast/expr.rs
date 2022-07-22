@@ -2,7 +2,8 @@ use std::fmt;
 
 use crate::parser::Token;
 
-use super::{Atom, Node, Primary};
+use super::{Atom, Primary};
+use crate::types::Node;
 
 #[derive(Debug, PartialEq)]
 pub enum Expr<'input> {

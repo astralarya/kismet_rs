@@ -7,8 +7,8 @@ mod token;
 use nom::{Err, IResult, Parser};
 
 use crate::{
-    ast::{Expr, Node},
-    types::Span,
+    ast::Expr,
+    types::{Span, Node},
 };
 
 pub use atom::*;

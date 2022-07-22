@@ -1,8 +1,8 @@
 use std::fmt;
 
-use crate::types::{Float, Integer};
+use crate::types::{Float, Node, Integer};
 
-use super::{CompIter, Expr, KeyDatum, Node, SpreadItem};
+use super::{CompIter, Expr, KeyDatum, SpreadItem};
 
 #[derive(Debug, PartialEq)]
 pub enum Atom<'input> {

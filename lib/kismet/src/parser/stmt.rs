@@ -1,8 +1,8 @@
 use nom::multi::{many0, many1};
 
 use crate::{
-    ast::{Expr, Node},
-    types::Span,
+    ast::{Expr },
+    types::{Node, Span},
 };
 
 use super::{expr, token_tag, KResult, Token};

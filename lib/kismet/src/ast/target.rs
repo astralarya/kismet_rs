@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::Node;
+use crate::types::Node;
 
 #[derive(Debug, PartialEq)]
 pub enum TargetList<'input> {

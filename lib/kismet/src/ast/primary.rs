@@ -1,6 +1,7 @@
 use std::fmt;
 
-use super::{Atom, Node};
+use super::{Atom };
+use crate::types::Node;
 
 #[derive(Debug, PartialEq)]
 pub enum Primary<'input> {

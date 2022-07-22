@@ -1,6 +1,7 @@
 use nom::{combinator::opt, sequence::tuple as nom_tuple};
 
-use crate::ast::{Expr, Node, Primary};
+use crate::ast::{Expr, Primary};
+use crate::types::Node;
 
 use super::{atom, token_if, token_tag, KResult, Token};
 

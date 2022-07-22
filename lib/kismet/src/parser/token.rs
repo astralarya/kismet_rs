@@ -5,8 +5,7 @@ use nom::Err;
 use syn::{parse_str, LitFloat, LitInt, LitStr};
 
 use crate::{
-    ast::Node,
-    types::{Float, Integer},
+    types::{Node, Float, Integer},
 };
 
 use super::{Error, ErrorKind, KResult};

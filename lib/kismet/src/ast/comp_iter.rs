@@ -1,6 +1,7 @@
 use std::fmt;
 
-use super::{Expr, Node, TargetList};
+use super::{Expr, TargetList};
+use crate::types::Node;
 
 #[derive(Debug, PartialEq)]
 pub enum CompIter<'input> {

@@ -1,7 +1,10 @@
 use num_complex::Complex;
 
 mod span;
-pub use span::Span;
+mod node;
+
+pub use span::*;
+pub use node::*;
 
 pub type Integer = i32;
 pub type Float = f32;

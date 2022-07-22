@@ -3,7 +3,7 @@ use std::ops::Range;
 use kismet::{
     ast::*,
     parser::{parse, Token},
-    types::{Integer, Span},
+    types::{Integer, Node, Span},
 };
 
 #[allow(dead_code)]
