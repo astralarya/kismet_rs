@@ -5,18 +5,18 @@ use crate::parser::Token;
 use super::{Atom, Primary};
 use crate::types::Node;
 
-#[derive(Debug, PartialEq)]
-pub enum Expr<'input> {
-    Stmts(Vec<Node<Expr<'input>>>),
-    Op(Node<Expr<'input>>, Node<Token<'input>>, Node<Expr<'input>>),
-    Unary(Node<Token<'input>>, Node<Expr<'input>>),
-    Coefficient(Node<Atom<'input>>, Node<Expr<'input>>),
-    Die(Node<Atom<'input>>),
-    Primary(Primary<'input>),
-    Token(Token<'input>),
+#[derive(Clone, Debug, PartialEq)]
+pub enum Expr {
+    Stmts(Vec<Node<Expr>>),
+    Op(Node<Expr>, Node<Token>, Node<Expr>),
+    Unary(Node<Token>, Node<Expr>),
+    Coefficient(Node<Atom>, Node<Expr>),
+    Die(Node<Atom>),
+    Primary(Primary),
+    Token(Token),
 }
 
-impl fmt::Display for Expr<'_> {
+impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Expr::Stmts(val) => write!(f, "{}", Node::vec_to_string(&val, "\n")),

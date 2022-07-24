@@ -1,19 +1,16 @@
 use std::fmt;
 
-use super::{Expr};
+use super::Expr;
 use crate::types::Node;
 
-#[derive(Debug, PartialEq)]
-pub enum KeyDatum<'input> {
-    KeyDatum {
-        key: Node<&'input str>,
-        val: Node<Expr<'input>>,
-    },
-    Shorthand(&'input str),
-    Spread(Node<Expr<'input>>),
+#[derive(Clone, Debug, PartialEq)]
+pub enum KeyDatum {
+    KeyDatum { key: Node<String>, val: Node<Expr> },
+    Shorthand(String),
+    Spread(Node<Expr>),
 }
 
-impl fmt::Display for KeyDatum<'_> {
+impl fmt::Display for KeyDatum {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
             KeyDatum::KeyDatum { key, val } => write!(f, "{}: {}", key, val),

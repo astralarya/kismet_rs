@@ -29,6 +29,22 @@ impl From<String> for Span {
     }
 }
 
+impl<N> FromIterator<N> for Span
+where
+    Span: From<N>,
+{
+    fn from_iter<T: IntoIterator<Item = N>>(iter: T) -> Self {
+        match iter
+            .into_iter()
+            .map(|x| Span::from(x))
+            .reduce(|acc, next| acc + next)
+        {
+            Some(span) => span,
+            None => Span::new(0..0),
+        }
+    }
+}
+
 impl Span {
     pub fn new(range: Range<usize>) -> Self {
         Span {

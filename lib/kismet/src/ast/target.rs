@@ -2,30 +2,30 @@ use std::fmt;
 
 use crate::types::Node;
 
-#[derive(Debug, PartialEq)]
-pub enum TargetList<'input> {
-    Target(Target<'input>),
-    List(Vec<Node<Target<'input>>>),
+#[derive(Clone, Debug, PartialEq)]
+pub enum TargetList {
+    Target(Target),
+    List(Vec<Node<Target>>),
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Target<'input> {
-    Id(&'input str),
-    TargetTuple(Vec<Node<Target<'input>>>),
-    TargetList(Vec<Node<Target<'input>>>),
-    TargetDict(Vec<Node<TargetDictItem<'input>>>),
+#[derive(Clone, Debug, PartialEq)]
+pub enum Target {
+    Id(String),
+    TargetTuple(Vec<Node<Target>>),
+    TargetList(Vec<Node<Target>>),
+    TargetDict(Vec<Node<TargetDictItem>>),
 }
 
-#[derive(Debug, PartialEq)]
-pub enum TargetDictItem<'input> {
-    Shorthand(&'input str),
+#[derive(Clone, Debug, PartialEq)]
+pub enum TargetDictItem {
+    Shorthand(String),
     Pair {
-        key: Node<&'input str>,
-        val: Node<Target<'input>>,
+        key: Node<String>,
+        val: Node<Target>,
     },
 }
 
-impl fmt::Display for TargetList<'_> {
+impl fmt::Display for TargetList {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TargetList::Target(val) => write!(f, "{}", val),
@@ -37,7 +37,7 @@ impl fmt::Display for TargetList<'_> {
     }
 }
 
-impl fmt::Display for Target<'_> {
+impl fmt::Display for Target {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Target::Id(val) => write!(f, "{}", val),
@@ -48,7 +48,7 @@ impl fmt::Display for Target<'_> {
     }
 }
 
-impl fmt::Display for TargetDictItem<'_> {
+impl fmt::Display for TargetDictItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TargetDictItem::Shorthand(val) => write!(f, "{}", val),

@@ -1,41 +1,41 @@
 mod atom;
 mod error;
-mod expr;
-mod stmt;
+// mod expr;
+// mod stmt;
 mod token;
 
-use nom::{Err, IResult, Parser};
+use nom::{Err, IResult};
 
 use crate::{
-    ast::Expr,
-    types::{Span, Node},
+    ast::Atom,
+    types::{Node, Span},
 };
 
 pub use atom::*;
 pub use error::*;
-pub use expr::*;
-pub use stmt::*;
+// pub use expr::*;
+// pub use stmt::*;
 pub use token::*;
 
-pub type KResult<I, O, E = Error<I>> = IResult<I, O, E>;
+pub type Input<'a> = &'a [Node<Token>];
+pub type KResult<'a, O> = IResult<Input<'a>, O, Node<Error>>;
 
-pub fn parse<'input>(input: &'input str) -> Result<Node<Expr<'input>>, Error<Node<&'input str>>> {
-    run_parser(&mut stmts, input)
+pub type ParseNode = Node<Atom>;
+
+pub fn parse<'a>(input: &'a str) -> Result<ParseNode, Node<Error>> {
+    run_parser(atom, input)
 }
 
-pub fn run_parser<I, O, P>(parser: &mut P, i: I) -> Result<O, Error<Node<I>>>
+pub fn run_parser<'a, P>(parser: P, i: &'a str) -> Result<ParseNode, Node<Error>>
 where
-    P: Parser<Node<I>, O, Error<Node<I>>>,
-    Span: From<I>,
-    I: Copy,
+    P: Fn(Input<'_>) -> KResult<'_, ParseNode>,
 {
-    let input = Node::from(i);
-    match parser.parse(input.clone()) {
-        Ok((_, result)) => Ok(result),
+    let span = Span::from(i);
+    let i = TokenIterator::new(i).collect::<Vec<_>>();
+    let x = match parser(&i) {
+        Ok((_, data)) => Ok(data),
         Err(Err::Error(e)) | Err(Err::Failure(e)) => Err(e),
-        Err(Err::Incomplete(e)) => Err(Error {
-            input,
-            code: ErrorKind::Incomplete(e),
-        }),
-    }
+        Err(Err::Incomplete(e)) => Err(Node::new(span.end..span.end, Error::Incomplete(e))),
+    };
+    x
 }

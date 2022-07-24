@@ -3,16 +3,16 @@ use std::fmt;
 use super::{Expr, TargetList};
 use crate::types::Node;
 
-#[derive(Debug, PartialEq)]
-pub enum CompIter<'input> {
+#[derive(Clone, Debug, PartialEq)]
+pub enum CompIter {
     For {
-        target: Node<TargetList<'input>>,
-        val: Node<Expr<'input>>,
+        target: Node<TargetList>,
+        val: Node<Expr>,
     },
-    If(Node<Expr<'input>>),
+    If(Node<Expr>),
 }
 
-impl fmt::Display for CompIter<'_> {
+impl fmt::Display for CompIter {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
             CompIter::For { target, val } => {

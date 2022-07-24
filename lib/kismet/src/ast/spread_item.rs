@@ -1,15 +1,15 @@
 use std::fmt;
 
-use crate::ast::{Expr};
+use crate::ast::Expr;
 use crate::types::Node;
 
-#[derive(Debug, PartialEq)]
-pub enum SpreadItem<'input> {
-    Expr(Expr<'input>),
-    Spread(Node<Expr<'input>>),
+#[derive(Clone, Debug, PartialEq)]
+pub enum SpreadItem {
+    Expr(Expr),
+    Spread(Node<Expr>),
 }
 
-impl fmt::Display for SpreadItem<'_> {
+impl fmt::Display for SpreadItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
             SpreadItem::Expr(val) => write!(f, "{}", val),

@@ -14,7 +14,10 @@ pub struct Node<T> {
 }
 
 impl<T> Node<T> {
-    pub fn new<S>(range: S, val: T) -> Node<T> where Span: From<S> {
+    pub fn new<S>(range: S, val: T) -> Node<T>
+    where
+        Span: From<S>,
+    {
         Node {
             span: Span::from(range),
             data: Box::new(val),
@@ -41,18 +44,6 @@ impl<T> From<Node<T>> for Span {
 impl<T> From<&Node<T>> for Span {
     fn from(item: &Node<T>) -> Self {
         item.span
-    }
-}
-
-impl<T> TryFrom<&Vec<Node<T>>> for Span
-{
-    type Error = ();
-
-    fn try_from(value: &Vec<Node<T>>) -> Result<Self, Self::Error> {
-        match value.iter().map(|x| x.span.clone()).reduce(|acc, next| acc + next ) {
-            Some(span) => Ok(span),
-            None => Err(())
-        }
     }
 }
 

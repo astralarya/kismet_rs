@@ -1,32 +1,32 @@
 use std::fmt;
 
-use crate::types::{Float, Node, Integer};
+use crate::types::{Float, Integer, Node};
 
 use super::{CompIter, Expr, KeyDatum, SpreadItem};
 
-#[derive(Debug, PartialEq)]
-pub enum Atom<'input> {
-    Parentheses(Node<Expr<'input>>),
-    Statements(Node<Expr<'input>>),
-    ListDisplay(Vec<Node<SpreadItem<'input>>>),
+#[derive(Clone, Debug, PartialEq)]
+pub enum Atom {
+    Parentheses(Node<Expr>),
+    Statements(Node<Expr>),
+    ListDisplay(Vec<Node<SpreadItem>>),
     ListComprehension {
-        val: Node<Expr<'input>>,
-        iter: Vec<Node<CompIter<'input>>>,
+        val: Node<Expr>,
+        iter: Vec<Node<CompIter>>,
     },
-    DictDisplay(Vec<Node<KeyDatum<'input>>>),
+    DictDisplay(Vec<Node<KeyDatum>>),
     DictComprehension {
-        key: Node<Expr<'input>>,
-        val: Node<Expr<'input>>,
-        iter: Vec<Node<CompIter<'input>>>,
+        key: Node<Expr>,
+        val: Node<Expr>,
+        iter: Vec<Node<CompIter>>,
     },
-    Tuple(Vec<Node<Expr<'input>>>),
-    Id(&'input str),
+    Tuple(Vec<Node<Expr>>),
+    Id(String),
     String(String),
     Float(Float),
     Integer(Integer),
 }
 
-impl fmt::Display for Atom<'_> {
+impl fmt::Display for Atom {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
             Atom::Parentheses(val) => {

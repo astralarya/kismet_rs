@@ -1,34 +1,27 @@
 use nom::{error::ParseError, Needed};
 
-#[derive(Debug, PartialEq)]
-pub struct Error<I> {
-    pub input: I,
-    pub code: ErrorKind<I>,
-}
+use crate::types::{Node, Span};
 
 #[derive(Debug, PartialEq)]
-pub enum ErrorKind<I> {
+pub enum Error {
     Eof,
     Lex,
     Incomplete(Needed),
     Nom(nom::error::ErrorKind),
     Predicate,
     Grammar,
-    Chain(Box<ErrorKind<I>>, Box<Error<I>>),
+    Chain(Node<Error>, Box<Error>),
 }
 
-impl<I> ParseError<I> for Error<I> {
-    fn from_error_kind(input: I, kind: nom::error::ErrorKind) -> Self {
-        Error {
-            input,
-            code: ErrorKind::Nom(kind),
-        }
+impl<T> ParseError<&[Node<T>]> for Node<Error> {
+    fn from_error_kind(input: &[Node<T>], kind: nom::error::ErrorKind) -> Self {
+        Node::new(Span::from_iter(input), Error::Nom(kind))
     }
 
-    fn append(input: I, kind: nom::error::ErrorKind, other: Self) -> Self {
-        Error {
-            input,
-            code: ErrorKind::Chain(Box::new(ErrorKind::Nom(kind)), Box::new(other)),
-        }
+    fn append(input: &[Node<T>], kind: nom::error::ErrorKind, other: Self) -> Self {
+        Node::new(
+            Span::from_iter(input),
+            Error::Chain(other, Box::new(Error::Nom(kind))),
+        )
     }
 }

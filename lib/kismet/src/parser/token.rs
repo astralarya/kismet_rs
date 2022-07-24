@@ -1,36 +1,44 @@
 use std::fmt;
 
-use logos::{Lexer, Logos};
+use logos::{Lexer, Logos, SpannedIter};
 use nom::Err;
 use syn::{parse_str, LitFloat, LitInt, LitStr};
 
-use crate::{
-    types::{Node, Float, Integer},
-};
+use crate::types::{Float, Integer, Node, Span};
 
-use super::{Error, ErrorKind, KResult};
+use super::{Error, Input, KResult};
 
-pub fn token<'input>(input: Node<&'input str>) -> KResult<Node<&'input str>, Node<Token<'input>>> {
-    let mut lexer = Token::lexer(&input.data);
-    match lexer.next() {
-        Some(Token::ERROR) => Err(Err::Error(Error {
-            input,
-            code: ErrorKind::Lex,
-        })),
-        Some(val) => {
-            let start = input.span.len() - lexer.remainder().len();
-            Ok((
-                Node::new(input.span.slice(start..), lexer.remainder()),
-                Node::new(input.span.slice(..start), val),
-            ))
+pub struct TokenIterator<'a> {
+    iter: SpannedIter<'a, Token>,
+}
+
+impl<'a> TokenIterator<'a> {
+    pub fn new(input: &'a str) -> Self {
+        TokenIterator {
+            iter: Token::lexer(input).spanned(),
         }
-        None => Err(Err::Error(Error {
-            input: input,
-            code: ErrorKind::Eof,
-        })),
     }
 }
 
+impl Iterator for TokenIterator<'_> {
+    type Item = Node<Token>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.iter.next() {
+            Some((token, range)) => Some(Node::new(range, token)),
+            None => None,
+        }
+    }
+}
+
+pub fn token<'input>(i: Input<'input>) -> KResult<'input, Node<Token>> {
+    match i.get(0) {
+        Some(x) => Ok((&i[1..], x.clone())),
+        None => Err(Err::Failure(Node::new(Span::from_iter(i), Error::Eof))),
+    }
+}
+
+/*
 pub fn token_if<'input, P>(
     predicate: P,
 ) -> impl Fn(Node<&'input str>) -> KResult<Node<&'input str>, Node<Token<'input>>>
@@ -83,9 +91,10 @@ where
         }
     }
 }
+ */
 
 #[derive(Logos, Clone, Debug, PartialEq)]
-pub enum Token<'input> {
+pub enum Token {
     #[regex(r"[;\n]")]
     DELIM,
 
@@ -187,7 +196,7 @@ pub enum Token<'input> {
     Number(NumberKind),
 
     #[regex(r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*", Token::parse_id)]
-    Id(&'input str),
+    Id(String),
 
     #[regex(r"[ \t\f]+", logos::skip)]
     SKIP,
@@ -202,12 +211,12 @@ pub enum NumberKind {
     Float(Float),
 }
 
-impl<'input> Token<'input> {
-    fn parse_id(t: &mut Lexer<'input, Token<'input>>) -> &'input str {
-        t.slice()
+impl Token {
+    fn parse_id(t: &mut Lexer<Token>) -> String {
+        t.slice().to_string()
     }
 
-    fn parse_number(t: &mut Lexer<'input, Token<'input>>) -> Result<NumberKind, ()> {
+    fn parse_number(t: &mut Lexer<Token>) -> Result<NumberKind, ()> {
         #[derive(Logos, Debug, PartialEq)]
         enum Part<'input> {
             #[regex(r"\.([[:digit:]][[:digit:]_]*)?")]
@@ -248,7 +257,7 @@ impl<'input> Token<'input> {
         }
     }
 
-    fn parse_int(t: &mut Lexer<'input, Token<'input>>) -> Result<NumberKind, ()> {
+    fn parse_int(t: &mut Lexer<Token>) -> Result<NumberKind, ()> {
         match parse_str::<LitInt>(t.slice()) {
             Ok(n) => match n.base10_parse::<Integer>() {
                 Ok(i) => Ok(NumberKind::Integer(i)),
@@ -258,7 +267,7 @@ impl<'input> Token<'input> {
         }
     }
 
-    fn parse_float(t: &mut Lexer<'input, Token<'input>>) -> Result<NumberKind, ()> {
+    fn parse_float(t: &mut Lexer<Token>) -> Result<NumberKind, ()> {
         match parse_str::<LitFloat>(t.slice()) {
             Ok(n) => match n.base10_parse::<Float>() {
                 Ok(i) => Ok(NumberKind::Float(i)),
@@ -268,7 +277,7 @@ impl<'input> Token<'input> {
         }
     }
 
-    fn parse_string(t: &mut Lexer<'input, Token<'input>>) -> Result<String, ()> {
+    fn parse_string(t: &mut Lexer<Token>) -> Result<String, ()> {
         #[derive(Logos, Debug, PartialEq)]
         enum Part<'input> {
             #[token("\"")]
@@ -302,7 +311,7 @@ impl<'input> Token<'input> {
         Err(())
     }
 
-    fn parse_rawstring(t: &mut Lexer<'input, Token<'input>>) -> Result<String, ()> {
+    fn parse_rawstring(t: &mut Lexer<Token>) -> Result<String, ()> {
         #[derive(Logos, Debug, PartialEq)]
         enum Part<'input> {
             #[token("\"")]
@@ -364,7 +373,7 @@ impl<'input> Token<'input> {
     }
 }
 
-impl fmt::Display for Token<'_> {
+impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Token::DELIM => write!(f, "\n"),
