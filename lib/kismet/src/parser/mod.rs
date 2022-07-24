@@ -1,7 +1,7 @@
 mod atom;
 mod error;
-// mod expr;
-// mod stmt;
+mod expr;
+mod stmt;
 mod token;
 
 use nom::{Err, IResult};
@@ -13,8 +13,8 @@ use crate::{
 
 pub use atom::*;
 pub use error::*;
-// pub use expr::*;
-// pub use stmt::*;
+pub use expr::*;
+pub use stmt::*;
 pub use token::*;
 
 pub type Input<'a> = &'a [Node<Token>];

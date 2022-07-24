@@ -2,12 +2,12 @@ use std::ops::Range;
 
 use kismet::{
     ast::*,
-    parser::{parse, Token},
+    parser::{parse, ParseNode, Token},
     types::{Integer, Node, Span},
 };
 
 #[allow(dead_code)]
-pub fn assert_stmt(node: Node<Expr>, input: &str) {
+pub fn assert_stmt(node: ParseNode, input: &str) {
     assert_eq!(
         Ok(Node::new(Span::from(input), Expr::Stmts(vec![node]))),
         parse(input)

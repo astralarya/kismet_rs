@@ -1,20 +1,20 @@
 use nom::multi::{many0, many1};
 
 use crate::{
-    ast::{Expr },
+    ast::Expr,
     types::{Node, Span},
 };
 
-use super::{expr, token_tag, KResult, Token};
+use super::{expr, token_tag, Input, KResult, Token};
 
-pub fn stmt<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
+pub fn stmt<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, _) = many0(token_tag(Token::DELIM))(i)?;
     let (i, val) = expr(i)?;
     let (i, _) = many1(token_tag(Token::DELIM))(i)?;
     Ok((i, val))
 }
 
-pub fn stmts<'input>(i: Node<&'input str>) -> KResult<Node<&'input str>, Node<Expr<'input>>> {
+pub fn stmts<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let i_start = i.span.start;
     let (i, mut val) = many0(stmt)(i)?;
     let (i, last) = expr(i)?;
