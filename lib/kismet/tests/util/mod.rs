@@ -41,7 +41,7 @@ pub fn new_string<'input>(range: Range<usize>, val: &'input str) -> Node<Expr> {
 
 #[allow(dead_code)]
 pub fn new_id<'input>(range: Range<usize>, val: &'input str) -> Node<Expr> {
-    new_atom(range, Atom::Id(val))
+    new_atom(range, Atom::Id(String::from(val)))
 }
 
 #[allow(dead_code)]
