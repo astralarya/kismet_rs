@@ -18,7 +18,7 @@ pub enum Target {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TargetDictItem {
-    Shorthand(String),
+    Target(String),
     Pair {
         key: Node<String>,
         val: Node<Target>,
@@ -51,7 +51,7 @@ impl fmt::Display for Target {
 impl fmt::Display for TargetDictItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TargetDictItem::Shorthand(val) => write!(f, "{}", val),
+            TargetDictItem::Target(val) => write!(f, "{}", val),
             TargetDictItem::Pair { key, val } => write!(f, "{}: {}", key, val),
         }
     }
