@@ -57,6 +57,17 @@ where
     }
 }
 
+pub fn token_tag_id<'input>(input: Input<'input>) -> KResult<'input, Node<String>> {
+    let (tail, head) = token(input)?;
+    match &*head.data {
+        Token::Id(val) => Ok((tail, Node::new(head.span, val.clone()))),
+        _ => Err(Err::Error(Node::new(
+            Span::from_iter(input),
+            Error::Predicate,
+        ))),
+    }
+}
+
 pub fn token_tag<'input>(tag: Token) -> impl Fn(Input<'input>) -> KResult<'input, &Node<Token>> {
     move |input| {
         let (tail, head) = token(input)?;

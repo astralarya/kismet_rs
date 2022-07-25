@@ -6,6 +6,10 @@ use crate::types::{Node, Span};
 use super::{atom, numeric_literal, token_if, token_tag, Error, Input, KResult, Token};
 
 pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    walrus_expr(i)
+}
+
+pub fn walrus_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     a_expr(i)
 }
 
