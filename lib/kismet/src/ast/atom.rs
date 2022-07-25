@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::types::{Float, Integer, Node};
 
-use super::{CompIter, Expr, KeyDatum, SpreadItem};
+use super::{CompIter, DictItem, Expr, SpreadItem};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Atom {
@@ -13,7 +13,7 @@ pub enum Atom {
         val: Node<Expr>,
         iter: Vec<Node<CompIter>>,
     },
-    DictDisplay(Vec<Node<KeyDatum>>),
+    DictDisplay(Vec<Node<DictItem>>),
     DictComprehension {
         key: Node<Expr>,
         val: Node<Expr>,
