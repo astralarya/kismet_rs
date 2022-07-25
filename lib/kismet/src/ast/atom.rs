@@ -2,13 +2,13 @@ use std::fmt;
 
 use crate::types::{Float, Integer, Node};
 
-use super::{CompIter, DictItem, Expr, SpreadItem};
+use super::{CompIter, DictItem, Expr, ListItem};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Atom {
     Parentheses(Node<Expr>),
     Statements(Node<Expr>),
-    ListDisplay(Vec<Node<SpreadItem>>),
+    ListDisplay(Vec<Node<ListItem>>),
     ListComprehension {
         val: Node<Expr>,
         iter: Vec<Node<CompIter>>,
