@@ -90,7 +90,11 @@ pub fn coefficient<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn die<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    expr_node(i)
+    let (i, die_val) = opt(nom_tuple((token_tag(Token::DIE), numeric_literal)))(i)?;
+    match die_val {
+        Some((op, rhs)) => Ok((i, Node::new(op.span + rhs.span, Expr::Die(rhs)))),
+        None => expr_node(i),
+    }
 }
 
 pub fn expr_node<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
