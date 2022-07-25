@@ -1,4 +1,5 @@
 mod atom;
+mod enclosure;
 mod error;
 mod expr;
 mod stmt;
@@ -12,6 +13,7 @@ use crate::{
 };
 
 pub use atom::*;
+pub use enclosure::*;
 pub use error::*;
 pub use expr::*;
 pub use stmt::*;
