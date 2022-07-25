@@ -7,7 +7,7 @@ mod token;
 use nom::{Err, IResult};
 
 use crate::{
-    ast::Atom,
+    ast::Expr,
     types::{Node, Span},
 };
 
@@ -20,10 +20,10 @@ pub use token::*;
 pub type Input<'a> = &'a [Node<Token>];
 pub type KResult<'a, O> = IResult<Input<'a>, O, Node<Error>>;
 
-pub type ParseNode = Node<Atom>;
+pub type ParseNode = Node<Expr>;
 
 pub fn parse<'a>(input: &'a str) -> Result<ParseNode, Node<Error>> {
-    run_parser(atom, input)
+    run_parser(stmts, input)
 }
 
 pub fn run_parser<'a, P>(parser: P, i: &'a str) -> Result<ParseNode, Node<Error>>

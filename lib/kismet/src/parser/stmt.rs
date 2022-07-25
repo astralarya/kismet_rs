@@ -15,19 +15,8 @@ pub fn stmt<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn stmts<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    let i_start = i.span.start;
     let (i, mut val) = many0(stmt)(i)?;
     let (i, last) = expr(i)?;
     val.push(last);
-    let i_range = i_start..i.span.start;
-    Ok((
-        i,
-        Node::new(
-            match Span::try_from(&val) {
-                Ok(span) => span,
-                Err(_) => Span::new(i_range),
-            },
-            Expr::Stmts(val),
-        ),
-    ))
+    Ok((i, Node::new(Span::from_iter(&val), Expr::Stmts(val))))
 }

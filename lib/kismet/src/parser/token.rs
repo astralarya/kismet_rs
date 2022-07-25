@@ -57,10 +57,7 @@ where
     }
 }
 
-pub fn token_tag<'input, P>(tag: Token) -> impl Fn(Input<'input>) -> KResult<'input, &Node<Token>>
-where
-    P: Fn(Node<Token>) -> bool,
-{
+pub fn token_tag<'input>(tag: Token) -> impl Fn(Input<'input>) -> KResult<'input, &Node<Token>> {
     move |input| {
         let (tail, head) = token(input)?;
         match *head.data == tag {
