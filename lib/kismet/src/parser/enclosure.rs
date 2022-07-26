@@ -2,8 +2,7 @@ use nom::{
     branch::alt,
     combinator::{map, opt},
     multi::{many0, separated_list1},
-    sequence::preceded,
-    Err,
+    sequence::{preceded, terminated},
 };
 
 use crate::{
@@ -11,7 +10,7 @@ use crate::{
     types::{Node, Span},
 };
 
-use super::{expr, or_test, token_tag, token_tag_id, Error, Input, KResult, Token};
+use super::{expr, or_test, token_tag, token_tag_id, Input, KResult, Token};
 
 pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     alt((parentheses, list))(i)
@@ -32,25 +31,20 @@ pub fn parentheses<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     }
 
     let (i, _) = token_tag(Token::COMMA)(i)?;
-    let mut items = vec![val];
-    let mut i = i;
-    loop {
-        let (_i, val) = opt(expr)(i)?;
-        i = _i;
-        match val {
-            Some(val) => items.push(val),
-            None => break,
+    let (i, vals) = opt(terminated(
+        separated_list1(token_tag(Token::COMMA), expr),
+        opt(token_tag(Token::COMMA)),
+    ))(i)?;
+    let vals = match vals {
+        Some(mut vals) => {
+            vals.insert(0, val);
+            vals
         }
-        let (_i, sep) = opt(token_tag(Token::COMMA))(i)?;
-        i = _i;
-        match sep {
-            Some(_) => (),
-            None => break,
-        }
-    }
+        _ => vec![val],
+    };
 
     let (i, rhs) = token_tag(Token::RPAREN)(i)?;
-    Ok((i, Node::new(lhs.span + rhs.span, Atom::Tuple(items))))
+    Ok((i, Node::new(lhs.span + rhs.span, Atom::Tuple(vals))))
 }
 
 pub fn list<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
