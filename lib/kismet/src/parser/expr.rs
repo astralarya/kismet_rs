@@ -10,6 +10,10 @@ pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn walrus_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    or_test(i)
+}
+
+pub fn or_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     a_expr(i)
 }
 

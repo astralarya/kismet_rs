@@ -1,7 +1,7 @@
 use nom::{
     branch::alt,
     combinator::{map, opt},
-    multi::separated_list1,
+    multi::{many0, separated_list1},
     sequence::preceded,
 };
 
@@ -10,7 +10,7 @@ use crate::{
     types::{Node, Span},
 };
 
-use super::{expr, id, token_action, token_if, token_tag, token_tag_id, Input, KResult, Token};
+use super::{expr, or_test, token_tag, token_tag_id, Input, KResult, Token};
 
 pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     alt((parentheses, list))(i)
@@ -61,7 +61,27 @@ pub fn list<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     };
 
     let (i, val) = list_item(i)?;
-    // TODO comprehension
+    let (i, comp_val) = opt(comp_for)(i)?;
+    let val = Node::new(
+        val.span,
+        match (*val.data, comp_val) {
+            (ListItem::Expr(val_data), Some(comp_val)) => {
+                let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
+                iter.insert(0, comp_val);
+                return Ok((
+                    i,
+                    Node::new(
+                        lhs.span + Span::from_iter(&iter),
+                        Atom::ListComprehension {
+                            val: Node::new(val.span, val_data),
+                            iter,
+                        },
+                    ),
+                ));
+            }
+            (val_data, _) => val_data,
+        },
+    );
 
     let (i, _) = token_tag(Token::COMMA)(i)?;
     let mut items = vec![val];
@@ -85,9 +105,31 @@ pub fn list<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     Ok((i, Node::new(lhs.span + rhs.span, Atom::ListDisplay(items))))
 }
 
-// pub fn comp_for<'input>(i: Input<'input>) -> KResult<'input, Node<CompIter>> {
-//     let (i, lhs) = token_tag(Token::FOR)(i)?;
-// }
+pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
+    let (i, lhs) = opt(token_tag(Token::SPREAD))(i)?;
+    let (i, val) = expr(i)?;
+    match lhs {
+        Some(lhs) => Ok((i, Node::new(lhs.span + val.span, ListItem::Spread(val)))),
+        None => Ok((i, Node::new(val.span, ListItem::Expr(*val.data)))),
+    }
+}
+
+pub fn comp_for<'input>(i: Input<'input>) -> KResult<'input, Node<CompIter>> {
+    let (i, lhs) = token_tag(Token::FOR)(i)?;
+    let (i, tar) = target(i)?;
+    let (i, _) = token_tag(Token::IN)(i)?;
+    let (i, val) = or_test(i)?;
+    Ok((
+        i,
+        Node::new(lhs.span + val.span, CompIter::For { target: tar, val }),
+    ))
+}
+
+pub fn comp_if<'input>(i: Input<'input>) -> KResult<'input, Node<CompIter>> {
+    let (i, lhs) = token_tag(Token::IF)(i)?;
+    let (i, val) = or_test(i)?;
+    Ok((i, Node::new(lhs.span + val.span, CompIter::If(val))))
+}
 
 pub fn target<'input>(i: Input<'input>) -> KResult<'input, Node<TargetList>> {
     let (i, val) = separated_list1(token_tag(Token::COMMA), target_item)(i)?;
@@ -147,14 +189,5 @@ pub fn target_dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<Target
             Node::new(key.span + val.span, TargetDictItem::Pair { key, val }),
         )),
         None => Ok((i, Node::new(key.span, TargetDictItem::Target(*key.data)))),
-    }
-}
-
-pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
-    let (i, lhs) = opt(token_tag(Token::SPREAD))(i)?;
-    let (i, val) = expr(i)?;
-    match lhs {
-        Some(lhs) => Ok((i, Node::new(lhs.span + val.span, ListItem::Spread(val)))),
-        None => Ok((i, Node::new(val.span, ListItem::Expr(*val.data)))),
     }
 }
