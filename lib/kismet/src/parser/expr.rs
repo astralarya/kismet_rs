@@ -14,7 +14,26 @@ pub fn walrus_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn or_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    c_expr(i)
+    and_test(i)
+}
+
+pub fn and_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    not_test(i)
+}
+
+pub fn not_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    let (i, op) = opt(token_tag(Token::NOT))(i)?;
+    let (i, rhs) = c_expr(i)?;
+    match op {
+        Some(op) => Ok((
+            i,
+            Node::new(
+                op.span.clone() + rhs.span.clone(),
+                Expr::Unary(op.clone(), rhs),
+            ),
+        )),
+        None => Ok((i, rhs)),
+    }
 }
 
 pub fn c_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
