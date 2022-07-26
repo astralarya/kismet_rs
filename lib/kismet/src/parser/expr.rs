@@ -1,9 +1,11 @@
 use nom::{combinator::opt, sequence::tuple, Err};
 
-use crate::ast::{Expr, Primary};
+use crate::ast::{Expr, Primary, Range};
 use crate::types::{Node, Span};
 
-use super::{numeric_literal, primary, token_if, token_tag, Error, Input, KResult, Token};
+use super::{
+    numeric_literal, primary, token_action, token_if, token_tag, Error, Input, KResult, Token,
+};
 
 pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     walrus_expr(i)
@@ -59,8 +61,8 @@ pub fn not_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn c_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    let (i, lhs) = a_expr(i)?;
-    let (i, rhs) = opt(tuple((eqs, a_expr)))(i)?;
+    let (i, lhs) = r_expr(i)?;
+    let (i, rhs) = opt(tuple((eqs, r_expr)))(i)?;
     match rhs {
         Some((op, rhs)) => Ok((
             i,
@@ -70,6 +72,45 @@ pub fn c_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             ),
         )),
         None => Ok((i, lhs)),
+    }
+}
+
+pub fn r_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    let (i, start) = opt(a_expr)(i)?;
+    let (i, rhs) = opt(tuple((ranges, opt(a_expr))))(i)?;
+    match (start, rhs) {
+        (Some(start), Some((op, Some(end)))) => Ok((
+            i,
+            Node::new(
+                start.span.clone() + end.span.clone(),
+                Expr::Range(match *op.data {
+                    RangeKind::Exclusive => Range::Range { start, end },
+                    RangeKind::Inclusive => Range::RangeI { start, end },
+                }),
+            ),
+        )),
+        (Some(start), Some((op, None))) => Ok((
+            i,
+            Node::new(
+                start.span.clone() + op.span,
+                Expr::Range(Range::RangeFrom { start }),
+            ),
+        )),
+        (None, Some((op, Some(end)))) => Ok((
+            i,
+            Node::new(
+                op.span.clone() + end.span.clone(),
+                Expr::Range(match *op.data {
+                    RangeKind::Exclusive => Range::RangeTo { end },
+                    RangeKind::Inclusive => Range::RangeToI { end },
+                }),
+            ),
+        )),
+        (None, Some((op, None))) => {
+            Ok((i, Node::new(op.span.clone(), Expr::Range(Range::RangeFull))))
+        }
+        (Some(lhs), None) => Ok((i, lhs)),
+        (None, None) => Err(Err::Error(Node::new(Span::from_iter(i), Error::Grammar))),
     }
 }
 
@@ -170,6 +211,20 @@ pub fn eqs<'input>(i: Input<'input>) -> KResult<'input, &Node<Token>> {
     token_if(|x| match *x.data {
         Token::EQ | Token::NE | Token::LT | Token::LE | Token::GT | Token::GE => true,
         _ => false,
+    })(i)
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum RangeKind {
+    Exclusive,
+    Inclusive,
+}
+
+pub fn ranges<'input>(i: Input<'input>) -> KResult<'input, Node<RangeKind>> {
+    token_action(|x| match *x.data {
+        Token::RANGE => Some(Node::new(x.span, RangeKind::Exclusive)),
+        Token::RANGEI => Some(Node::new(x.span, RangeKind::Inclusive)),
+        _ => None,
     })(i)
 }
 

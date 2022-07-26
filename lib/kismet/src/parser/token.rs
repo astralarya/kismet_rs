@@ -108,6 +108,12 @@ pub enum Token {
     #[token(":")]
     COLON,
 
+    #[token("..")]
+    RANGE,
+
+    #[token("..=")]
+    RANGEI,
+
     #[token("...")]
     SPREAD,
 
@@ -371,7 +377,14 @@ impl Token {
 
     pub fn space(&self) -> &'static str {
         match self {
-            Token::DIE | Token::POW | Token::MUL | Token::LPAREN | Token::RPAREN => "",
+            Token::DIE
+            | Token::POW
+            | Token::MUL
+            | Token::MOD
+            | Token::RANGE
+            | Token::RANGEI
+            | Token::LPAREN
+            | Token::RPAREN => "",
             _ => " ",
         }
     }
@@ -383,6 +396,8 @@ impl fmt::Display for Token {
             Token::DELIM => write!(f, "\n"),
             Token::COMMA => write!(f, ","),
             Token::COLON => write!(f, ":"),
+            Token::RANGE => write!(f, ".."),
+            Token::RANGEI => write!(f, "..="),
             Token::SPREAD => write!(f, "..."),
             Token::FOR => write!(f, "for"),
             Token::IN => write!(f, "in"),
