@@ -90,7 +90,7 @@ pub fn a_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 
 pub fn m_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = p_expr(i)?;
-    let (i, rhs) = opt(tuple((muls, p_expr)))(i)?;
+    let (i, rhs) = opt(tuple((muls, m_expr)))(i)?;
     match rhs {
         Some((op, rhs)) => Ok((
             i,
@@ -105,7 +105,7 @@ pub fn m_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 
 pub fn p_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = u_expr(i)?;
-    let (i, rhs) = opt(tuple((token_tag(Token::POW), u_expr)))(i)?;
+    let (i, rhs) = opt(tuple((token_tag(Token::POW), p_expr)))(i)?;
     match rhs {
         Some((op, rhs)) => Ok((
             i,
