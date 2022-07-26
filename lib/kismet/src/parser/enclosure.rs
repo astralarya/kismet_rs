@@ -72,11 +72,11 @@ pub fn list<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         None => (),
     }
 
-    let (i, _) = token_tag(Token::COMMA)(i)?;
-    let (i, vals) = opt(terminated(
+    let (i, vals) = opt(preceded(
+        token_tag(Token::COMMA),
         separated_list1(token_tag(Token::COMMA), list_item),
-        opt(token_tag(Token::COMMA)),
     ))(i)?;
+    let (i, _) = opt(token_tag(Token::COMMA))(i)?;
     let vals = match vals {
         Some(mut vals) => {
             vals.insert(0, val);
