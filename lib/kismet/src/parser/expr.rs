@@ -1,4 +1,4 @@
-use nom::{combinator::opt, sequence::tuple as nom_tuple, Err};
+use nom::{combinator::opt, sequence::tuple, Err};
 
 use crate::ast::{Expr, Primary};
 use crate::types::{Node, Span};
@@ -19,7 +19,7 @@ pub fn or_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 
 pub fn a_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = m_expr(i)?;
-    let (i, rhs) = opt(nom_tuple((adds, a_expr)))(i)?;
+    let (i, rhs) = opt(tuple((adds, a_expr)))(i)?;
     match rhs {
         Some((op, rhs)) => Ok((
             i,
@@ -34,7 +34,7 @@ pub fn a_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 
 pub fn m_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = p_expr(i)?;
-    let (i, rhs) = opt(nom_tuple((muls, p_expr)))(i)?;
+    let (i, rhs) = opt(tuple((muls, p_expr)))(i)?;
     match rhs {
         Some((op, rhs)) => Ok((
             i,
@@ -49,7 +49,7 @@ pub fn m_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 
 pub fn p_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = u_expr(i)?;
-    let (i, rhs) = opt(nom_tuple((token_tag(Token::POW), u_expr)))(i)?;
+    let (i, rhs) = opt(tuple((token_tag(Token::POW), u_expr)))(i)?;
     match rhs {
         Some((op, rhs)) => Ok((
             i,
@@ -98,7 +98,7 @@ pub fn coefficient<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn die<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    let (i, die_val) = opt(nom_tuple((token_tag(Token::DIE), numeric_literal)))(i)?;
+    let (i, die_val) = opt(tuple((token_tag(Token::DIE), numeric_literal)))(i)?;
     match die_val {
         Some((op, rhs)) => Ok((i, Node::new(op.span + rhs.span, Expr::Die(rhs)))),
         None => expr_node(i),
