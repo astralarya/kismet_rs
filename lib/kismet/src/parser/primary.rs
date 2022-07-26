@@ -1,8 +1,12 @@
-use nom::{combinator::opt, sequence::preceded};
+use nom::{
+    combinator::opt,
+    multi::separated_list1,
+    sequence::{preceded, tuple},
+};
 
 use crate::{ast::Primary, types::Node};
 
-use super::{atom, token_tag, token_tag_id, Input, KResult, Token};
+use super::{atom, expr, token_tag, token_tag_id, Input, KResult, Token};
 
 pub fn primary<'input>(i: Input<'input>) -> KResult<'input, Node<Primary>> {
     let (mut i, mut iter) = primary_node(i)?;
@@ -24,15 +28,35 @@ pub fn primary_iter<'input>(
     move |i| {
         let (i, val) = opt(preceded(token_tag(Token::DOT), token_tag_id))(i)?;
         match val {
-            Some(val) => Ok((
-                i,
-                Node::new(
-                    iter.span.clone() + val.span.clone(),
-                    Primary::Attribute(iter.clone(), val),
-                ),
-            )),
-            None => Ok((i, iter.clone())),
+            Some(val) => {
+                return Ok((
+                    i,
+                    Node::new(
+                        iter.span.clone() + val.span.clone(),
+                        Primary::Attribute(iter.clone(), val),
+                    ),
+                ))
+            }
+            None => (),
         }
+        let (i, val) = opt(tuple((
+            token_tag(Token::LBRACKET),
+            separated_list1(token_tag(Token::COMMA), expr),
+            token_tag(Token::RBRACKET),
+        )))(i)?;
+        match val {
+            Some((_, val, rhs)) => {
+                return Ok((
+                    i,
+                    Node::new(
+                        iter.span.clone() + rhs.span.clone(),
+                        Primary::Subscription(iter.clone(), val),
+                    ),
+                ))
+            }
+            None => (),
+        }
+        Ok((i, iter.clone()))
     }
 }
 
