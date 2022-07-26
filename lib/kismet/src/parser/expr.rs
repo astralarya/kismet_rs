@@ -14,7 +14,22 @@ pub fn walrus_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn or_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    a_expr(i)
+    c_expr(i)
+}
+
+pub fn c_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    let (i, lhs) = a_expr(i)?;
+    let (i, rhs) = opt(tuple((eqs, a_expr)))(i)?;
+    match rhs {
+        Some((op, rhs)) => Ok((
+            i,
+            Node::new(
+                lhs.span.clone() + rhs.span.clone(),
+                Expr::Op(lhs, op.clone(), rhs),
+            ),
+        )),
+        None => Ok((i, lhs)),
+    }
 }
 
 pub fn a_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
@@ -111,6 +126,13 @@ pub fn expr_node<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
         i,
         Node::new(val.span.clone(), Expr::Primary(Primary::Atom(*val.data))),
     ))
+}
+
+pub fn eqs<'input>(i: Input<'input>) -> KResult<'input, &Node<Token>> {
+    token_if(|x| match *x.data {
+        Token::EQ | Token::NE | Token::LT | Token::LE | Token::GT | Token::GE => true,
+        _ => false,
+    })(i)
 }
 
 pub fn adds<'input>(i: Input<'input>) -> KResult<'input, &Node<Token>> {
