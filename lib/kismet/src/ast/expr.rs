@@ -2,12 +2,20 @@ use std::fmt;
 
 use crate::parser::Token;
 
-use super::{Atom, Primary, Range};
+use super::{Atom, OpEqs, Primary, Range};
 use crate::types::Node;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Stmts(Vec<Node<Expr>>),
+    CompareBound {
+        val: Node<Expr>,
+        l_op: OpEqs,
+        l_val: Node<Expr>,
+        r_op: OpEqs,
+        r_val: Node<Expr>,
+    },
+    Compare(Node<Expr>, OpEqs, Node<Expr>),
     Range(Range),
     Op(Node<Expr>, Node<Token>, Node<Expr>),
     Unary(Node<Token>, Node<Expr>),
@@ -20,6 +28,14 @@ impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Expr::Stmts(val) => write!(f, "{}", Node::vec_to_string(&val, "\n")),
+            Expr::CompareBound {
+                val,
+                l_op,
+                l_val,
+                r_op,
+                r_val,
+            } => write!(f, "{} {} {} {} {}", l_val, l_op, val, r_op, r_val),
+            Expr::Compare(lhs, op, rhs) => write!(f, "{} {} {}", lhs, op, rhs),
             Expr::Range(val) => write!(f, "{}", val),
             Expr::Op(lhs, val, rhs) => {
                 write!(

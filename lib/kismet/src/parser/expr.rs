@@ -1,6 +1,6 @@
 use nom::{combinator::opt, sequence::tuple, Err};
 
-use crate::ast::{Expr, Primary, Range};
+use crate::ast::{Expr, OpEqs, Primary, Range};
 use crate::types::{Node, Span};
 
 use super::{
@@ -62,16 +62,37 @@ pub fn not_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 
 pub fn c_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = r_expr(i)?;
+    let (i, val) = opt(tuple((eqs, r_expr)))(i)?;
     let (i, rhs) = opt(tuple((eqs, r_expr)))(i)?;
-    match rhs {
-        Some((op, rhs)) => Ok((
+    match (val, rhs) {
+        (Some((l_op, val)), Some((r_op, rhs))) => Ok((
             i,
             Node::new(
                 lhs.span.clone() + rhs.span.clone(),
-                Expr::Op(lhs, op.clone(), rhs),
+                Expr::CompareBound {
+                    l_val: lhs,
+                    l_op: *l_op.data,
+                    val,
+                    r_op: *r_op.data,
+                    r_val: rhs,
+                },
             ),
         )),
-        None => Ok((i, lhs)),
+        (Some((op, rhs)), None) => Ok((
+            i,
+            Node::new(
+                lhs.span.clone() + rhs.span.clone(),
+                Expr::Compare(lhs, *op.data, rhs),
+            ),
+        )),
+        (None, Some((op, rhs))) => Ok((
+            i,
+            Node::new(
+                lhs.span.clone() + rhs.span.clone(),
+                Expr::Compare(lhs, *op.data, rhs),
+            ),
+        )),
+        (None, None) => Ok((i, lhs)),
     }
 }
 
@@ -207,10 +228,15 @@ pub fn expr_node<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     Ok((i, Node::new(val.span.clone(), Expr::Primary(*val.data))))
 }
 
-pub fn eqs<'input>(i: Input<'input>) -> KResult<'input, &Node<Token>> {
-    token_if(|x| match *x.data {
-        Token::EQ | Token::NE | Token::LT | Token::LE | Token::GT | Token::GE => true,
-        _ => false,
+pub fn eqs<'input>(i: Input<'input>) -> KResult<'input, Node<OpEqs>> {
+    token_action(|x| match *x.data {
+        Token::EQ => Some(Node::new(x.span, OpEqs::EQ)),
+        Token::NE => Some(Node::new(x.span, OpEqs::NE)),
+        Token::LT => Some(Node::new(x.span, OpEqs::LT)),
+        Token::LE => Some(Node::new(x.span, OpEqs::LE)),
+        Token::GT => Some(Node::new(x.span, OpEqs::GT)),
+        Token::GE => Some(Node::new(x.span, OpEqs::GE)),
+        _ => None,
     })(i)
 }
 
