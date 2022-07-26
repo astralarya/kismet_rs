@@ -14,10 +14,10 @@ use crate::{
 use super::{expr, or_test, target, token_tag, token_tag_id, Error, Input, KResult, Token};
 
 pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
-    alt((parentheses, list, brace))(i)
+    alt((parens, brackets, brace))(i)
 }
 
-pub fn parentheses<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
+pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     let (i, lhs) = token_tag(Token::LPAREN)(i)?;
     let (i, rhs) = opt(token_tag(Token::RPAREN))(i)?;
     match rhs {
@@ -48,7 +48,7 @@ pub fn parentheses<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     Ok((i, Node::new(lhs.span + rhs.span, Atom::Tuple(vals))))
 }
 
-pub fn list<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
+pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     let (i, lhs) = token_tag(Token::LBRACKET)(i)?;
     let (i, rhs) = opt(token_tag(Token::RBRACKET))(i)?;
     match rhs {
