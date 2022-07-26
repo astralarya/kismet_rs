@@ -18,7 +18,11 @@ pub enum Atom {
         val: Node<DictItemComp>,
         iter: Vec<Node<CompIter>>,
     },
-    Tuple(Vec<Node<Expr>>),
+    Tuple(Vec<Node<ListItem>>),
+    Generator {
+        val: Node<ListItem>,
+        iter: Vec<Node<CompIter>>,
+    },
     Id(String),
     String(String),
     Float(Float),
@@ -47,6 +51,9 @@ impl fmt::Display for Atom {
                 1 => write!(f, "({},)", val[0]),
                 _ => write!(f, "({})", Node::vec_to_string(&val, ", ")),
             },
+            Atom::Generator { val, iter } => {
+                write!(f, "({} {})", val, Node::vec_to_string(&iter, " "))
+            }
             Atom::String(val) => write!(f, r#""{}""#, val),
             Atom::Float(val) => write!(f, "{}", val),
             Atom::Integer(val) => write!(f, "{}", val),

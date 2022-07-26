@@ -8,7 +8,7 @@ use nom::{
 
 use crate::{
     ast::{Atom, CompIter, DictItem, DictItemComp, ListItem},
-    types::{Node, Span},
+    types::Node,
 };
 
 use super::{
@@ -26,16 +26,46 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         Some(rhs) => return Ok((i, Node::new(lhs.span + rhs.span, Atom::Tuple(vec![])))),
         None => (),
     };
-    let (i, val) = expr(i)?;
+    let (i, val) = list_item(i)?;
     let (i, rhs) = opt(token_tag(Token::RPAREN))(i)?;
     match rhs {
-        Some(rhs) => return Ok((i, Node::new(lhs.span + rhs.span, Atom::Parentheses(val)))),
+        Some(rhs) => match *val.data {
+            ListItem::Expr(x) => {
+                return Ok((
+                    i,
+                    Node::new(
+                        lhs.span + rhs.span,
+                        Atom::Parentheses(Node::new(val.span, x)),
+                    ),
+                ))
+            }
+            _ => {
+                return Ok((
+                    i,
+                    Node::new(lhs.span + rhs.span, Atom::ListDisplay(vec![val])),
+                ))
+            }
+        },
+        None => (),
+    }
+
+    let (i, comp_val) = opt(comp_for)(i)?;
+    match comp_val {
+        Some(comp_val) => {
+            let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
+            let (i, rhs) = token_tag(Token::RPAREN)(i)?;
+            iter.insert(0, comp_val);
+            return Ok((
+                i,
+                Node::new(lhs.span + rhs.span, Atom::Generator { val, iter }),
+            ));
+        }
         None => (),
     }
 
     let (i, _) = token_tag(Token::COMMA)(i)?;
     let (i, vals) = opt(terminated(
-        separated_list1(token_tag(Token::COMMA), expr),
+        separated_list1(token_tag(Token::COMMA), list_item),
         opt(token_tag(Token::COMMA)),
     ))(i)?;
     let vals = match vals {
@@ -63,13 +93,11 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     match comp_val {
         Some(comp_val) => {
             let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
+            let (i, rhs) = token_tag(Token::RBRACKET)(i)?;
             iter.insert(0, comp_val);
             return Ok((
                 i,
-                Node::new(
-                    lhs.span + Span::from_iter(&iter),
-                    Atom::ListComprehension { val, iter },
-                ),
+                Node::new(lhs.span + rhs.span, Atom::ListComprehension { val, iter }),
             ));
         }
         None => (),
@@ -128,11 +156,12 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         match (*val.data, comp_val) {
             (DictItem::DynKeyVal { key, val }, Some(comp_val)) => {
                 let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
+                let (i, rhs) = token_tag(Token::RBRACE)(i)?;
                 iter.insert(0, comp_val);
                 return Ok((
                     i,
                     Node::new(
-                        lhs.span + Span::from_iter(&iter),
+                        lhs.span + rhs.span,
                         Atom::DictComprehension {
                             val: Node::new(val.span, DictItemComp::DynKeyVal { key, val }),
                             iter,
@@ -143,10 +172,11 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
             (DictItem::Spread(val), Some(comp_val)) => {
                 let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
                 iter.insert(0, comp_val);
+                let (i, rhs) = token_tag(Token::RBRACE)(i)?;
                 return Ok((
                     i,
                     Node::new(
-                        lhs.span + Span::from_iter(&iter),
+                        lhs.span + rhs.span,
                         Atom::DictComprehension {
                             val: Node::new(val.span, DictItemComp::Spread(val)),
                             iter,
