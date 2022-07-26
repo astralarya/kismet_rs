@@ -10,7 +10,7 @@ pub enum Atom {
     Statements(Node<Expr>),
     ListDisplay(Vec<Node<ListItem>>),
     ListComprehension {
-        val: Node<Expr>,
+        val: Node<ListItem>,
         iter: Vec<Node<CompIter>>,
     },
     DictDisplay(Vec<Node<DictItem>>),

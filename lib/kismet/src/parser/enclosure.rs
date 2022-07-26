@@ -3,6 +3,7 @@ use nom::{
     combinator::{map, opt},
     multi::{many0, separated_list1},
     sequence::preceded,
+    Err,
 };
 
 use crate::{
@@ -10,7 +11,7 @@ use crate::{
     types::{Node, Span},
 };
 
-use super::{expr, or_test, token_tag, token_tag_id, Input, KResult, Token};
+use super::{expr, or_test, token_tag, token_tag_id, Error, Input, KResult, Token};
 
 pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     alt((parentheses, list))(i)
@@ -62,47 +63,28 @@ pub fn list<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
 
     let (i, val) = list_item(i)?;
     let (i, comp_val) = opt(comp_for)(i)?;
-    let val = Node::new(
-        val.span,
-        match (*val.data, comp_val) {
-            (ListItem::Expr(val_data), Some(comp_val)) => {
-                let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
-                iter.insert(0, comp_val);
-                return Ok((
-                    i,
-                    Node::new(
-                        lhs.span + Span::from_iter(&iter),
-                        Atom::ListComprehension {
-                            val: Node::new(val.span, val_data),
-                            iter,
-                        },
-                    ),
-                ));
-            }
-            (val_data, _) => val_data,
-        },
-    );
-
-    let (i, _) = token_tag(Token::COMMA)(i)?;
-    let mut items = vec![val];
-    let mut i = i;
-    loop {
-        let (_i, val) = opt(list_item)(i)?;
-        i = _i;
-        match val {
-            Some(val) => items.push(val),
-            None => break,
+    match comp_val {
+        Some(comp_val) => {
+            let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
+            iter.insert(0, comp_val);
+            return Ok((
+                i,
+                Node::new(
+                    lhs.span + Span::from_iter(&iter),
+                    Atom::ListComprehension { val, iter },
+                ),
+            ));
         }
-        let (_i, sep) = opt(token_tag(Token::COMMA))(i)?;
-        i = _i;
-        match sep {
-            Some(_) => (),
-            None => break,
-        }
+        None => (),
     }
 
+    let (i, _) = token_tag(Token::COMMA)(i)?;
+    let (i, mut vals) = separated_list1(token_tag(Token::COMMA), list_item)(i)?;
+    vals.insert(0, val);
+
+    let (i, _) = opt(token_tag(Token::COMMA))(i)?;
     let (i, rhs) = token_tag(Token::RBRACKET)(i)?;
-    Ok((i, Node::new(lhs.span + rhs.span, Atom::ListDisplay(items))))
+    Ok((i, Node::new(lhs.span + rhs.span, Atom::ListDisplay(vals))))
 }
 
 pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
