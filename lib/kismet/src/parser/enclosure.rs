@@ -73,10 +73,18 @@ pub fn list<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     }
 
     let (i, _) = token_tag(Token::COMMA)(i)?;
-    let (i, mut vals) = separated_list1(token_tag(Token::COMMA), list_item)(i)?;
-    vals.insert(0, val);
+    let (i, vals) = opt(terminated(
+        separated_list1(token_tag(Token::COMMA), list_item),
+        opt(token_tag(Token::COMMA)),
+    ))(i)?;
+    let vals = match vals {
+        Some(mut vals) => {
+            vals.insert(0, val);
+            vals
+        }
+        _ => vec![val],
+    };
 
-    let (i, _) = opt(token_tag(Token::COMMA))(i)?;
     let (i, rhs) = token_tag(Token::RBRACKET)(i)?;
     Ok((i, Node::new(lhs.span + rhs.span, Atom::ListDisplay(vals))))
 }
