@@ -4,7 +4,10 @@ use nom::{
     sequence::{preceded, tuple},
 };
 
-use crate::{ast::Primary, types::Node};
+use crate::{
+    ast::{Expr, Primary},
+    types::Node,
+};
 
 use super::{atom, expr, token_tag, token_tag_id, Input, KResult, Token};
 
@@ -26,7 +29,7 @@ pub fn primary_iter<'input>(
     iter: Node<Primary>,
 ) -> impl Fn(Input<'input>) -> KResult<'input, Node<Primary>> {
     move |i| {
-        let (i, val) = opt(preceded(token_tag(Token::DOT), token_tag_id))(i)?;
+        let (i, val) = opt(attribute)(i)?;
         match val {
             Some(val) => {
                 return Ok((
@@ -39,11 +42,7 @@ pub fn primary_iter<'input>(
             }
             None => (),
         }
-        let (i, val) = opt(tuple((
-            token_tag(Token::LBRACKET),
-            separated_list1(token_tag(Token::COMMA), expr),
-            token_tag(Token::RBRACKET),
-        )))(i)?;
+        let (i, val) = opt(subscription)(i)?;
         match val {
             Some((_, val, rhs)) => {
                 return Ok((
@@ -58,6 +57,20 @@ pub fn primary_iter<'input>(
         }
         Ok((i, iter.clone()))
     }
+}
+
+pub fn attribute<'input>(i: Input<'input>) -> KResult<'input, Node<String>> {
+    preceded(token_tag(Token::DOT), token_tag_id)(i)
+}
+
+pub fn subscription<'input>(
+    i: Input<'input>,
+) -> KResult<'input, (&Node<Token>, Vec<Node<Expr>>, &Node<Token>)> {
+    tuple((
+        token_tag(Token::LBRACKET),
+        separated_list1(token_tag(Token::COMMA), expr),
+        token_tag(Token::RBRACKET),
+    ))(i)
 }
 
 pub fn primary_node<'input>(i: Input<'input>) -> KResult<'input, Node<Primary>> {
