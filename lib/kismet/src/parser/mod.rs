@@ -1,10 +1,3 @@
-mod atom;
-mod enclosure;
-mod error;
-mod expr;
-mod stmt;
-mod token;
-
 use nom::{Err, IResult};
 
 use crate::{
@@ -12,11 +5,20 @@ use crate::{
     types::{Node, Span},
 };
 
+mod atom;
+mod enclosure;
+mod error;
+mod expr;
+mod stmt;
+mod target;
+mod token;
+
 pub use atom::*;
 pub use enclosure::*;
 pub use error::*;
 pub use expr::*;
 pub use stmt::*;
+pub use target::*;
 pub use token::*;
 
 pub type Input<'a> = &'a [Node<Token>];
