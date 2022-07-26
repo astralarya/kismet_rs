@@ -374,20 +374,6 @@ impl Token {
         }
         Err(())
     }
-
-    pub fn space(&self) -> &'static str {
-        match self {
-            Token::DIE
-            | Token::POW
-            | Token::MUL
-            | Token::MOD
-            | Token::RANGE
-            | Token::RANGEI
-            | Token::LPAREN
-            | Token::RPAREN => "",
-            _ => " ",
-        }
-    }
 }
 
 impl fmt::Display for Token {

@@ -1,13 +1,14 @@
 use std::fmt;
 
-use crate::parser::Token;
-
-use super::{Atom, OpEqs, Primary, Range};
+use super::{Atom, OpArith, OpEqs, Primary, Range};
 use crate::types::Node;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Stmts(Vec<Node<Expr>>),
+    And(Node<Expr>, Node<Expr>),
+    Or(Node<Expr>, Node<Expr>),
+    Not(Node<Expr>),
     CompareBound {
         val: Node<Expr>,
         l_op: OpEqs,
@@ -17,8 +18,8 @@ pub enum Expr {
     },
     Compare(Node<Expr>, OpEqs, Node<Expr>),
     Range(Range),
-    Op(Node<Expr>, Node<Token>, Node<Expr>),
-    Unary(Node<Token>, Node<Expr>),
+    Arith(Node<Expr>, OpArith, Node<Expr>),
+    Unary(OpArith, Node<Expr>),
     Coefficient(Node<Atom>, Node<Expr>),
     Die(Node<Atom>),
     Primary(Primary),
@@ -28,6 +29,9 @@ impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Expr::Stmts(val) => write!(f, "{}", Node::vec_to_string(&val, "\n")),
+            Expr::And(lhs, rhs) => write!(f, "{} and {}", lhs, rhs),
+            Expr::Or(lhs, rhs) => write!(f, "{} or {}", lhs, rhs),
+            Expr::Not(val) => write!(f, "not {}", val),
             Expr::CompareBound {
                 val,
                 l_op,
@@ -37,18 +41,10 @@ impl fmt::Display for Expr {
             } => write!(f, "{} {} {} {} {}", l_val, l_op, val, r_op, r_val),
             Expr::Compare(lhs, op, rhs) => write!(f, "{} {} {}", lhs, op, rhs),
             Expr::Range(val) => write!(f, "{}", val),
-            Expr::Op(lhs, val, rhs) => {
-                write!(
-                    f,
-                    "{}{}{}{}{}",
-                    lhs,
-                    val.data.space(),
-                    val,
-                    val.data.space(),
-                    rhs
-                )
+            Expr::Arith(lhs, op, rhs) => {
+                write!(f, "{}{}{}{}{}", lhs, op.space(), op, op.space(), rhs)
             }
-            Expr::Unary(lhs, val) => write!(f, "{}{}{}", lhs, lhs.data.space(), val),
+            Expr::Unary(lhs, val) => write!(f, "{}{}{}", lhs, lhs.space(), val),
             Expr::Coefficient(lhs, rhs) => write!(f, "{}{}", lhs, rhs),
             Expr::Die(val) => match *val.data {
                 Atom::Id(_) => write!(f, "d({})", val),

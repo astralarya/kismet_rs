@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use kismet::{
     ast::*,
-    parser::{parse, ParseNode, Token},
+    parser::{parse, ParseNode},
     types::{Integer, Node, Span},
 };
 
@@ -15,13 +15,13 @@ pub fn assert_stmt(node: ParseNode, input: &str) {
 }
 
 #[allow(dead_code)]
-pub fn new_op<'input>(lhs: Node<Expr>, val: Node<Token>, rhs: Node<Expr>) -> Node<Expr> {
-    Node::new(lhs.span + rhs.span, Expr::Op(lhs, val, rhs))
+pub fn new_arith<'input>(lhs: Node<Expr>, op: OpArith, rhs: Node<Expr>) -> Node<Expr> {
+    Node::new(lhs.span + rhs.span, Expr::Arith(lhs, op, rhs))
 }
 
 #[allow(dead_code)]
-pub fn new_unary<'input>(lhs: Node<Token>, val: Node<Expr>) -> Node<Expr> {
-    Node::new(lhs.span + val.span, Expr::Unary(lhs, val))
+pub fn new_unary<'input>(lhs_span: Range<usize>, op: OpArith, val: Node<Expr>) -> Node<Expr> {
+    Node::new(Span::new(lhs_span) + val.span, Expr::Unary(op, val))
 }
 
 #[allow(dead_code)]
@@ -42,9 +42,4 @@ pub fn new_string<'input>(range: Range<usize>, val: &'input str) -> Node<Expr> {
 #[allow(dead_code)]
 pub fn new_id<'input>(range: Range<usize>, val: &'input str) -> Node<Expr> {
     new_atom(range, Atom::Id(String::from(val)))
-}
-
-#[allow(dead_code)]
-pub fn new_token<'input>(range: Range<usize>, token: Token) -> Node<Token> {
-    Node::new(range, token)
 }

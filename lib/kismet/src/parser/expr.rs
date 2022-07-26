@@ -1,11 +1,10 @@
+use nom::sequence::preceded;
 use nom::{combinator::opt, sequence::tuple, Err};
 
-use crate::ast::{Expr, OpEqs, Primary, Range};
+use crate::ast::{Expr, OpArith, OpEqs, OpRange, Primary, Range};
 use crate::types::{Node, Span};
 
-use super::{
-    numeric_literal, primary, token_action, token_if, token_tag, Error, Input, KResult, Token,
-};
+use super::{numeric_literal, primary, token_action, token_tag, Error, Input, KResult, Token};
 
 pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     walrus_expr(i)
@@ -17,14 +16,11 @@ pub fn walrus_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 
 pub fn or_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = and_test(i)?;
-    let (i, rhs) = opt(tuple((token_tag(Token::OR), or_test)))(i)?;
+    let (i, rhs) = opt(preceded(token_tag(Token::OR), or_test))(i)?;
     match rhs {
-        Some((op, rhs)) => Ok((
+        Some(rhs) => Ok((
             i,
-            Node::new(
-                lhs.span.clone() + rhs.span.clone(),
-                Expr::Op(lhs, op.clone(), rhs),
-            ),
+            Node::new(lhs.span.clone() + rhs.span.clone(), Expr::Or(lhs, rhs)),
         )),
         None => Ok((i, lhs)),
     }
@@ -32,14 +28,11 @@ pub fn or_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 
 pub fn and_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = not_test(i)?;
-    let (i, rhs) = opt(tuple((token_tag(Token::AND), and_test)))(i)?;
+    let (i, rhs) = opt(preceded(token_tag(Token::AND), and_test))(i)?;
     match rhs {
-        Some((op, rhs)) => Ok((
+        Some(rhs) => Ok((
             i,
-            Node::new(
-                lhs.span.clone() + rhs.span.clone(),
-                Expr::Op(lhs, op.clone(), rhs),
-            ),
+            Node::new(lhs.span.clone() + rhs.span.clone(), Expr::And(lhs, rhs)),
         )),
         None => Ok((i, lhs)),
     }
@@ -51,10 +44,7 @@ pub fn not_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     match op {
         Some(op) => Ok((
             i,
-            Node::new(
-                op.span.clone() + rhs.span.clone(),
-                Expr::Unary(op.clone(), rhs),
-            ),
+            Node::new(op.span.clone() + rhs.span.clone(), Expr::Not(rhs)),
         )),
         None => Ok((i, rhs)),
     }
@@ -105,8 +95,8 @@ pub fn r_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             Node::new(
                 start.span.clone() + end.span.clone(),
                 Expr::Range(match *op.data {
-                    RangeKind::Exclusive => Range::Range { start, end },
-                    RangeKind::Inclusive => Range::RangeI { start, end },
+                    OpRange::RANGE => Range::Range { start, end },
+                    OpRange::RANGEI => Range::RangeI { start, end },
                 }),
             ),
         )),
@@ -122,8 +112,8 @@ pub fn r_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             Node::new(
                 op.span.clone() + end.span.clone(),
                 Expr::Range(match *op.data {
-                    RangeKind::Exclusive => Range::RangeTo { end },
-                    RangeKind::Inclusive => Range::RangeToI { end },
+                    OpRange::RANGE => Range::RangeTo { end },
+                    OpRange::RANGEI => Range::RangeToI { end },
                 }),
             ),
         )),
@@ -143,7 +133,7 @@ pub fn a_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             i,
             Node::new(
                 lhs.span.clone() + rhs.span.clone(),
-                Expr::Op(lhs, op.clone(), rhs),
+                Expr::Arith(lhs, *op.data, rhs),
             ),
         )),
         None => Ok((i, lhs)),
@@ -158,7 +148,7 @@ pub fn m_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             i,
             Node::new(
                 lhs.span.clone() + rhs.span.clone(),
-                Expr::Op(lhs, op.clone(), rhs),
+                Expr::Arith(lhs, *op.data, rhs),
             ),
         )),
         None => Ok((i, lhs)),
@@ -167,13 +157,13 @@ pub fn m_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 
 pub fn p_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = u_expr(i)?;
-    let (i, rhs) = opt(tuple((token_tag(Token::POW), p_expr)))(i)?;
+    let (i, rhs) = opt(tuple((pow, p_expr)))(i)?;
     match rhs {
         Some((op, rhs)) => Ok((
             i,
             Node::new(
                 lhs.span.clone() + rhs.span.clone(),
-                Expr::Op(lhs, op.clone(), rhs),
+                Expr::Arith(lhs, *op.data, rhs),
             ),
         )),
         None => Ok((i, lhs)),
@@ -188,7 +178,7 @@ pub fn u_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             i,
             Node::new(
                 op.span.clone() + rhs.span.clone(),
-                Expr::Unary(op.clone(), rhs),
+                Expr::Unary(*op.data, rhs),
             ),
         )),
         None => Ok((i, rhs)),
@@ -240,30 +230,34 @@ pub fn eqs<'input>(i: Input<'input>) -> KResult<'input, Node<OpEqs>> {
     })(i)
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum RangeKind {
-    Exclusive,
-    Inclusive,
-}
-
-pub fn ranges<'input>(i: Input<'input>) -> KResult<'input, Node<RangeKind>> {
+pub fn ranges<'input>(i: Input<'input>) -> KResult<'input, Node<OpRange>> {
     token_action(|x| match *x.data {
-        Token::RANGE => Some(Node::new(x.span, RangeKind::Exclusive)),
-        Token::RANGEI => Some(Node::new(x.span, RangeKind::Inclusive)),
+        Token::RANGE => Some(Node::new(x.span, OpRange::RANGE)),
+        Token::RANGEI => Some(Node::new(x.span, OpRange::RANGEI)),
         _ => None,
     })(i)
 }
 
-pub fn adds<'input>(i: Input<'input>) -> KResult<'input, &Node<Token>> {
-    token_if(|x| match *x.data {
-        Token::ADD | Token::SUB => true,
-        _ => false,
+pub fn adds<'input>(i: Input<'input>) -> KResult<'input, Node<OpArith>> {
+    token_action(|x| match *x.data {
+        Token::ADD => Some(Node::new(x.span, OpArith::ADD)),
+        Token::SUB => Some(Node::new(x.span, OpArith::SUB)),
+        _ => None,
     })(i)
 }
 
-pub fn muls<'input>(i: Input<'input>) -> KResult<'input, &Node<Token>> {
-    token_if(|x| match *x.data {
-        Token::MOD | Token::MUL | Token::DIV => true,
-        _ => false,
+pub fn muls<'input>(i: Input<'input>) -> KResult<'input, Node<OpArith>> {
+    token_action(|x| match *x.data {
+        Token::MOD => Some(Node::new(x.span, OpArith::MOD)),
+        Token::MUL => Some(Node::new(x.span, OpArith::MUL)),
+        Token::DIV => Some(Node::new(x.span, OpArith::DIV)),
+        _ => None,
+    })(i)
+}
+
+pub fn pow<'input>(i: Input<'input>) -> KResult<'input, Node<OpArith>> {
+    token_action(|x| match *x.data {
+        Token::POW => Some(Node::new(x.span, OpArith::POW)),
+        _ => None,
     })(i)
 }
