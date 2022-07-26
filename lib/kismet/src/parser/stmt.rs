@@ -1,4 +1,7 @@
-use nom::multi::{many0, many1, separated_list0};
+use nom::{
+    combinator::all_consuming,
+    multi::{many0, many1, separated_list0},
+};
 
 use crate::{
     ast::Expr,
@@ -28,6 +31,6 @@ pub fn expr_list1<'input>(i: Input<'input>) -> KResult<'input, Node<Vec<Node<Exp
 }
 
 pub fn start<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    let (i, val) = expr_list0(i)?;
+    let (i, val) = all_consuming(expr_list0)(i)?;
     Ok((i, Node::new(val.span, Expr::Stmts(*val.data))))
 }
