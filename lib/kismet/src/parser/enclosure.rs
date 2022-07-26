@@ -33,10 +33,7 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
             ListItem::Expr(x) => {
                 return Ok((
                     i,
-                    Node::new(
-                        lhs.span + rhs.span,
-                        Atom::Parentheses(Node::new(val.span, x)),
-                    ),
+                    Node::new(lhs.span + rhs.span, Atom::Parenth(Node::new(val.span, x))),
                 ))
             }
             _ => {
@@ -141,10 +138,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     match val {
         Some(val) => {
             let (i, rhs) = token_tag(Token::RBRACE)(i)?;
-            return Ok((
-                i,
-                Node::new(lhs.span + rhs.span, Atom::Statements(*val.data)),
-            ));
+            return Ok((i, Node::new(lhs.span + rhs.span, Atom::Stmts(*val.data))));
         }
         None => (),
     }
