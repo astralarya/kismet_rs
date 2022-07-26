@@ -11,7 +11,9 @@ use crate::{
     types::{Node, Span},
 };
 
-use super::{expr, or_test, target, token_tag, token_tag_id, Error, Input, KResult, Token};
+use super::{
+    expr, expr_list1, or_test, target, token_tag, token_tag_id, Error, Input, KResult, Token,
+};
 
 pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     alt((parens, brackets, brace))(i)
@@ -106,6 +108,18 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         Some(rhs) => return Ok((i, Node::new(lhs.span + rhs.span, Atom::DictDisplay(vec![])))),
         None => (),
     };
+
+    let (i, val) = opt(expr_list1)(i)?;
+    match val {
+        Some(val) => {
+            let (i, rhs) = token_tag(Token::RBRACE)(i)?;
+            return Ok((
+                i,
+                Node::new(lhs.span + rhs.span, Atom::Statements(*val.data)),
+            ));
+        }
+        None => (),
+    }
 
     let (i, val) = dict_item(i)?;
     let (i, comp_val) = opt(comp_for)(i)?;

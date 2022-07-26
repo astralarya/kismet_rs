@@ -27,7 +27,7 @@ pub type KResult<'a, O> = IResult<Input<'a>, O, Node<Error>>;
 pub type ParseNode = Node<Expr>;
 
 pub fn parse<'a>(input: &'a str) -> Result<ParseNode, Node<Error>> {
-    run_parser(stmts, input)
+    run_parser(start, input)
 }
 
 pub fn run_parser<'a, P>(parser: P, i: &'a str) -> Result<ParseNode, Node<Error>>
