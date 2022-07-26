@@ -1,3 +1,4 @@
+use nom::sequence::preceded;
 use nom::{combinator::opt, sequence::tuple, Err};
 
 use crate::ast::{Expr, Primary};
@@ -14,11 +15,33 @@ pub fn walrus_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn or_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    and_test(i)
+    let (i, lhs) = and_test(i)?;
+    let (i, rhs) = opt(tuple((token_tag(Token::OR), or_test)))(i)?;
+    match rhs {
+        Some((op, rhs)) => Ok((
+            i,
+            Node::new(
+                lhs.span.clone() + rhs.span.clone(),
+                Expr::Op(lhs, op.clone(), rhs),
+            ),
+        )),
+        None => Ok((i, lhs)),
+    }
 }
 
 pub fn and_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    not_test(i)
+    let (i, lhs) = not_test(i)?;
+    let (i, rhs) = opt(tuple((token_tag(Token::AND), and_test)))(i)?;
+    match rhs {
+        Some((op, rhs)) => Ok((
+            i,
+            Node::new(
+                lhs.span.clone() + rhs.span.clone(),
+                Expr::Op(lhs, op.clone(), rhs),
+            ),
+        )),
+        None => Ok((i, lhs)),
+    }
 }
 
 pub fn not_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
