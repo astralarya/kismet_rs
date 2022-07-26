@@ -3,7 +3,7 @@ use nom::{combinator::opt, sequence::tuple, Err};
 use crate::ast::{Expr, Primary};
 use crate::types::{Node, Span};
 
-use super::{atom, numeric_literal, token_if, token_tag, Error, Input, KResult, Token};
+use super::{numeric_literal, primary, token_if, token_tag, Error, Input, KResult, Token};
 
 pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     walrus_expr(i)
@@ -162,11 +162,8 @@ pub fn die<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn expr_node<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    let (i, val) = atom(i)?;
-    Ok((
-        i,
-        Node::new(val.span.clone(), Expr::Primary(Primary::Atom(*val.data))),
-    ))
+    let (i, val) = primary(i)?;
+    Ok((i, Node::new(val.span.clone(), Expr::Primary(*val.data))))
 }
 
 pub fn eqs<'input>(i: Input<'input>) -> KResult<'input, &Node<Token>> {
