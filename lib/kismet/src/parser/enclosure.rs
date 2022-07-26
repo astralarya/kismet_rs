@@ -1,19 +1,20 @@
 use nom::{
     branch::alt,
-    combinator::opt,
+    combinator::{map, opt},
     multi::{many0, separated_list1},
-    sequence::{preceded, terminated},
+    sequence::{delimited, pair, preceded, terminated},
+    Err,
 };
 
 use crate::{
-    ast::{Atom, CompIter, ListItem},
+    ast::{Atom, CompIter, DictItem, DictItemComp, ListItem},
     types::{Node, Span},
 };
 
-use super::{expr, or_test, target, token_tag, Input, KResult, Token};
+use super::{expr, or_test, target, token_tag, token_tag_id, Error, Input, KResult, Token};
 
 pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
-    alt((parentheses, list))(i)
+    alt((parentheses, list, brace))(i)
 }
 
 pub fn parentheses<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
@@ -96,6 +97,91 @@ pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
         Some(lhs) => Ok((i, Node::new(lhs.span + val.span, ListItem::Spread(val)))),
         None => Ok((i, Node::new(val.span, ListItem::Expr(*val.data)))),
     }
+}
+
+pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
+    let (i, lhs) = token_tag(Token::LBRACE)(i)?;
+    let (i, rhs) = opt(token_tag(Token::RBRACE))(i)?;
+    match rhs {
+        Some(rhs) => return Ok((i, Node::new(lhs.span + rhs.span, Atom::DictDisplay(vec![])))),
+        None => (),
+    };
+
+    let (i, val) = dict_item(i)?;
+    let (i, comp_val) = opt(comp_for)(i)?;
+    let val = Node::new(
+        val.span,
+        match (*val.data, comp_val) {
+            (DictItem::DynKeyVal { key, val }, Some(comp_val)) => {
+                let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
+                iter.insert(0, comp_val);
+                return Ok((
+                    i,
+                    Node::new(
+                        lhs.span + Span::from_iter(&iter),
+                        Atom::DictComprehension {
+                            val: Node::new(val.span, DictItemComp::DynKeyVal { key, val }),
+                            iter,
+                        },
+                    ),
+                ));
+            }
+            (DictItem::Spread(val), Some(comp_val)) => {
+                let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
+                iter.insert(0, comp_val);
+                return Ok((
+                    i,
+                    Node::new(
+                        lhs.span + Span::from_iter(&iter),
+                        Atom::DictComprehension {
+                            val: Node::new(val.span, DictItemComp::Spread(val)),
+                            iter,
+                        },
+                    ),
+                ));
+            }
+            (_, Some(_)) => return Err(Err::Failure(Node::new(val.span, Error::Grammar))),
+            (val_data, None) => val_data,
+        },
+    );
+
+    let (i, vals) = opt(preceded(
+        token_tag(Token::COMMA),
+        separated_list1(token_tag(Token::COMMA), dict_item),
+    ))(i)?;
+    let (i, _) = opt(token_tag(Token::COMMA))(i)?;
+    let vals = match vals {
+        Some(mut vals) => {
+            vals.insert(0, val);
+            vals
+        }
+        _ => vec![val],
+    };
+
+    let (i, rhs) = token_tag(Token::RBRACE)(i)?;
+    Ok((i, Node::new(lhs.span + rhs.span, Atom::DictDisplay(vals))))
+}
+
+pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
+    let spread = map(preceded(token_tag(Token::SPREAD), expr), |x| {
+        Node::new(x.span, DictItem::Spread(x))
+    });
+    let dynkeyval = map(
+        pair(
+            delimited(token_tag(Token::LBRACKET), expr, token_tag(Token::RBRACKET)),
+            preceded(token_tag(Token::COLON), expr),
+        ),
+        |(key, val)| Node::new(key.span + val.span, DictItem::DynKeyVal { key, val }),
+    );
+    let keyval = map(
+        pair(token_tag_id, opt(preceded(token_tag(Token::COLON), expr))),
+        |(key, val)| match val {
+            Some(val) => Node::new(key.span + val.span, DictItem::KeyVal { key, val }),
+            None => Node::new(key.span, DictItem::Shorthand(*key.data)),
+        },
+    );
+
+    alt((spread, dynkeyval, keyval))(i)
 }
 
 pub fn comp_for<'input>(i: Input<'input>) -> KResult<'input, Node<CompIter>> {

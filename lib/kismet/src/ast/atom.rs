@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::types::{Float, Integer, Node};
 
-use super::{CompIter, DictItem, Expr, ListItem};
+use super::{CompIter, DictItem, DictItemComp, Expr, ListItem};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Atom {
@@ -15,8 +15,7 @@ pub enum Atom {
     },
     DictDisplay(Vec<Node<DictItem>>),
     DictComprehension {
-        key: Node<Expr>,
-        val: Node<Expr>,
+        val: Node<DictItemComp>,
         iter: Vec<Node<CompIter>>,
     },
     Tuple(Vec<Node<Expr>>),
@@ -40,14 +39,8 @@ impl fmt::Display for Atom {
                 write!(f, "[{} {}]", val, Node::vec_to_string(&iter, " "))
             }
             Atom::DictDisplay(val) => write!(f, "{{{}}}", Node::vec_to_string(&val, ", ")),
-            Atom::DictComprehension { key, val, iter } => {
-                write!(
-                    f,
-                    "{{{}: {} {}}}",
-                    key,
-                    val,
-                    Node::vec_to_string(&iter, ", ")
-                )
+            Atom::DictComprehension { val, iter } => {
+                write!(f, "{{{} {}}}", val, Node::vec_to_string(&iter, " "))
             }
             Atom::Tuple(val) => match val.len() {
                 1 => write!(f, "({},)", val[0]),
