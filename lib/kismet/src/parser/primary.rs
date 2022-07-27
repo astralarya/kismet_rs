@@ -1,5 +1,6 @@
 use nom::{
-    combinator::opt,
+    branch::alt,
+    combinator::{map, opt},
     multi::separated_list1,
     sequence::{preceded, tuple},
 };
@@ -13,49 +14,34 @@ use super::{atom, expr, token_tag, token_tag_id, Input, KResult, Token};
 
 pub fn primary<'input>(i: Input<'input>) -> KResult<'input, Node<Primary>> {
     let (mut i, mut iter) = primary_node(i)?;
-    let mut prev = i.len();
+    let mut next ;
     loop {
-        (i, iter) = primary_iter(iter)(i)?;
-        if i.len() == prev {
-            break;
-        } else {
-            prev = i.len()
+        (i, next) = opt(primary_iter(iter.clone()))(i)?;
+        match next {
+            Some(next) => iter = next,
+            None => return Ok((i, iter)),
         }
     }
-    Ok((i, iter))
 }
 
 pub fn primary_iter<'input>(
     iter: Node<Primary>,
 ) -> impl Fn(Input<'input>) -> KResult<'input, Node<Primary>> {
     move |i| {
-        let (i, val) = opt(attribute)(i)?;
-        match val {
-            Some(val) => {
-                return Ok((
-                    i,
-                    Node::new(
-                        iter.span.clone() + val.span.clone(),
-                        Primary::Attribute(iter.clone(), val),
-                    ),
-                ))
-            }
-            None => (),
-        }
-        let (i, val) = opt(subscription)(i)?;
-        match val {
-            Some((_, val, rhs)) => {
-                return Ok((
-                    i,
-                    Node::new(
-                        iter.span.clone() + rhs.span.clone(),
-                        Primary::Subscription(iter.clone(), val),
-                    ),
-                ))
-            }
-            None => (),
-        }
-        Ok((i, iter.clone()))
+        alt((
+            map(attribute, |val| {
+                Node::new(
+                    iter.span.clone() + val.span.clone(),
+                    Primary::Attribute(iter.clone(), val),
+                )
+            }),
+            map(subscription, |(lhs, val, rhs)| {
+                Node::new(
+                    lhs.span + rhs.span,
+                    Primary::Subscription(iter.clone(), val),
+                )
+            }),
+        ))(i)
     }
 }
 
