@@ -1,7 +1,7 @@
 use nom::sequence::preceded;
 use nom::{combinator::opt, sequence::tuple, Err};
 
-use crate::ast::{Expr, OpArith, OpEqs, OpRange, Primary, Range};
+use crate::ast::{Atom, Expr, OpArith, OpEqs, OpRange, Primary, Range};
 use crate::types::{Node, Span};
 
 use super::{numeric_literal, primary, token_action, token_tag, Error, Input, KResult, Token};
@@ -10,7 +10,18 @@ pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     walrus_expr(i)
 }
 
+pub fn expr_as_id<'input>(val: Node<Expr>) -> Option<Node<String>> {
+    match *val.data {
+        Expr::Primary(Primary::Atom(Atom::Id(x))) => Some(Node::new(val.span, x)),
+        _ => None,
+    }
+}
+
 pub fn walrus_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    lambda_expr(i)
+}
+
+pub fn lambda_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     or_test(i)
 }
 

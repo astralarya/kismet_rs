@@ -7,14 +7,14 @@ use crate::types::Node;
 pub enum Primary {
     Attribute(Node<Primary>, Node<String>),
     Subscription(Node<Primary>, Vec<Node<Expr>>),
-    Call(Node<Primary>, Args),
+    Call(Node<Primary>, Node<Args>),
     Atom(Atom),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Args {
-    args: Vec<Node<Expr>>,
-    kwargs: HashMap<String, Node<Expr>>,
+    pub args: Vec<Node<Expr>>,
+    pub kwargs: HashMap<String, Node<Expr>>,
 }
 
 impl fmt::Display for Primary {
