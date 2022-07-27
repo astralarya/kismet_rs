@@ -108,12 +108,6 @@ pub enum Token {
     #[token(":")]
     COLON,
 
-    #[token("..")]
-    RANGE,
-
-    #[token("..=")]
-    RANGEI,
-
     #[token("...")]
     SPREAD,
 
@@ -152,6 +146,12 @@ pub enum Token {
 
     #[token(">=")]
     GE,
+
+    #[token("..")]
+    RANGE,
+
+    #[token("..=")]
+    RANGEI,
 
     #[token("+")]
     ADD,
@@ -262,8 +262,8 @@ impl Token {
             }
         }
         match dot || exp {
-            true => Token::parse_float(t),
-            false => Token::parse_int(t),
+            true => Self::parse_float(t),
+            false => Self::parse_int(t),
         }
     }
 
@@ -379,42 +379,42 @@ impl Token {
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Token::DELIM => write!(f, "\n"),
-            Token::COMMA => write!(f, ","),
-            Token::COLON => write!(f, ":"),
-            Token::RANGE => write!(f, ".."),
-            Token::RANGEI => write!(f, "..="),
-            Token::SPREAD => write!(f, "..."),
-            Token::FOR => write!(f, "for"),
-            Token::IN => write!(f, "in"),
-            Token::IF => write!(f, "if"),
-            Token::AND => write!(f, "and"),
-            Token::OR => write!(f, "or"),
-            Token::NOT => write!(f, "not"),
-            Token::EQ => write!(f, "=="),
-            Token::NE => write!(f, "!="),
-            Token::LT => write!(f, "<"),
-            Token::LE => write!(f, "<="),
-            Token::GT => write!(f, ">"),
-            Token::GE => write!(f, ">="),
-            Token::ADD => write!(f, "+"),
-            Token::SUB => write!(f, "-"),
-            Token::MOD => write!(f, "%"),
-            Token::MUL => write!(f, "*"),
-            Token::DIV => write!(f, "/"),
-            Token::POW => write!(f, "^"),
-            Token::DIE => write!(f, "d"),
-            Token::DOT => write!(f, "."),
-            Token::LPAREN => write!(f, "("),
-            Token::RPAREN => write!(f, ")"),
-            Token::LBRACKET => write!(f, "["),
-            Token::RBRACKET => write!(f, "]"),
-            Token::LBRACE => write!(f, "{{"),
-            Token::RBRACE => write!(f, "}}"),
-            Token::String(value) => write!(f, r#""{}""#, value),
-            Token::Number(value) => write!(f, "{}", value),
-            Token::Id(value) => write!(f, "{}", value),
-            Token::SKIP | Token::ERROR => write!(f, "{:?}", self),
+            Self::DELIM => write!(f, "\n"),
+            Self::COMMA => write!(f, ","),
+            Self::COLON => write!(f, ":"),
+            Self::SPREAD => write!(f, "..."),
+            Self::FOR => write!(f, "for"),
+            Self::IN => write!(f, "in"),
+            Self::IF => write!(f, "if"),
+            Self::AND => write!(f, "and"),
+            Self::OR => write!(f, "or"),
+            Self::NOT => write!(f, "not"),
+            Self::EQ => write!(f, "=="),
+            Self::NE => write!(f, "!="),
+            Self::LT => write!(f, "<"),
+            Self::LE => write!(f, "<="),
+            Self::GT => write!(f, ">"),
+            Self::GE => write!(f, ">="),
+            Self::RANGE => write!(f, ".."),
+            Self::RANGEI => write!(f, "..="),
+            Self::ADD => write!(f, "+"),
+            Self::SUB => write!(f, "-"),
+            Self::MOD => write!(f, "%"),
+            Self::MUL => write!(f, "*"),
+            Self::DIV => write!(f, "/"),
+            Self::POW => write!(f, "^"),
+            Self::DIE => write!(f, "d"),
+            Self::DOT => write!(f, "."),
+            Self::LPAREN => write!(f, "("),
+            Self::RPAREN => write!(f, ")"),
+            Self::LBRACKET => write!(f, "["),
+            Self::RBRACKET => write!(f, "]"),
+            Self::LBRACE => write!(f, "{{"),
+            Self::RBRACE => write!(f, "}}"),
+            Self::String(value) => write!(f, r#""{}""#, value),
+            Self::Number(value) => write!(f, "{}", value),
+            Self::Id(value) => write!(f, "{}", value),
+            Self::SKIP | Self::ERROR => write!(f, "{:?}", self),
         }
     }
 }
