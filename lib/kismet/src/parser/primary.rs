@@ -14,7 +14,7 @@ use super::{atom, expr, token_tag, token_tag_id, Input, KResult, Token};
 
 pub fn primary<'input>(i: Input<'input>) -> KResult<'input, Node<Primary>> {
     let (mut i, mut iter) = primary_node(i)?;
-    let mut next ;
+    let mut next;
     loop {
         (i, next) = opt(primary_iter(iter.clone()))(i)?;
         match next {
