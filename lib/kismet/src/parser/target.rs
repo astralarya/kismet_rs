@@ -6,7 +6,7 @@ use nom::{
 };
 
 use crate::{
-    ast::{Atom, DictItem, Expr, ListItem, Primary, Target, TargetDictItem, TargetListItem},
+    ast::{Target, TargetDictItem, TargetListItem},
     types::Node,
 };
 
@@ -78,81 +78,5 @@ pub fn target_dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<Target
             Node::new(key.span + val.span, TargetDictItem::Pair { key, val }),
         )),
         None => Ok((i, Node::new(key.span, TargetDictItem::Target(*key.data)))),
-    }
-}
-
-pub fn expr_as_target(val: &Node<Expr>) -> Option<Node<Target>> {
-    match &*val.data {
-        Expr::Primary(Primary::Atom(Atom::Id(x))) => {
-            Some(Node::new(val.span, Target::Id(x.clone())))
-        }
-        Expr::Primary(Primary::Atom(Atom::Tuple(x))) => {
-            let y = x
-                .iter()
-                .filter_map(|x| match &*x.data {
-                    ListItem::Expr(y) => match expr_as_target(&Node::new(x.span, y.clone())) {
-                        Some(x) => Some(Node::new(x.span, TargetListItem::Target(*x.data))),
-                        None => None,
-                    },
-                    ListItem::Spread(x) => match expr_as_target(x) {
-                        Some(x) => Some(Node::new(x.span, TargetListItem::Spread(x))),
-                        None => None,
-                    },
-                })
-                .collect::<Vec<_>>();
-            if x.len() != y.len() {
-                return None;
-            }
-            Some(Node::new(val.span, Target::TargetTuple(y)))
-        }
-        Expr::Primary(Primary::Atom(Atom::ListDisplay(x))) => {
-            let y = x
-                .iter()
-                .filter_map(|x| match &*x.data {
-                    ListItem::Expr(y) => match expr_as_target(&Node::new(x.span, y.clone())) {
-                        Some(x) => Some(Node::new(x.span, TargetListItem::Target(*x.data))),
-                        None => None,
-                    },
-                    ListItem::Spread(x) => match expr_as_target(&x) {
-                        Some(x) => Some(Node::new(x.span, TargetListItem::Spread(x))),
-                        None => None,
-                    },
-                })
-                .collect::<Vec<_>>();
-            if x.len() != y.len() {
-                return None;
-            }
-            Some(Node::new(val.span, Target::TargetList(y)))
-        }
-        Expr::Primary(Primary::Atom(Atom::DictDisplay(x))) => {
-            let y = x
-                .iter()
-                .filter_map(|x| match &*x.data {
-                    DictItem::Shorthand(y) => {
-                        Some(Node::new(x.span, TargetDictItem::Target(y.clone())))
-                    }
-                    DictItem::Spread(x) => match expr_as_target(&x) {
-                        Some(x) => Some(Node::new(x.span, TargetDictItem::Spread(x))),
-                        None => None,
-                    },
-                    DictItem::KeyVal { key, val } => match expr_as_target(&val) {
-                        Some(val) => Some(Node::new(
-                            x.span,
-                            TargetDictItem::Pair {
-                                key: key.clone(),
-                                val,
-                            },
-                        )),
-                        None => None,
-                    },
-                    _ => None,
-                })
-                .collect::<Vec<_>>();
-            if x.len() != y.len() {
-                return None;
-            }
-            Some(Node::new(val.span, Target::TargetDict(y)))
-        }
-        _ => None,
     }
 }
