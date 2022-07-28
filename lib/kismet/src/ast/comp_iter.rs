@@ -1,12 +1,12 @@
 use std::fmt;
 
-use super::{Expr, TargetList};
+use super::{Expr, Target};
 use crate::types::Node;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum CompIter {
     For {
-        target: Node<TargetList>,
+        target: Node<Target>,
         val: Node<Expr>,
     },
     If(Node<Expr>),

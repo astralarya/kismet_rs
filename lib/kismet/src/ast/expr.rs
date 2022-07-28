@@ -2,12 +2,12 @@ use std::fmt;
 
 use crate::types::Node;
 
-use super::{Atom, OpArith, OpEqs, Primary, Range, TargetList};
+use super::{Atom, OpArith, OpEqs, Primary, Range, Target};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Stmts(Vec<Node<Expr>>),
-    Assign(Node<TargetList>, Node<Expr>),
+    Assign(Node<Target>, Node<Expr>),
     And(Node<Expr>, Node<Expr>),
     Or(Node<Expr>, Node<Expr>),
     Not(Node<Expr>),

@@ -55,6 +55,18 @@ impl<T: std::fmt::Display> Node<T> {
             .collect::<Vec<String>>()
             .join(delim)
     }
+
+    pub fn vec_to_string1(
+        nodes: &Vec<Node<T>>,
+        delim: &'static str,
+        delim1: &'static str,
+    ) -> String {
+        format!(
+            "{}{}",
+            Self::vec_to_string(nodes, delim),
+            if nodes.len() == 1 { delim1 } else { "" }
+        )
+    }
 }
 
 impl<T: std::fmt::Display> fmt::Display for Node<T> {

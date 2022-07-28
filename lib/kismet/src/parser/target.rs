@@ -6,29 +6,14 @@ use nom::{
 };
 
 use crate::{
-    ast::{Target, TargetDictItem, TargetList},
-    types::{Node, Span},
+    ast::{Target, TargetDictItem, TargetListItem},
+    types::Node,
 };
 
 use super::{token_tag, token_tag_id, Input, KResult, Token};
 
-pub fn target<'input>(i: Input<'input>) -> KResult<'input, Node<TargetList>> {
-    let (i, val) = separated_list1(token_tag(Token::COMMA), target_item)(i)?;
-    let (i, rhs) = opt(token_tag(Token::COMMA))(i)?;
-    match (rhs, val.len()) {
-        (None, 1) => Ok((
-            i,
-            Node::new(
-                Span::from_iter(&val),
-                TargetList::Target(*val[0].data.clone()),
-            ),
-        )),
-        _ => Ok((i, Node::new(Span::from_iter(&val), TargetList::List(val)))),
-    }
-}
-
-pub fn target_item<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
-    alt((target_id, target_tuple, target_list))(i)
+pub fn target<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
+    alt((target_id, target_tuple, target_list, target_dict))(i)
 }
 
 pub fn target_id<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
@@ -39,15 +24,15 @@ pub fn target_id<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
 
 pub fn target_tuple<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
     let (i, lhs) = token_tag(Token::LPAREN)(i)?;
-    let (i, val) = separated_list1(token_tag(Token::COMMA), target_item)(i)?;
+    let (i, val) = separated_list1(token_tag(Token::COMMA), target_list_item)(i)?;
     let (i, _) = opt(token_tag(Token::COMMA))(i)?;
     let (i, rhs) = token_tag(Token::RPAREN)(i)?;
-    Ok((i, Node::new(lhs.span + rhs.span, Target::TargetList(val))))
+    Ok((i, Node::new(lhs.span + rhs.span, Target::TargetTuple(val))))
 }
 
 pub fn target_list<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
     let (i, lhs) = token_tag(Token::LBRACKET)(i)?;
-    let (i, val) = separated_list1(token_tag(Token::COMMA), target_item)(i)?;
+    let (i, val) = separated_list1(token_tag(Token::COMMA), target_list_item)(i)?;
     let (i, _) = opt(token_tag(Token::COMMA))(i)?;
     let (i, rhs) = token_tag(Token::RBRACKET)(i)?;
     Ok((i, Node::new(lhs.span + rhs.span, Target::TargetList(val))))
@@ -61,9 +46,32 @@ pub fn target_dict<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
     Ok((i, Node::new(lhs.span + rhs.span, Target::TargetDict(val))))
 }
 
+pub fn target_list_item<'input>(i: Input<'input>) -> KResult<'input, Node<TargetListItem>> {
+    let (i, op) = opt(token_tag(Token::SPREAD))(i)?;
+    let (i, val) = target(i)?;
+    match op {
+        Some(op) => Ok((
+            i,
+            Node::new(op.span + val.span, TargetListItem::Spread(val)),
+        )),
+        None => Ok((i, Node::new(val.span, TargetListItem::Target(*val.data)))),
+    }
+}
+
 pub fn target_dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<TargetDictItem>> {
+    let (i, op) = opt(token_tag(Token::SPREAD))(i)?;
+    match op {
+        Some(op) => {
+            let (i, val) = target(i)?;
+            return Ok((
+                i,
+                Node::new(op.span + val.span, TargetDictItem::Spread(val)),
+            ));
+        }
+        None => (),
+    }
     let (i, key) = token_tag_id(i)?;
-    let (i, val) = opt(preceded(token_tag(Token::COLON), target_item))(i)?;
+    let (i, val) = opt(preceded(token_tag(Token::COLON), target))(i)?;
     match val {
         Some(val) => Ok((
             i,
