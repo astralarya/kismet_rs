@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt};
+use std::fmt;
 
 use super::{Atom, Expr};
 use crate::types::Node;
@@ -14,7 +14,7 @@ pub enum Primary {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Args {
     pub args: Vec<Node<Expr>>,
-    pub kwargs: HashMap<String, Node<Expr>>,
+    pub kwargs: Vec<(String, Node<Expr>)>,
 }
 
 impl fmt::Display for Primary {

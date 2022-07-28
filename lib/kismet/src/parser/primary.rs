@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use nom::{
     branch::alt,
     combinator::{map, opt},
@@ -92,7 +90,7 @@ pub fn call<'input>(i: Input<'input>) -> KResult<'input, Node<Args>> {
                         lhs.span + rhs.span,
                         Args {
                             args,
-                            kwargs: HashMap::new(),
+                            kwargs: vec![],
                         },
                     ),
                 ));
@@ -120,11 +118,11 @@ pub fn call<'input>(i: Input<'input>) -> KResult<'input, Node<Args>> {
         i_ = i;
     };
 
-    let mut kwargs: HashMap<String, Node<Expr>> = HashMap::new();
+    let mut kwargs = vec![];
     let i = match kwarg0_key {
         Some(key) => {
             let (i, val) = expr(i)?;
-            kwargs.insert(*key.data, val);
+            kwargs.push((*key.data, val));
             i
         }
         None => i,
@@ -144,7 +142,7 @@ pub fn call<'input>(i: Input<'input>) -> KResult<'input, Node<Args>> {
         let (i, pair) = opt(separated_pair(token_tag_id, assign, expr))(i)?;
         match pair {
             Some((key, val)) => {
-                kwargs.insert(*key.data, val);
+                kwargs.push((*key.data, val));
             }
             None => break (i, kwargs),
         }
