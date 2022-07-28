@@ -7,7 +7,7 @@ use super::{CompIter, DictItem, DictItemComp, Expr, ListItem};
 #[derive(Clone, Debug, PartialEq)]
 pub enum Atom {
     Stmts(Vec<Node<Expr>>),
-    Paren(Node<Expr>),
+    Paren(Node<ListItem>),
     ListDisplay(Vec<Node<ListItem>>),
     ListComprehension {
         val: Node<ListItem>,

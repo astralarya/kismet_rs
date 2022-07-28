@@ -1,7 +1,7 @@
 use nom::sequence::preceded;
 use nom::{combinator::opt, sequence::tuple, Err};
 
-use crate::ast::{Expr, OpArith, OpEqs, OpRange, Primary, Range};
+use crate::ast::{Expr, OpArith, OpEqs, OpRange, Primary, Range, Target};
 use crate::types::{Node, Span};
 
 use super::{numeric_literal, primary, token_action, token_tag, Error, Input, KResult, Token};
@@ -11,7 +11,18 @@ pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn assignment_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    conditional_expr(i)
+    let (i, lhs) = conditional_expr(i)?;
+    let (i, op) = opt(token_tag(Token::ASSIGNE))(i)?;
+    match op {
+        Some(op) => match Node::<Target>::try_from(lhs) {
+            Ok(lhs) => {
+                let (i, rhs) = conditional_expr(i)?;
+                Ok((i, Node::new(lhs.span + rhs.span, Expr::Assign(lhs, rhs))))
+            }
+            Err(_) => Err(Err::Failure(Node::new(op.span, Error::Grammar))),
+        },
+        None => Ok((i, lhs)),
+    }
 }
 
 pub fn conditional_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {

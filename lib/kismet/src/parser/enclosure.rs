@@ -33,20 +33,7 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     let (i, val) = list_item(i)?;
     let (i, rhs) = opt(close)(i)?;
     match rhs {
-        Some(rhs) => match *val.data {
-            ListItem::Expr(x) => {
-                return Ok((
-                    i,
-                    Node::new(lhs.span + rhs.span, Atom::Paren(Node::new(val.span, x))),
-                ))
-            }
-            _ => {
-                return Ok((
-                    i,
-                    Node::new(lhs.span + rhs.span, Atom::ListDisplay(vec![val])),
-                ))
-            }
-        },
+        Some(rhs) => return Ok((i, Node::new(lhs.span + rhs.span, Atom::Paren(val)))),
         None => (),
     }
 

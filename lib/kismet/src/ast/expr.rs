@@ -72,60 +72,68 @@ impl TryFrom<&Node<Expr>> for Node<String> {
     }
 }
 
-impl TryFrom<&Node<Expr>> for Node<Target> {
+impl TryFrom<Node<Expr>> for Node<Target> {
     type Error = ();
 
-    fn try_from(val: &Node<Expr>) -> Result<Self, Self::Error> {
-        match &*val.data {
-            Expr::Primary(Primary::Atom(Atom::Id(x))) => {
-                Ok(Node::new(val.span, Target::Id(x.clone())))
+    fn try_from(val: Node<Expr>) -> Result<Self, Self::Error> {
+        match *val.data {
+            Expr::Primary(Primary::Atom(x)) => Node::<Target>::try_from(Node::new(val.span, x)),
+            _ => Err(()),
+        }
+    }
+}
+
+impl TryFrom<Node<Atom>> for Node<Target> {
+    type Error = ();
+
+    fn try_from(val: Node<Atom>) -> Result<Self, Self::Error> {
+        fn list_item(val: Node<ListItem>) -> Result<Node<TargetListItem>, ()> {
+            let (val, node): (Node<Expr>, &dyn Fn(Node<Target>) -> Node<TargetListItem>) =
+                match *val.data {
+                    ListItem::Expr(y) => (Node::new(val.span, y), &|x: Node<Target>| {
+                        Node::new(x.span, TargetListItem::Target(*x.data))
+                    }),
+                    ListItem::Spread(x) => (x.clone(), &|x: Node<Target>| {
+                        Node::new(x.span, TargetListItem::Spread(x))
+                    }),
+                };
+            let val = Node::<Target>::try_from(val)?;
+            Ok(node(val))
+        }
+
+        match *val.data {
+            Atom::Id(x) => Ok(Node::new(val.span, Target::Id(x.clone()))),
+            Atom::Paren(x) => {
+                let x = list_item(x)?;
+                Ok(Node::new(val.span, Target::TargetTuple(vec![x])))
             }
-            Expr::Primary(Primary::Atom(Atom::Tuple(x))) => {
+            Atom::Tuple(x) => {
+                let x_len = x.len();
                 let y = x
-                    .iter()
-                    .filter_map(|x| match &*x.data {
-                        ListItem::Expr(y) => {
-                            match Node::<Target>::try_from(&Node::new(x.span, y.clone())) {
-                                Ok(x) => Some(Node::new(x.span, TargetListItem::Target(*x.data))),
-                                Err(_) => None,
-                            }
-                        }
-                        ListItem::Spread(x) => match Node::<Target>::try_from(x) {
-                            Ok(x) => Some(Node::new(x.span, TargetListItem::Spread(x))),
-                            Err(_) => None,
-                        },
-                    })
+                    .into_iter()
+                    .filter_map(|x| list_item(x).ok())
                     .collect::<Vec<_>>();
-                if x.len() != y.len() {
+                if x_len != y.len() {
                     return Err(());
                 }
                 Ok(Node::new(val.span, Target::TargetTuple(y)))
             }
-            Expr::Primary(Primary::Atom(Atom::ListDisplay(x))) => {
+            Atom::ListDisplay(x) => {
+                let x_len = x.len();
                 let y = x
-                    .iter()
-                    .filter_map(|x| match &*x.data {
-                        ListItem::Expr(y) => {
-                            match Node::<Target>::try_from(&Node::new(x.span, y.clone())) {
-                                Ok(x) => Some(Node::new(x.span, TargetListItem::Target(*x.data))),
-                                Err(_) => None,
-                            }
-                        }
-                        ListItem::Spread(x) => match Node::<Target>::try_from(x) {
-                            Ok(x) => Some(Node::new(x.span, TargetListItem::Spread(x))),
-                            Err(_) => None,
-                        },
-                    })
+                    .into_iter()
+                    .filter_map(|x| list_item(x).ok())
                     .collect::<Vec<_>>();
-                if x.len() != y.len() {
+                if x_len != y.len() {
                     return Err(());
                 }
                 Ok(Node::new(val.span, Target::TargetList(y)))
             }
-            Expr::Primary(Primary::Atom(Atom::DictDisplay(x))) => {
+            Atom::DictDisplay(x) => {
+                let x_len = x.len();
                 let y = x
-                    .iter()
-                    .filter_map(|x| match &*x.data {
+                    .into_iter()
+                    .filter_map(|x| match *x.data {
                         DictItem::Shorthand(y) => {
                             Some(Node::new(x.span, TargetDictItem::Target(y.clone())))
                         }
@@ -146,7 +154,7 @@ impl TryFrom<&Node<Expr>> for Node<Target> {
                         _ => None,
                     })
                     .collect::<Vec<_>>();
-                if x.len() != y.len() {
+                if x_len != y.len() {
                     return Err(());
                 }
                 Ok(Node::new(val.span, Target::TargetDict(y)))
