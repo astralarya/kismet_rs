@@ -11,6 +11,7 @@ pub enum TargetList {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Target {
     Id(String),
+    Spread(String),
     TargetTuple(Vec<Node<Target>>),
     TargetList(Vec<Node<Target>>),
     TargetDict(Vec<Node<TargetDictItem>>),
@@ -41,6 +42,7 @@ impl fmt::Display for Target {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Target::Id(val) => write!(f, "{}", val),
+            Target::Spread(val) => write!(f, "...{}", val),
             Target::TargetTuple(val) => write!(f, "({})", Node::vec_to_string(&val, ", ")),
             Target::TargetList(val) => write!(f, "[{}]", Node::vec_to_string(&val, ", ")),
             Target::TargetDict(val) => write!(f, "{{{}}}", Node::vec_to_string(&val, ", ")),
