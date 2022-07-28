@@ -20,14 +20,18 @@ pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
 }
 
 pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
-    let (i, lhs) = token_tag(Token::LPAREN)(i)?;
-    let (i, rhs) = opt(token_tag(Token::RPAREN))(i)?;
+    let open = &token_tag(Token::LPAREN);
+    let close = &token_tag(Token::RPAREN);
+    let separator = &token_tag(Token::COMMA);
+
+    let (i, lhs) = open(i)?;
+    let (i, rhs) = opt(close)(i)?;
     match rhs {
         Some(rhs) => return Ok((i, Node::new(lhs.span + rhs.span, Atom::Tuple(vec![])))),
         None => (),
     };
     let (i, val) = list_item(i)?;
-    let (i, rhs) = opt(token_tag(Token::RPAREN))(i)?;
+    let (i, rhs) = opt(close)(i)?;
     match rhs {
         Some(rhs) => match *val.data {
             ListItem::Expr(x) => {
@@ -50,7 +54,7 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     match comp_val {
         Some(comp_val) => {
             let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
-            let (i, rhs) = token_tag(Token::RPAREN)(i)?;
+            let (i, rhs) = close(i)?;
             iter.insert(0, comp_val);
             return Ok((
                 i,
@@ -60,10 +64,10 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         None => (),
     }
 
-    let (i, _) = token_tag(Token::COMMA)(i)?;
+    let (i, _) = separator(i)?;
     let (i, vals) = opt(terminated(
-        separated_list1(token_tag(Token::COMMA), list_item),
-        opt(token_tag(Token::COMMA)),
+        separated_list1(separator, list_item),
+        opt(separator),
     ))(i)?;
     let vals = match vals {
         Some(mut vals) => {
@@ -73,13 +77,17 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         _ => vec![val],
     };
 
-    let (i, rhs) = token_tag(Token::RPAREN)(i)?;
+    let (i, rhs) = close(i)?;
     Ok((i, Node::new(lhs.span + rhs.span, Atom::Tuple(vals))))
 }
 
 pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
-    let (i, lhs) = token_tag(Token::LBRACKET)(i)?;
-    let (i, rhs) = opt(token_tag(Token::RBRACKET))(i)?;
+    let open = &token_tag(Token::LBRACKET);
+    let close = &token_tag(Token::RBRACKET);
+    let separator = &token_tag(Token::COMMA);
+
+    let (i, lhs) = open(i)?;
+    let (i, rhs) = opt(close)(i)?;
     match rhs {
         Some(rhs) => return Ok((i, Node::new(lhs.span + rhs.span, Atom::ListDisplay(vec![])))),
         None => (),
@@ -90,7 +98,7 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     match comp_val {
         Some(comp_val) => {
             let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
-            let (i, rhs) = token_tag(Token::RBRACKET)(i)?;
+            let (i, rhs) = close(i)?;
             iter.insert(0, comp_val);
             return Ok((
                 i,
@@ -100,11 +108,8 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         None => (),
     }
 
-    let (i, vals) = opt(preceded(
-        token_tag(Token::COMMA),
-        separated_list1(token_tag(Token::COMMA), list_item),
-    ))(i)?;
-    let (i, _) = opt(token_tag(Token::COMMA))(i)?;
+    let (i, vals) = opt(preceded(separator, separated_list1(separator, list_item)))(i)?;
+    let (i, _) = opt(separator)(i)?;
     let vals = match vals {
         Some(mut vals) => {
             vals.insert(0, val);
@@ -113,7 +118,7 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         _ => vec![val],
     };
 
-    let (i, rhs) = token_tag(Token::RBRACKET)(i)?;
+    let (i, rhs) = close(i)?;
     Ok((i, Node::new(lhs.span + rhs.span, Atom::ListDisplay(vals))))
 }
 
@@ -127,8 +132,12 @@ pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
 }
 
 pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
-    let (i, lhs) = token_tag(Token::LBRACE)(i)?;
-    let (i, rhs) = opt(token_tag(Token::RBRACE))(i)?;
+    let open = &token_tag(Token::LBRACE);
+    let close = &token_tag(Token::RBRACE);
+    let separator = &token_tag(Token::COMMA);
+
+    let (i, lhs) = open(i)?;
+    let (i, rhs) = opt(close)(i)?;
     match rhs {
         Some(rhs) => return Ok((i, Node::new(lhs.span + rhs.span, Atom::DictDisplay(vec![])))),
         None => (),
@@ -137,7 +146,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     let (i, val) = opt(expr_list1)(i)?;
     match val {
         Some(val) => {
-            let (i, rhs) = token_tag(Token::RBRACE)(i)?;
+            let (i, rhs) = close(i)?;
             return Ok((i, Node::new(lhs.span + rhs.span, Atom::Stmts(*val.data))));
         }
         None => (),
@@ -150,7 +159,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         match (*val.data, comp_val) {
             (DictItem::DynKeyVal { key, val }, Some(comp_val)) => {
                 let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
-                let (i, rhs) = token_tag(Token::RBRACE)(i)?;
+                let (i, rhs) = close(i)?;
                 iter.insert(0, comp_val);
                 return Ok((
                     i,
@@ -166,7 +175,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
             (DictItem::Spread(val), Some(comp_val)) => {
                 let (i, mut iter) = many0(alt((comp_for, comp_if)))(i)?;
                 iter.insert(0, comp_val);
-                let (i, rhs) = token_tag(Token::RBRACE)(i)?;
+                let (i, rhs) = close(i)?;
                 return Ok((
                     i,
                     Node::new(
@@ -183,11 +192,8 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         },
     );
 
-    let (i, vals) = opt(preceded(
-        token_tag(Token::COMMA),
-        separated_list1(token_tag(Token::COMMA), dict_item),
-    ))(i)?;
-    let (i, _) = opt(token_tag(Token::COMMA))(i)?;
+    let (i, vals) = opt(preceded(separator, separated_list1(separator, dict_item)))(i)?;
+    let (i, _) = opt(separator)(i)?;
     let vals = match vals {
         Some(mut vals) => {
             vals.insert(0, val);
@@ -196,7 +202,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         _ => vec![val],
     };
 
-    let (i, rhs) = token_tag(Token::RBRACE)(i)?;
+    let (i, rhs) = close(i)?;
     Ok((i, Node::new(lhs.span + rhs.span, Atom::DictDisplay(vals))))
 }
 
