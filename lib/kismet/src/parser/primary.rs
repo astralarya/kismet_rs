@@ -11,7 +11,7 @@ use crate::{
     types::Node,
 };
 
-use super::{atom, expr, expr_as_id, token_tag, token_tag_id, Error, Input, KResult, Token};
+use super::{atom, expr, token_tag, token_tag_id, Error, Input, KResult, Token};
 
 pub fn primary<'input>(i: Input<'input>) -> KResult<'input, Node<Primary>> {
     let (mut i, mut iter) = primary_node(i)?;
@@ -100,12 +100,12 @@ pub fn call<'input>(i: Input<'input>) -> KResult<'input, Node<Args>> {
         match sep {
             Some(_) => {
                 let argspan = arg.span.clone();
-                match expr_as_id(arg) {
-                    Some(key) => {
+                match Node::<String>::try_from(&arg) {
+                    Ok(key) => {
                         kwarg0_key = Some(key);
                         break (i, args);
                     }
-                    None => return Err(Err::Failure(Node::new(argspan, Error::Grammar))),
+                    Err(_) => return Err(Err::Failure(Node::new(argspan, Error::Grammar))),
                 }
             }
             None => args.push(arg),

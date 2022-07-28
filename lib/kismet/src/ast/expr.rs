@@ -2,7 +2,10 @@ use std::fmt;
 
 use crate::types::Node;
 
-use super::{Atom, OpArith, OpEqs, Primary, Range, Target};
+use super::{
+    Atom, DictItem, ListItem, OpArith, OpEqs, Primary, Range, Target, TargetDictItem,
+    TargetListItem,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
@@ -54,6 +57,101 @@ impl fmt::Display for Expr {
                 _ => write!(f, "d{}", val),
             },
             Expr::Primary(val) => write!(f, "{}", val),
+        }
+    }
+}
+
+impl TryFrom<&Node<Expr>> for Node<String> {
+    type Error = ();
+
+    fn try_from(val: &Node<Expr>) -> Result<Self, Self::Error> {
+        match &*val.data {
+            Expr::Primary(Primary::Atom(Atom::Id(x))) => Ok(Node::new(val.span, x.clone())),
+            _ => Err(()),
+        }
+    }
+}
+
+impl TryFrom<&Node<Expr>> for Node<Target> {
+    type Error = ();
+
+    fn try_from(val: &Node<Expr>) -> Result<Self, Self::Error> {
+        match &*val.data {
+            Expr::Primary(Primary::Atom(Atom::Id(x))) => {
+                Ok(Node::new(val.span, Target::Id(x.clone())))
+            }
+            Expr::Primary(Primary::Atom(Atom::Tuple(x))) => {
+                let y = x
+                    .iter()
+                    .filter_map(|x| match &*x.data {
+                        ListItem::Expr(y) => {
+                            match Node::<Target>::try_from(&Node::new(x.span, y.clone())) {
+                                Ok(x) => Some(Node::new(x.span, TargetListItem::Target(*x.data))),
+                                Err(_) => None,
+                            }
+                        }
+                        ListItem::Spread(x) => match Node::<Target>::try_from(x) {
+                            Ok(x) => Some(Node::new(x.span, TargetListItem::Spread(x))),
+                            Err(_) => None,
+                        },
+                    })
+                    .collect::<Vec<_>>();
+                if x.len() != y.len() {
+                    return Err(());
+                }
+                Ok(Node::new(val.span, Target::TargetTuple(y)))
+            }
+            Expr::Primary(Primary::Atom(Atom::ListDisplay(x))) => {
+                let y = x
+                    .iter()
+                    .filter_map(|x| match &*x.data {
+                        ListItem::Expr(y) => {
+                            match Node::<Target>::try_from(&Node::new(x.span, y.clone())) {
+                                Ok(x) => Some(Node::new(x.span, TargetListItem::Target(*x.data))),
+                                Err(_) => None,
+                            }
+                        }
+                        ListItem::Spread(x) => match Node::<Target>::try_from(x) {
+                            Ok(x) => Some(Node::new(x.span, TargetListItem::Spread(x))),
+                            Err(_) => None,
+                        },
+                    })
+                    .collect::<Vec<_>>();
+                if x.len() != y.len() {
+                    return Err(());
+                }
+                Ok(Node::new(val.span, Target::TargetList(y)))
+            }
+            Expr::Primary(Primary::Atom(Atom::DictDisplay(x))) => {
+                let y = x
+                    .iter()
+                    .filter_map(|x| match &*x.data {
+                        DictItem::Shorthand(y) => {
+                            Some(Node::new(x.span, TargetDictItem::Target(y.clone())))
+                        }
+                        DictItem::Spread(x) => match Node::<Target>::try_from(x) {
+                            Ok(x) => Some(Node::new(x.span, TargetDictItem::Spread(x))),
+                            Err(_) => None,
+                        },
+                        DictItem::KeyVal { key, val } => match Node::<Target>::try_from(val) {
+                            Ok(val) => Some(Node::new(
+                                x.span,
+                                TargetDictItem::Pair {
+                                    key: key.clone(),
+                                    val,
+                                },
+                            )),
+                            Err(_) => None,
+                        },
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>();
+                if x.len() != y.len() {
+                    return Err(());
+                }
+                Ok(Node::new(val.span, Target::TargetDict(y)))
+            }
+            _ => Err(()),
         }
     }
 }
