@@ -105,11 +105,14 @@ pub enum Token {
     #[token(",")]
     COMMA,
 
+    #[token(":")]
+    COLON,
+
     #[token("=")]
     ASSIGN,
 
-    #[token(":")]
-    COLON,
+    #[token(":=")]
+    ASSIGNE,
 
     #[token("...")]
     SPREAD,
@@ -384,8 +387,9 @@ impl fmt::Display for Token {
         match self {
             Self::DELIM => write!(f, "\n"),
             Self::COMMA => write!(f, ","),
-            Self::ASSIGN => write!(f, "="),
             Self::COLON => write!(f, ":"),
+            Self::ASSIGN => write!(f, "="),
+            Self::ASSIGNE => write!(f, ":="),
             Self::SPREAD => write!(f, "..."),
             Self::FOR => write!(f, "for"),
             Self::IN => write!(f, "in"),

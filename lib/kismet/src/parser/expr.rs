@@ -7,7 +7,7 @@ use crate::types::{Node, Span};
 use super::{numeric_literal, primary, token_action, token_tag, Error, Input, KResult, Token};
 
 pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    walrus_expr(i)
+    assignment_expr(i)
 }
 
 pub fn expr_as_id<'input>(val: Node<Expr>) -> Option<Node<String>> {
@@ -17,7 +17,11 @@ pub fn expr_as_id<'input>(val: Node<Expr>) -> Option<Node<String>> {
     }
 }
 
-pub fn walrus_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn assignment_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    conditional_expr(i)
+}
+
+pub fn conditional_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     lambda_expr(i)
 }
 
