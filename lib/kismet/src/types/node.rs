@@ -30,12 +30,6 @@ where
     }
 }
 
-impl<T> From<Node<T>> for Span {
-    fn from(item: Node<T>) -> Self {
-        item.span
-    }
-}
-
 impl<T> From<&Node<T>> for Span {
     fn from(item: &Node<T>) -> Self {
         item.span
