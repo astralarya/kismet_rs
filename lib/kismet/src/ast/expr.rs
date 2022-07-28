@@ -16,15 +16,15 @@ pub enum Expr {
     Not(Node<Expr>),
     CompareBound {
         val: Node<Expr>,
-        l_op: OpEqs,
+        l_op: Node<OpEqs>,
         l_val: Node<Expr>,
-        r_op: OpEqs,
+        r_op: Node<OpEqs>,
         r_val: Node<Expr>,
     },
-    Compare(Node<Expr>, OpEqs, Node<Expr>),
+    Compare(Node<Expr>, Node<OpEqs>, Node<Expr>),
     Range(Range),
-    Arith(Node<Expr>, OpArith, Node<Expr>),
-    Unary(OpArith, Node<Expr>),
+    Arith(Node<Expr>, Node<OpArith>, Node<Expr>),
+    Unary(Node<OpArith>, Node<Expr>),
     Coefficient(Node<Atom>, Node<Expr>),
     Die(Node<Atom>),
     Primary(Primary),
@@ -48,9 +48,17 @@ impl fmt::Display for Expr {
             Self::Compare(lhs, op, rhs) => write!(f, "{} {} {}", lhs, op, rhs),
             Self::Range(val) => write!(f, "{}", val),
             Self::Arith(lhs, op, rhs) => {
-                write!(f, "{}{}{}{}{}", lhs, op.space(), op, op.space(), rhs)
+                write!(
+                    f,
+                    "{}{}{}{}{}",
+                    lhs,
+                    op.data.space(),
+                    op,
+                    op.data.space(),
+                    rhs
+                )
             }
-            Self::Unary(lhs, val) => write!(f, "{}{}{}", lhs, lhs.space(), val),
+            Self::Unary(lhs, val) => write!(f, "{}{}{}", lhs, lhs.data.space(), val),
             Self::Coefficient(lhs, rhs) => write!(f, "{}{}", lhs, rhs),
             Self::Die(val) => match *val.data {
                 Atom::Id(_) => write!(f, "d({})", val),

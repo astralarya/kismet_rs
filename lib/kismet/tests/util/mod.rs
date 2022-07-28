@@ -15,13 +15,18 @@ pub fn assert_stmt(node: ParseNode, input: &str) {
 }
 
 #[allow(dead_code)]
-pub fn new_arith<'input>(lhs: Node<Expr>, op: OpArith, rhs: Node<Expr>) -> Node<Expr> {
+pub fn new_arith<'input>(lhs: Node<Expr>, op: Node<OpArith>, rhs: Node<Expr>) -> Node<Expr> {
     Node::new(lhs.span + rhs.span, Expr::Arith(lhs, op, rhs))
 }
 
 #[allow(dead_code)]
-pub fn new_unary<'input>(lhs_span: Range<usize>, op: OpArith, val: Node<Expr>) -> Node<Expr> {
-    Node::new(Span::new(lhs_span) + val.span, Expr::Unary(op, val))
+pub fn new_unary<'input>(op: Node<OpArith>, val: Node<Expr>) -> Node<Expr> {
+    Node::new(op.span + val.span, Expr::Unary(op, val))
+}
+
+#[allow(dead_code)]
+pub fn new_op<'input>(range: Range<usize>, op: OpArith) -> Node<OpArith> {
+    Node::new(range, op)
 }
 
 #[allow(dead_code)]

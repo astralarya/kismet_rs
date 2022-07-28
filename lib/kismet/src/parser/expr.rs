@@ -80,9 +80,9 @@ pub fn c_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
                 lhs.span.clone() + rhs.span.clone(),
                 Expr::CompareBound {
                     l_val: lhs,
-                    l_op: *l_op.data,
+                    l_op: l_op,
                     val,
-                    r_op: *r_op.data,
+                    r_op: r_op,
                     r_val: rhs,
                 },
             ),
@@ -91,14 +91,14 @@ pub fn c_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             i,
             Node::new(
                 lhs.span.clone() + rhs.span.clone(),
-                Expr::Compare(lhs, *op.data, rhs),
+                Expr::Compare(lhs, op, rhs),
             ),
         )),
         (None, Some((op, rhs))) => Ok((
             i,
             Node::new(
                 lhs.span.clone() + rhs.span.clone(),
-                Expr::Compare(lhs, *op.data, rhs),
+                Expr::Compare(lhs, op, rhs),
             ),
         )),
         (None, None) => Ok((i, lhs)),
@@ -152,7 +152,7 @@ pub fn a_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             i,
             Node::new(
                 lhs.span.clone() + rhs.span.clone(),
-                Expr::Arith(lhs, *op.data, rhs),
+                Expr::Arith(lhs, op, rhs),
             ),
         )),
         None => Ok((i, lhs)),
@@ -167,7 +167,7 @@ pub fn m_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             i,
             Node::new(
                 lhs.span.clone() + rhs.span.clone(),
-                Expr::Arith(lhs, *op.data, rhs),
+                Expr::Arith(lhs, op, rhs),
             ),
         )),
         None => Ok((i, lhs)),
@@ -182,7 +182,7 @@ pub fn p_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             i,
             Node::new(
                 lhs.span.clone() + rhs.span.clone(),
-                Expr::Arith(lhs, *op.data, rhs),
+                Expr::Arith(lhs, op, rhs),
             ),
         )),
         None => Ok((i, lhs)),
@@ -195,10 +195,7 @@ pub fn u_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     match op {
         Some(op) => Ok((
             i,
-            Node::new(
-                op.span.clone() + rhs.span.clone(),
-                Expr::Unary(*op.data, rhs),
-            ),
+            Node::new(op.span.clone() + rhs.span.clone(), Expr::Unary(op, rhs)),
         )),
         None => Ok((i, rhs)),
     }
