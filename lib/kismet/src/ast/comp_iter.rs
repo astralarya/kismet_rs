@@ -15,10 +15,10 @@ pub enum CompIter {
 impl fmt::Display for CompIter {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            CompIter::For { target, val } => {
+            Self::For { target, val } => {
                 write!(f, "for {} in {}", target, val)
             }
-            CompIter::If(val) => write!(f, "if {}", val),
+            Self::If(val) => write!(f, "if {}", val),
         }
     }
 }

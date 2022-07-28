@@ -20,12 +20,12 @@ pub struct Args {
 impl fmt::Display for Primary {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Primary::Attribute(lhs, rhs) => write!(f, "{}.{}", lhs, rhs),
-            Primary::Subscription(lhs, rhs) => {
+            Self::Attribute(lhs, rhs) => write!(f, "{}.{}", lhs, rhs),
+            Self::Subscription(lhs, rhs) => {
                 write!(f, "{}[{}]", lhs, Node::join(rhs, ", "))
             }
-            Primary::Call(lhs, val) => write!(f, "{}({})", lhs, val),
-            Primary::Atom(val) => write!(f, "{}", val),
+            Self::Call(lhs, val) => write!(f, "{}({})", lhs, val),
+            Self::Atom(val) => write!(f, "{}", val),
         }
     }
 }

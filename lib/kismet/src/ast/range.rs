@@ -17,12 +17,12 @@ pub enum Range {
 impl fmt::Display for Range {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Range::Range { start, end } => write!(f, "{}..{}", start, end),
-            Range::RangeFrom { start } => write!(f, "{}..", start),
-            Range::RangeTo { end } => write!(f, "..{}", end),
-            Range::RangeFull => write!(f, ".."),
-            Range::RangeI { start, end } => write!(f, "{}..={}", start, end),
-            Range::RangeToI { end } => write!(f, "..={}", end),
+            Self::Range { start, end } => write!(f, "{}..{}", start, end),
+            Self::RangeFrom { start } => write!(f, "{}..", start),
+            Self::RangeTo { end } => write!(f, "..{}", end),
+            Self::RangeFull => write!(f, ".."),
+            Self::RangeI { start, end } => write!(f, "{}..={}", start, end),
+            Self::RangeToI { end } => write!(f, "..={}", end),
         }
     }
 }

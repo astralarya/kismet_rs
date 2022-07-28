@@ -32,32 +32,32 @@ pub enum Atom {
 impl fmt::Display for Atom {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            Atom::Stmts(val) => match val.len() {
+            Self::Stmts(val) => match val.len() {
                 1 => write!(f, "{{{};}}", Node::join(&val, "; ")),
                 _ => write!(f, "{{{}}}", Node::join(&val, "; ")),
             },
-            Atom::Paren(val) => {
+            Self::Paren(val) => {
                 write!(f, "({})", val)
             }
-            Atom::ListDisplay(val) => write!(f, "[{}]", Node::join(&val, ", ")),
-            Atom::ListComprehension { val, iter } => {
+            Self::ListDisplay(val) => write!(f, "[{}]", Node::join(&val, ", ")),
+            Self::ListComprehension { val, iter } => {
                 write!(f, "[{} {}]", val, Node::join(&iter, " "))
             }
-            Atom::DictDisplay(val) => write!(f, "{{{}}}", Node::join(&val, ", ")),
-            Atom::DictComprehension { val, iter } => {
+            Self::DictDisplay(val) => write!(f, "{{{}}}", Node::join(&val, ", ")),
+            Self::DictComprehension { val, iter } => {
                 write!(f, "{{{} {}}}", val, Node::join(&iter, " "))
             }
-            Atom::Tuple(val) => match val.len() {
+            Self::Tuple(val) => match val.len() {
                 1 => write!(f, "({},)", val[0]),
                 _ => write!(f, "({})", Node::join(&val, ", ")),
             },
-            Atom::Generator { val, iter } => {
+            Self::Generator { val, iter } => {
                 write!(f, "({} {})", val, Node::join(&iter, " "))
             }
-            Atom::String(val) => write!(f, r#""{}""#, val),
-            Atom::Float(val) => write!(f, "{}", val),
-            Atom::Integer(val) => write!(f, "{}", val),
-            Atom::Id(val) => write!(f, "{}", val),
+            Self::String(val) => write!(f, r#""{}""#, val),
+            Self::Float(val) => write!(f, "{}", val),
+            Self::Integer(val) => write!(f, "{}", val),
+            Self::Id(val) => write!(f, "{}", val),
         }
     }
 }

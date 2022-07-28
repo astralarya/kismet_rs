@@ -20,10 +20,10 @@ pub enum DictItemComp {
 impl fmt::Display for DictItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            DictItem::KeyVal { key, val } => write!(f, "{}: {}", key, val),
-            DictItem::DynKeyVal { key, val } => write!(f, "[{}]: {}", key, val),
-            DictItem::Shorthand(val) => write!(f, "{}", val),
-            DictItem::Spread(val) => write!(f, "...{}", val),
+            Self::KeyVal { key, val } => write!(f, "{}: {}", key, val),
+            Self::DynKeyVal { key, val } => write!(f, "[{}]: {}", key, val),
+            Self::Shorthand(val) => write!(f, "{}", val),
+            Self::Spread(val) => write!(f, "...{}", val),
         }
     }
 }
@@ -31,8 +31,8 @@ impl fmt::Display for DictItem {
 impl fmt::Display for DictItemComp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            DictItemComp::DynKeyVal { key, val } => write!(f, "[{}]: {}", key, val),
-            DictItemComp::Spread(val) => write!(f, "...{}", val),
+            Self::DynKeyVal { key, val } => write!(f, "[{}]: {}", key, val),
+            Self::Spread(val) => write!(f, "...{}", val),
         }
     }
 }

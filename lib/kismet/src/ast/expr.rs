@@ -33,30 +33,30 @@ pub enum Expr {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expr::Stmts(val) => write!(f, "{}", Node::join(&val, "\n")),
-            Expr::Assign(lhs, rhs) => write!(f, "{} := {}", lhs, rhs),
-            Expr::And(lhs, rhs) => write!(f, "{} and {}", lhs, rhs),
-            Expr::Or(lhs, rhs) => write!(f, "{} or {}", lhs, rhs),
-            Expr::Not(val) => write!(f, "not {}", val),
-            Expr::CompareBound {
+            Self::Stmts(val) => write!(f, "{}", Node::join(&val, "\n")),
+            Self::Assign(lhs, rhs) => write!(f, "{} := {}", lhs, rhs),
+            Self::And(lhs, rhs) => write!(f, "{} and {}", lhs, rhs),
+            Self::Or(lhs, rhs) => write!(f, "{} or {}", lhs, rhs),
+            Self::Not(val) => write!(f, "not {}", val),
+            Self::CompareBound {
                 val,
                 l_op,
                 l_val,
                 r_op,
                 r_val,
             } => write!(f, "{} {} {} {} {}", l_val, l_op, val, r_op, r_val),
-            Expr::Compare(lhs, op, rhs) => write!(f, "{} {} {}", lhs, op, rhs),
-            Expr::Range(val) => write!(f, "{}", val),
-            Expr::Arith(lhs, op, rhs) => {
+            Self::Compare(lhs, op, rhs) => write!(f, "{} {} {}", lhs, op, rhs),
+            Self::Range(val) => write!(f, "{}", val),
+            Self::Arith(lhs, op, rhs) => {
                 write!(f, "{}{}{}{}{}", lhs, op.space(), op, op.space(), rhs)
             }
-            Expr::Unary(lhs, val) => write!(f, "{}{}{}", lhs, lhs.space(), val),
-            Expr::Coefficient(lhs, rhs) => write!(f, "{}{}", lhs, rhs),
-            Expr::Die(val) => match *val.data {
+            Self::Unary(lhs, val) => write!(f, "{}{}{}", lhs, lhs.space(), val),
+            Self::Coefficient(lhs, rhs) => write!(f, "{}{}", lhs, rhs),
+            Self::Die(val) => match *val.data {
                 Atom::Id(_) => write!(f, "d({})", val),
                 _ => write!(f, "d{}", val),
             },
-            Expr::Primary(val) => write!(f, "{}", val),
+            Self::Primary(val) => write!(f, "{}", val),
         }
     }
 }
