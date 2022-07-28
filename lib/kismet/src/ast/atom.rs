@@ -7,7 +7,7 @@ use super::{CompIter, DictItem, DictItemComp, Expr, ListItem};
 #[derive(Clone, Debug, PartialEq)]
 pub enum Atom {
     Stmts(Vec<Node<Expr>>),
-    Parenth(Node<Expr>),
+    Paren(Node<Expr>),
     ListDisplay(Vec<Node<ListItem>>),
     ListComprehension {
         val: Node<ListItem>,
@@ -36,7 +36,7 @@ impl fmt::Display for Atom {
                 1 => write!(f, "{{{};}}", Node::vec_to_string(&val, "; ")),
                 _ => write!(f, "{{{}}}", Node::vec_to_string(&val, "; ")),
             },
-            Atom::Parenth(val) => {
+            Atom::Paren(val) => {
                 write!(f, "({})", val)
             }
             Atom::ListDisplay(val) => write!(f, "[{}]", Node::vec_to_string(&val, ", ")),

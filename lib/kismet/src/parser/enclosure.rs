@@ -33,7 +33,7 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
             ListItem::Expr(x) => {
                 return Ok((
                     i,
-                    Node::new(lhs.span + rhs.span, Atom::Parenth(Node::new(val.span, x))),
+                    Node::new(lhs.span + rhs.span, Atom::Paren(Node::new(val.span, x))),
                 ))
             }
             _ => {
