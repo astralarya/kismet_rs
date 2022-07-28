@@ -3,7 +3,12 @@ use std::{
     ops::{self, Index, Range, RangeFrom, RangeFull, RangeTo},
 };
 
+use nom::Err;
 use overload::overload;
+
+use crate::parser::ErrorKind;
+
+use super::ONode;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Span {
@@ -26,22 +31,6 @@ impl<'input> From<&'input str> for Span {
 impl From<String> for Span {
     fn from(input: String) -> Self {
         Span::new(0..input.len())
-    }
-}
-
-impl<N> FromIterator<N> for Span
-where
-    Span: From<N>,
-{
-    fn from_iter<T: IntoIterator<Item = N>>(iter: T) -> Self {
-        match iter
-            .into_iter()
-            .map(|x| Span::from(x))
-            .reduce(|acc, next| acc + next)
-        {
-            Some(span) => span,
-            None => Span::new(0..0),
-        }
     }
 }
 
@@ -77,6 +66,47 @@ impl Span {
             (None, Some(r)) => Some(r.clone()),
             (None, None) => None,
         }
+    }
+
+    pub fn reduce<'input, T>(vec: &'input Vec<T>) -> Option<Span>
+    where
+        Span: From<&'input T>,
+    {
+        vec.into_iter()
+            .map(|x| Span::from(x))
+            .reduce(|acc, next| acc + next)
+    }
+
+    pub fn reduce_ok<'input, T>(vec: &'input Vec<T>) -> Result<Span, Err<ONode<ErrorKind>>>
+    where
+        Span: From<&'input T>,
+    {
+        Self::reduce(vec).ok_or(Err::Failure(ONode::new(None, ErrorKind::Runtime)))
+    }
+
+    pub fn reduce_ref<'input, T>(vec: &'input Vec<&'input T>) -> Option<Span>
+    where
+        Span: From<&'input T>,
+    {
+        vec.into_iter()
+            .map(|x| Span::from(x))
+            .reduce(|acc, next| acc + next)
+    }
+
+    pub fn reduce_ref_ok<'input, T>(
+        vec: &'input Vec<&'input T>,
+    ) -> Result<Span, Err<ONode<ErrorKind>>>
+    where
+        Span: From<&'input T>,
+    {
+        Self::reduce_ref(vec).ok_or(Err::Failure(ONode::new(None, ErrorKind::Runtime)))
+    }
+
+    pub fn get0<'input, T>(input: &'input [T]) -> Option<Span>
+    where
+        Span: From<&'input T>,
+    {
+        input.get(0).map(|x| Span::from(x))
     }
 }
 

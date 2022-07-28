@@ -3,22 +3,13 @@ use std::fmt;
 use crate::types::Span;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Node<T> {
-    pub span: Span,
+pub struct BaseNode<N, T> {
+    pub span: N,
     pub data: Box<T>,
 }
 
-impl<T> Node<T> {
-    pub fn new<S>(range: S, val: T) -> Node<T>
-    where
-        Span: From<S>,
-    {
-        Node {
-            span: Span::from(range),
-            data: Box::new(val),
-        }
-    }
-}
+pub type Node<T> = BaseNode<Span, T>;
+pub type ONode<T> = BaseNode<Option<Span>, T>;
 
 impl<T> From<T> for Node<T>
 where
@@ -36,7 +27,19 @@ impl<T> From<&Node<T>> for Span {
     }
 }
 
-impl<T: std::fmt::Display> Node<T> {
+impl<N, T> BaseNode<N, T> {
+    pub fn new<S>(range: S, val: T) -> BaseNode<N, T>
+    where
+        N: From<S>,
+    {
+        BaseNode {
+            span: N::from(range),
+            data: Box::new(val),
+        }
+    }
+}
+
+impl<N, T: std::fmt::Display> BaseNode<N, T> {
     pub fn join(nodes: &Vec<Node<T>>, delim: &'static str) -> String {
         nodes
             .iter()
@@ -54,7 +57,7 @@ impl<T: std::fmt::Display> Node<T> {
     }
 }
 
-impl<T: std::fmt::Display> fmt::Display for Node<T> {
+impl<N, T: std::fmt::Display> fmt::Display for BaseNode<N, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.data)
     }

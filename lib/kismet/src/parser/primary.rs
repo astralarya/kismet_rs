@@ -8,10 +8,10 @@ use nom::{
 
 use crate::{
     ast::{Args, Expr, Primary},
-    types::Node,
+    types::{Node, ONode},
 };
 
-use super::{atom, expr, token_tag, token_tag_id, Error, Input, KResult, Token};
+use super::{atom, expr, token_tag, token_tag_id, ErrorKind, Input, KResult, Token};
 
 pub fn primary<'input>(i: Input<'input>) -> KResult<'input, Node<Primary>> {
     let (mut i, mut iter) = primary_node(i)?;
@@ -105,7 +105,7 @@ pub fn call<'input>(i: Input<'input>) -> KResult<'input, Node<Args>> {
                         kwarg0_key = Some(key);
                         break (i, args);
                     }
-                    Err(_) => return Err(Err::Failure(Node::new(argspan, Error::Grammar))),
+                    Err(_) => return Err(Err::Failure(ONode::new(argspan, ErrorKind::Grammar))),
                 }
             }
             None => args.push(arg),

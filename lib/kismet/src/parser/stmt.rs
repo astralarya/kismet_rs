@@ -14,7 +14,7 @@ pub fn expr_list0<'input>(i: Input<'input>) -> KResult<'input, Node<Vec<Node<Exp
     let (i, _lhs) = many0(token_tag(Token::DELIM))(i)?;
     let (i, val) = separated_list0(many1(token_tag(Token::DELIM)), expr)(i)?;
     let (i, _rhs) = many0(token_tag(Token::DELIM))(i)?;
-    Ok((i, Node::new(Span::from_iter(&val), val)))
+    Ok((i, Node::new(Span::reduce_ok(&val)?, val)))
 }
 
 pub fn expr_list1<'input>(i: Input<'input>) -> KResult<'input, Node<Vec<Node<Expr>>>> {
@@ -23,10 +23,14 @@ pub fn expr_list1<'input>(i: Input<'input>) -> KResult<'input, Node<Vec<Node<Exp
     let (i, _sep) = many1(token_tag(Token::DELIM))(i)?;
     let (i, mut val) = separated_list0(many1(token_tag(Token::DELIM)), expr)(i)?;
     let (i, rhs) = many0(token_tag(Token::DELIM))(i)?;
+    let head_span = head.span;
     val.insert(0, head);
     Ok((
         i,
-        Node::new(Span::from_iter(lhs) + Span::from_iter(rhs), val),
+        Node::new(
+            head_span + Span::reduce(&val) + Span::reduce_ref(&lhs) + Span::reduce_ref(&rhs),
+            val,
+        ),
     ))
 }
 

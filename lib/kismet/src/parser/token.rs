@@ -4,9 +4,9 @@ use logos::{Lexer, Logos, SpannedIter};
 use nom::Err;
 use syn::{parse_str, LitFloat, LitInt, LitStr};
 
-use crate::types::{Float, Integer, Node, Span};
+use crate::types::{Float, Integer, Node, ONode};
 
-use super::{Error, Input, KResult};
+use super::{ErrorKind, Input, KResult};
 
 pub struct TokenIterator<'a> {
     iter: SpannedIter<'a, Token>,
@@ -34,10 +34,10 @@ impl Iterator for TokenIterator<'_> {
 pub fn token<'input>(i: Input<'input>) -> KResult<'input, &Node<Token>> {
     match i.get(0) {
         Some(x) => match *x.data {
-            Token::ERROR => Err(Err::Error(Node::new(Span::from_iter(i), Error::Lex))),
+            Token::ERROR => Err(Err::Error(ONode::new(x.span, ErrorKind::Lex))),
             _ => Ok((&i[1..], x)),
         },
-        None => Err(Err::Error(Node::new(Span::from_iter(i), Error::Eof))),
+        None => Err(Err::Error(ONode::new(None, ErrorKind::Eof))),
     }
 }
 
@@ -49,10 +49,7 @@ where
         let (tail, head) = token(input)?;
         match predicate(head) {
             true => Ok((tail, head)),
-            false => Err(Err::Error(Node::new(
-                Span::from_iter(input),
-                Error::Predicate,
-            ))),
+            false => Err(Err::Error(ONode::new(head.span, ErrorKind::Predicate))),
         }
     }
 }
@@ -61,10 +58,7 @@ pub fn token_tag_id<'input>(input: Input<'input>) -> KResult<'input, Node<String
     let (tail, head) = token(input)?;
     match &*head.data {
         Token::Id(val) => Ok((tail, Node::new(head.span, val.clone()))),
-        _ => Err(Err::Error(Node::new(
-            Span::from_iter(input),
-            Error::Predicate,
-        ))),
+        _ => Err(Err::Error(ONode::new(head.span, ErrorKind::Predicate))),
     }
 }
 
@@ -73,10 +67,7 @@ pub fn token_tag<'input>(tag: Token) -> impl Fn(Input<'input>) -> KResult<'input
         let (tail, head) = token(input)?;
         match *head.data == tag {
             true => Ok((tail, head)),
-            false => Err(Err::Error(Node::new(
-                Span::from_iter(input),
-                Error::Predicate,
-            ))),
+            false => Err(Err::Error(ONode::new(head.span, ErrorKind::Predicate))),
         }
     }
 }
@@ -89,10 +80,7 @@ where
         let (tail, head) = token(input)?;
         match action(head) {
             Some(t) => Ok((tail, t)),
-            None => Err(Err::Error(Node::new(
-                Span::from_iter(input),
-                Error::Predicate,
-            ))),
+            None => Err(Err::Error(ONode::new(head.span, ErrorKind::Predicate))),
         }
     }
 }

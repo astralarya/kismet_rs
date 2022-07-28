@@ -2,9 +2,9 @@ use nom::sequence::preceded;
 use nom::{combinator::opt, sequence::tuple, Err};
 
 use crate::ast::{Expr, OpArith, OpEqs, OpRange, Primary, Range, Target};
-use crate::types::{Node, Span};
+use crate::types::{Node, ONode, Span};
 
-use super::{numeric_literal, primary, token_action, token_tag, Error, Input, KResult, Token};
+use super::{numeric_literal, primary, token_action, token_tag, ErrorKind, Input, KResult, Token};
 
 pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     assignment_expr(i)
@@ -19,7 +19,7 @@ pub fn assignment_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> 
                 let (i, rhs) = conditional_expr(i)?;
                 Ok((i, Node::new(lhs.span + rhs.span, Expr::Assign(lhs, rhs))))
             }
-            Err(_) => Err(Err::Failure(Node::new(op.span, Error::Grammar))),
+            Err(_) => Err(Err::Failure(ONode::new(op.span, ErrorKind::Grammar))),
         },
         None => Ok((i, lhs)),
     }
@@ -140,7 +140,7 @@ pub fn r_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             Ok((i, Node::new(op.span.clone(), Expr::Range(Range::RangeFull))))
         }
         (Some(lhs), None) => Ok((i, lhs)),
-        (None, None) => Err(Err::Error(Node::new(Span::from_iter(i), Error::Grammar))),
+        (None, None) => Err(Err::Error(ONode::new(Span::get0(i), ErrorKind::Grammar))),
     }
 }
 
@@ -220,7 +220,7 @@ pub fn coefficient<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             Node::new(lhs.span.clone(), Expr::Primary(Primary::Atom(*lhs.data))),
         )),
         (None, Some(rhs)) => Ok((i, rhs)),
-        (None, None) => Err(Err::Error(Node::new(Span::from_iter(i), Error::Grammar))),
+        (None, None) => Err(Err::Error(ONode::new(Span::get0(i), ErrorKind::Grammar))),
     }
 }
 

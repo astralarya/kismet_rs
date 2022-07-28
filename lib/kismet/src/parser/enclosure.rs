@@ -8,11 +8,11 @@ use nom::{
 
 use crate::{
     ast::{Atom, CompIter, DictItem, DictItemComp, ListItem},
-    types::Node,
+    types::{Node, ONode},
 };
 
 use super::{
-    expr, expr_list1, or_test, target, token_tag, token_tag_id, Error, Input, KResult, Token,
+    expr, expr_list1, or_test, target, token_tag, token_tag_id, ErrorKind, Input, KResult, Token,
 };
 
 pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
@@ -174,7 +174,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
                     ),
                 ));
             }
-            (_, Some(_)) => return Err(Err::Failure(Node::new(val.span, Error::Grammar))),
+            (_, Some(_)) => return Err(Err::Failure(ONode::new(val.span, ErrorKind::Grammar))),
             (val_data, None) => val_data,
         },
     );
