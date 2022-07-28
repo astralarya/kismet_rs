@@ -33,7 +33,7 @@ pub enum Expr {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expr::Stmts(val) => write!(f, "{}", Node::vec_to_string(&val, "\n")),
+            Expr::Stmts(val) => write!(f, "{}", Node::join(&val, "\n")),
             Expr::Assign(lhs, rhs) => write!(f, "{} := {}", lhs, rhs),
             Expr::And(lhs, rhs) => write!(f, "{} and {}", lhs, rhs),
             Expr::Or(lhs, rhs) => write!(f, "{} or {}", lhs, rhs),

@@ -33,26 +33,26 @@ impl fmt::Display for Atom {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
             Atom::Stmts(val) => match val.len() {
-                1 => write!(f, "{{{};}}", Node::vec_to_string(&val, "; ")),
-                _ => write!(f, "{{{}}}", Node::vec_to_string(&val, "; ")),
+                1 => write!(f, "{{{};}}", Node::join(&val, "; ")),
+                _ => write!(f, "{{{}}}", Node::join(&val, "; ")),
             },
             Atom::Paren(val) => {
                 write!(f, "({})", val)
             }
-            Atom::ListDisplay(val) => write!(f, "[{}]", Node::vec_to_string(&val, ", ")),
+            Atom::ListDisplay(val) => write!(f, "[{}]", Node::join(&val, ", ")),
             Atom::ListComprehension { val, iter } => {
-                write!(f, "[{} {}]", val, Node::vec_to_string(&iter, " "))
+                write!(f, "[{} {}]", val, Node::join(&iter, " "))
             }
-            Atom::DictDisplay(val) => write!(f, "{{{}}}", Node::vec_to_string(&val, ", ")),
+            Atom::DictDisplay(val) => write!(f, "{{{}}}", Node::join(&val, ", ")),
             Atom::DictComprehension { val, iter } => {
-                write!(f, "{{{} {}}}", val, Node::vec_to_string(&iter, " "))
+                write!(f, "{{{} {}}}", val, Node::join(&iter, " "))
             }
             Atom::Tuple(val) => match val.len() {
                 1 => write!(f, "({},)", val[0]),
-                _ => write!(f, "({})", Node::vec_to_string(&val, ", ")),
+                _ => write!(f, "({})", Node::join(&val, ", ")),
             },
             Atom::Generator { val, iter } => {
-                write!(f, "({} {})", val, Node::vec_to_string(&iter, " "))
+                write!(f, "({} {})", val, Node::join(&iter, " "))
             }
             Atom::String(val) => write!(f, r#""{}""#, val),
             Atom::Float(val) => write!(f, "{}", val),

@@ -22,7 +22,7 @@ impl fmt::Display for Primary {
         match self {
             Primary::Attribute(lhs, rhs) => write!(f, "{}.{}", lhs, rhs),
             Primary::Subscription(lhs, rhs) => {
-                write!(f, "{}[{}]", lhs, Node::vec_to_string(rhs, ", "))
+                write!(f, "{}[{}]", lhs, Node::join(rhs, ", "))
             }
             Primary::Call(lhs, val) => write!(f, "{}({})", lhs, val),
             Primary::Atom(val) => write!(f, "{}", val),
@@ -32,7 +32,7 @@ impl fmt::Display for Primary {
 
 impl fmt::Display for Args {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", Node::vec_to_string(&self.args, ", "))?;
+        write!(f, "{}", Node::join(&self.args, ", "))?;
         if self.args.len() > 0 && self.kwargs.len() > 0 {
             write!(f, ", ")?
         }

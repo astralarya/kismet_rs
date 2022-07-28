@@ -48,7 +48,7 @@ impl<T> From<&Node<T>> for Span {
 }
 
 impl<T: std::fmt::Display> Node<T> {
-    pub fn vec_to_string(nodes: &Vec<Node<T>>, delim: &'static str) -> String {
+    pub fn join(nodes: &Vec<Node<T>>, delim: &'static str) -> String {
         nodes
             .iter()
             .map(|node| node.to_string())
@@ -56,14 +56,10 @@ impl<T: std::fmt::Display> Node<T> {
             .join(delim)
     }
 
-    pub fn vec_to_string1(
-        nodes: &Vec<Node<T>>,
-        delim: &'static str,
-        delim1: &'static str,
-    ) -> String {
+    pub fn join1(nodes: &Vec<Node<T>>, delim: &'static str, delim1: &'static str) -> String {
         format!(
             "{}{}",
-            Self::vec_to_string(nodes, delim),
+            Self::join(nodes, delim),
             if nodes.len() == 1 { delim1 } else { "" }
         )
     }

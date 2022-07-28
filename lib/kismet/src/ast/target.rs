@@ -30,9 +30,9 @@ impl fmt::Display for Target {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Id(val) => write!(f, "{}", val),
-            Self::TargetTuple(val) => write!(f, "({})", Node::vec_to_string1(&val, ", ", ",")),
-            Self::TargetList(val) => write!(f, "[{}]", Node::vec_to_string(&val, ", ")),
-            Self::TargetDict(val) => write!(f, "{{{}}}", Node::vec_to_string(&val, ", ")),
+            Self::TargetTuple(val) => write!(f, "({})", Node::join1(&val, ", ", ",")),
+            Self::TargetList(val) => write!(f, "[{}]", Node::join(&val, ", ")),
+            Self::TargetDict(val) => write!(f, "{{{}}}", Node::join(&val, ", ")),
         }
     }
 }
