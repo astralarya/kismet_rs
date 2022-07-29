@@ -96,6 +96,9 @@ pub enum Token {
     #[token(":")]
     COLON,
 
+    #[token("=>")]
+    ARROW,
+
     #[token("=")]
     ASSIGN,
 
@@ -388,6 +391,7 @@ impl fmt::Display for Token {
             Self::DELIM => write!(f, "\n"),
             Self::COMMA => write!(f, ","),
             Self::COLON => write!(f, ":"),
+            Self::ARROW => write!(f, "=>"),
             Self::ASSIGN => write!(f, "="),
             Self::ASSIGNE => write!(f, ":="),
             Self::SPREAD => write!(f, "..."),
