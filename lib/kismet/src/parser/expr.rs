@@ -5,12 +5,12 @@ use nom::{
     Err,
 };
 
-use crate::ast::{Expr, Target};
+use crate::ast::{Expr, ExprBlock, Target};
 use crate::types::{Node, ONode, Span};
 
 use super::{or_test, token_tag, ErrorKind, Input, KResult, Token};
 
-pub fn expr_list0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<Vec<Node<Expr>>>>> {
+pub fn expr_list0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<ExprBlock>>> {
     let i_span = match Span::get0(i) {
         Some(x) => x,
         None => return Ok((i, None)),
@@ -24,12 +24,12 @@ pub fn expr_list0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<Vec<N
             Span::reduce(&val).unwrap_or(Span::new(
                 i_span.start..Span::get0(i).map(|x| x.start).unwrap_or(i_span.end),
             )),
-            val,
+            ExprBlock(val),
         )),
     ))
 }
 
-pub fn expr_list1<'input>(i: Input<'input>) -> KResult<'input, Node<Vec<Node<Expr>>>> {
+pub fn expr_list1<'input>(i: Input<'input>) -> KResult<'input, Node<ExprBlock>> {
     let (i, lhs) = many0(token_tag(Token::DELIM))(i)?;
     let (i, head) = expr(i)?;
     let (i, _sep) = many1(token_tag(Token::DELIM))(i)?;
@@ -41,7 +41,7 @@ pub fn expr_list1<'input>(i: Input<'input>) -> KResult<'input, Node<Vec<Node<Exp
         i,
         Node::new(
             head_span + Span::reduce(&val) + Span::reduce_ref(&lhs) + Span::reduce_ref(&rhs),
-            val,
+            ExprBlock(val),
         ),
     ))
 }

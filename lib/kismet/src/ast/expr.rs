@@ -3,15 +3,22 @@ use std::fmt;
 use crate::{ast::TargetKind, types::Node};
 
 use super::{
-    Atom, Branch, DictItem, ListItem, OpArith, OpEqs, Primary, Range, Target, TargetDictItem,
-    TargetListItem,
+    ArgsDef, Atom, Branch, DictItem, ListItem, OpArith, OpEqs, Primary, Range, Target,
+    TargetDictItem, TargetListItem,
 };
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct ExprBlock(pub Vec<Node<Expr>>);
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
-    Stmts(Vec<Node<Expr>>),
     Assign(Node<Target>, Node<Expr>),
     Branch(Branch),
+    Function {
+        id: Node<String>,
+        args: Node<ArgsDef>,
+        block: Node<ExprBlock>,
+    },
     And(Node<Expr>, Node<Expr>),
     Or(Node<Expr>, Node<Expr>),
     Not(Node<Expr>),
@@ -31,12 +38,26 @@ pub enum Expr {
     Primary(Primary),
 }
 
+impl fmt::Display for ExprBlock {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{{\n{}\n}}",
+            self.0
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join("\n")
+        )
+    }
+}
+
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Stmts(val) => write!(f, "{}", Node::join(&val, "\n")),
             Self::Assign(lhs, rhs) => write!(f, "{} := {}", lhs, rhs),
             Self::Branch(val) => write!(f, "{}", val),
+            Self::Function { id, args, block } => write!(f, "{}({}) {}", id, args, block),
             Self::And(lhs, rhs) => write!(f, "{} and {}", lhs, rhs),
             Self::Or(lhs, rhs) => write!(f, "{} or {}", lhs, rhs),
             Self::Not(val) => write!(f, "not {}", val),
