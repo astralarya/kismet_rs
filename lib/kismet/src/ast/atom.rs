@@ -6,7 +6,7 @@ use super::{CompIter, DictItem, DictItemComp, Expr, ListItem};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Atom {
-    Stmts(Vec<Node<Expr>>),
+    Block(Vec<Node<Expr>>),
     Paren(Node<ListItem>),
     ListDisplay(Vec<Node<ListItem>>),
     ListComprehension {
@@ -32,7 +32,7 @@ pub enum Atom {
 impl fmt::Display for Atom {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            Self::Stmts(val) => match val.len() {
+            Self::Block(val) => match val.len() {
                 1 => write!(f, "{{{};}}", Node::join(&val, "; ")),
                 _ => write!(f, "{{{}}}", Node::join(&val, "; ")),
             },
