@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::types::Node;
+use crate::{ast::TargetKind, types::Node};
 
 use super::{
     Atom, Branch, DictItem, ListItem, OpArith, OpEqs, Primary, Range, Target, TargetDictItem,
@@ -97,25 +97,30 @@ impl TryFrom<Node<Atom>> for Node<Target> {
     type Error = ();
 
     fn try_from(val: Node<Atom>) -> Result<Self, Self::Error> {
-        fn list_item(val: Node<ListItem>) -> Result<Node<TargetListItem>, ()> {
-            let (val, node): (Node<Expr>, &dyn Fn(Node<Target>) -> Node<TargetListItem>) =
-                match *val.data {
-                    ListItem::Expr(y) => (Node::new(val.span, y), &|x: Node<Target>| {
-                        Node::new(x.span, TargetListItem::Target(*x.data))
-                    }),
-                    ListItem::Spread(x) => (x.clone(), &|x: Node<Target>| {
-                        Node::new(x.span, TargetListItem::Spread(x))
-                    }),
-                };
+        fn list_item(val: Node<ListItem>) -> Result<Node<TargetListItem<Target>>, ()> {
+            let (val, node): (
+                Node<Expr>,
+                &dyn Fn(Node<Target>) -> Node<TargetListItem<Target>>,
+            ) = match *val.data {
+                ListItem::Expr(y) => (Node::new(val.span, y), &|x: Node<Target>| {
+                    Node::new(x.span, TargetListItem::Target(*x.data))
+                }),
+                ListItem::Spread(x) => (x.clone(), &|x: Node<Target>| {
+                    Node::new(x.span, TargetListItem::Spread(x))
+                }),
+            };
             let val = Node::<Target>::try_from(val)?;
             Ok(node(val))
         }
 
         match *val.data {
-            Atom::Id(x) => Ok(Node::new(val.span, Target::Id(x.clone()))),
+            Atom::Id(x) => Ok(Node::new(val.span, Target(TargetKind::Id(x.clone())))),
             Atom::Paren(x) => {
                 let x = list_item(x)?;
-                Ok(Node::new(val.span, Target::TargetTuple(vec![x])))
+                Ok(Node::new(
+                    val.span,
+                    Target(TargetKind::TargetTuple(vec![x])),
+                ))
             }
             Atom::Tuple(x) => {
                 let x_len = x.len();
@@ -126,7 +131,7 @@ impl TryFrom<Node<Atom>> for Node<Target> {
                 if x_len != y.len() {
                     return Err(());
                 }
-                Ok(Node::new(val.span, Target::TargetTuple(y)))
+                Ok(Node::new(val.span, Target(TargetKind::TargetTuple(y))))
             }
             Atom::ListDisplay(x) => {
                 let x_len = x.len();
@@ -137,7 +142,7 @@ impl TryFrom<Node<Atom>> for Node<Target> {
                 if x_len != y.len() {
                     return Err(());
                 }
-                Ok(Node::new(val.span, Target::TargetList(y)))
+                Ok(Node::new(val.span, Target(TargetKind::TargetList(y))))
             }
             Atom::DictDisplay(x) => {
                 let x_len = x.len();
@@ -167,7 +172,7 @@ impl TryFrom<Node<Atom>> for Node<Target> {
                 if x_len != y.len() {
                     return Err(());
                 }
-                Ok(Node::new(val.span, Target::TargetDict(y)))
+                Ok(Node::new(val.span, Target(TargetKind::TargetDict(y))))
             }
             _ => Err(()),
         }

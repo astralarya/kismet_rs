@@ -6,7 +6,7 @@ use nom::{
 };
 
 use crate::{
-    ast::{Target, TargetDictItem, TargetListItem},
+    ast::{Target, TargetDictItem, TargetKind, TargetListItem},
     types::Node,
 };
 
@@ -18,7 +18,7 @@ pub fn target<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
 
 pub fn target_id<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
     map(token_tag_id, |x| {
-        Node::new(x.span, Target::Id(x.data.to_string()))
+        Node::new(x.span, Target(TargetKind::Id(x.data.to_string())))
     })(i)
 }
 
@@ -27,7 +27,10 @@ pub fn target_tuple<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
     let (i, val) = separated_list1(token_tag(Token::COMMA), target_list_item)(i)?;
     let (i, _) = opt(token_tag(Token::COMMA))(i)?;
     let (i, rhs) = token_tag(Token::RPAREN)(i)?;
-    Ok((i, Node::new(lhs.span + rhs.span, Target::TargetTuple(val))))
+    Ok((
+        i,
+        Node::new(lhs.span + rhs.span, Target(TargetKind::TargetTuple(val))),
+    ))
 }
 
 pub fn target_list<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
@@ -35,7 +38,10 @@ pub fn target_list<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
     let (i, val) = separated_list1(token_tag(Token::COMMA), target_list_item)(i)?;
     let (i, _) = opt(token_tag(Token::COMMA))(i)?;
     let (i, rhs) = token_tag(Token::RBRACKET)(i)?;
-    Ok((i, Node::new(lhs.span + rhs.span, Target::TargetList(val))))
+    Ok((
+        i,
+        Node::new(lhs.span + rhs.span, Target(TargetKind::TargetList(val))),
+    ))
 }
 
 pub fn target_dict<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
@@ -43,10 +49,13 @@ pub fn target_dict<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
     let (i, val) = separated_list1(token_tag(Token::COMMA), target_dict_item)(i)?;
     let (i, _) = opt(token_tag(Token::COMMA))(i)?;
     let (i, rhs) = token_tag(Token::RBRACE)(i)?;
-    Ok((i, Node::new(lhs.span + rhs.span, Target::TargetDict(val))))
+    Ok((
+        i,
+        Node::new(lhs.span + rhs.span, Target(TargetKind::TargetDict(val))),
+    ))
 }
 
-pub fn target_list_item<'input>(i: Input<'input>) -> KResult<'input, Node<TargetListItem>> {
+pub fn target_list_item<'input>(i: Input<'input>) -> KResult<'input, Node<TargetListItem<Target>>> {
     let (i, op) = opt(token_tag(Token::SPREAD))(i)?;
     let (i, val) = target(i)?;
     match op {
@@ -58,7 +67,7 @@ pub fn target_list_item<'input>(i: Input<'input>) -> KResult<'input, Node<Target
     }
 }
 
-pub fn target_dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<TargetDictItem>> {
+pub fn target_dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<TargetDictItem<Target>>> {
     let (i, op) = opt(token_tag(Token::SPREAD))(i)?;
     match op {
         Some(op) => {
