@@ -15,9 +15,9 @@ pub enum Expr {
     Or(Node<Expr>, Node<Expr>),
     Not(Node<Expr>),
     CompareBound {
-        val: Node<Expr>,
-        l_op: Node<OpEqs>,
         l_val: Node<Expr>,
+        l_op: Node<OpEqs>,
+        val: Node<Expr>,
         r_op: Node<OpEqs>,
         r_val: Node<Expr>,
     },
@@ -39,9 +39,9 @@ impl fmt::Display for Expr {
             Self::Or(lhs, rhs) => write!(f, "{} or {}", lhs, rhs),
             Self::Not(val) => write!(f, "not {}", val),
             Self::CompareBound {
-                val,
-                l_op,
                 l_val,
+                l_op,
+                val,
                 r_op,
                 r_val,
             } => write!(f, "{} {} {} {} {}", l_val, l_op, val, r_op, r_val),
