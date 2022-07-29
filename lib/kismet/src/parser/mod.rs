@@ -5,6 +5,7 @@ use crate::{
     types::{Node, ONode, Span},
 };
 
+mod arith;
 mod atom;
 mod enclosure;
 mod error;
@@ -14,6 +15,7 @@ mod start;
 mod target;
 mod token;
 
+pub use arith::*;
 pub use atom::*;
 pub use enclosure::*;
 pub use error::*;
