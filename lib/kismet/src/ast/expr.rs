@@ -3,7 +3,7 @@ use std::fmt;
 use crate::types::Node;
 
 use super::{
-    Atom, DictItem, ListItem, OpArith, OpEqs, Primary, Range, Target, TargetDictItem,
+    Atom, Branch, DictItem, ListItem, OpArith, OpEqs, Primary, Range, Target, TargetDictItem,
     TargetListItem,
 };
 
@@ -11,6 +11,7 @@ use super::{
 pub enum Expr {
     Stmts(Vec<Node<Expr>>),
     Assign(Node<Target>, Node<Expr>),
+    Branch(Branch),
     And(Node<Expr>, Node<Expr>),
     Or(Node<Expr>, Node<Expr>),
     Not(Node<Expr>),
@@ -35,6 +36,7 @@ impl fmt::Display for Expr {
         match self {
             Self::Stmts(val) => write!(f, "{}", Node::join(&val, "\n")),
             Self::Assign(lhs, rhs) => write!(f, "{} := {}", lhs, rhs),
+            Self::Branch(val) => write!(f, "{}", val),
             Self::And(lhs, rhs) => write!(f, "{} and {}", lhs, rhs),
             Self::Or(lhs, rhs) => write!(f, "{} or {}", lhs, rhs),
             Self::Not(val) => write!(f, "not {}", val),

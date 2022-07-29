@@ -1,4 +1,5 @@
 mod atom;
+mod branch;
 mod comp_iter;
 mod dict_item;
 mod expr;
@@ -9,6 +10,7 @@ mod range;
 mod target;
 
 pub use atom::*;
+pub use branch::*;
 pub use comp_iter::*;
 pub use dict_item::*;
 pub use expr::*;
