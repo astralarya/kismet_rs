@@ -10,7 +10,7 @@ use crate::types::{Node, ONode, Span};
 
 use super::{or_test, token_tag, ErrorKind, Input, KResult, Token};
 
-pub fn expr_list0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<ExprBlock>>> {
+pub fn expr_block0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<ExprBlock>>> {
     let i_span = match Span::get0(i) {
         Some(x) => x,
         None => return Ok((i, None)),
@@ -29,7 +29,7 @@ pub fn expr_list0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<ExprB
     ))
 }
 
-pub fn expr_list1<'input>(i: Input<'input>) -> KResult<'input, Node<ExprBlock>> {
+pub fn expr_block1<'input>(i: Input<'input>) -> KResult<'input, Node<ExprBlock>> {
     let (i, lhs) = many0(token_tag(Token::DELIM))(i)?;
     let (i, head) = expr(i)?;
     let (i, _sep) = many1(token_tag(Token::DELIM))(i)?;

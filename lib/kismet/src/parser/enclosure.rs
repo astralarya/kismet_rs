@@ -12,7 +12,7 @@ use crate::{
 };
 
 use super::{
-    expr, expr_list1, or_test, target, token_tag, token_tag_id, ErrorKind, Input, KResult, Token,
+    expr, expr_block1, or_test, target, token_tag, token_tag_id, ErrorKind, Input, KResult, Token,
 };
 
 pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
@@ -130,7 +130,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         None => (),
     };
 
-    let (i, val) = opt(expr_list1)(i)?;
+    let (i, val) = opt(expr_block1)(i)?;
     match val {
         Some(val) => {
             let (i, rhs) = close(i)?;
