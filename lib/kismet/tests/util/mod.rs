@@ -9,7 +9,7 @@ use kismet::{
 #[allow(dead_code)]
 pub fn assert_stmt(node: Node<Expr>, input: &str) {
     assert_eq!(
-        Ok(Node::new(Span::from(input), ExprBlock(vec![node]))),
+        Ok(Node::new(Span::from(input), ExprBlockTop(vec![node]))),
         parse(input)
     )
 }

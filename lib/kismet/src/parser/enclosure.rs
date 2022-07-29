@@ -134,7 +134,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     match val {
         Some(val) => {
             let (i, rhs) = close(i)?;
-            return Ok((i, Node::new(lhs.span + rhs.span, Atom::Block(val.data.0))));
+            return Ok((i, Node::new(lhs.span + rhs.span, Atom::Block(*val.data))));
         }
         None => (),
     }

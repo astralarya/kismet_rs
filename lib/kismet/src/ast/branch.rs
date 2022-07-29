@@ -2,14 +2,14 @@ use std::fmt;
 
 use crate::types::Node;
 
-use super::{Expr, ExprBlock, Target};
+use super::{Expr, ExprBlock, ExprBlockEnclosed, Target};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Branch {
     If {
         val: Node<Expr>,
-        t_block: Node<ExprBlock>,
-        f_block: Node<ExprBlock>,
+        t_block: Node<ExprBlockEnclosed>,
+        f_block: Node<ExprBlockEnclosed>,
     },
     Match {
         val: Node<Expr>,
@@ -19,23 +19,23 @@ pub enum Branch {
         label: Label,
         tar: Node<Target>,
         val: Node<Expr>,
-        block: Node<ExprBlock>,
+        block: Node<ExprBlockEnclosed>,
     },
     While {
         label: Label,
         val: Node<Expr>,
-        block: Node<ExprBlock>,
+        block: Node<ExprBlockEnclosed>,
     },
     Loop {
         label: Label,
-        block: Node<ExprBlock>,
+        block: Node<ExprBlockEnclosed>,
     },
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MatchArm {
     tar: Node<Target>,
-    block: Node<Expr>,
+    block: Node<ExprBlock>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -48,7 +48,7 @@ impl fmt::Display for Branch {
                 val,
                 t_block,
                 f_block,
-            } => write!(f, "if {} {} else {}", val, t_block, f_block,),
+            } => write!(f, "if {} {} else {}", val, t_block, f_block),
             Self::Match { val, arms } => write!(f, "match {} {{{}}}", val, Node::join(arms, ", ")),
             Self::For {
                 label,

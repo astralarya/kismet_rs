@@ -8,15 +8,12 @@ use super::{
 };
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExprBlock(pub Vec<Node<Expr>>);
-
-#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Assign(Node<Target>, Node<Expr>),
     Branch(Branch),
     Function {
         args: Node<ArgsDef>,
-        block: Node<ExprBlock>,
+        block: Node<ExprBlockEnclosed>,
     },
     And(Node<Expr>, Node<Expr>),
     Or(Node<Expr>, Node<Expr>),
@@ -37,20 +34,31 @@ pub enum Expr {
     Primary(Primary),
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExprBlock(pub Vec<Node<Expr>>);
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExprBlockTop(pub Vec<Node<Expr>>);
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExprBlockEnclosed(pub Vec<Node<Expr>>);
+
 impl fmt::Display for ExprBlock {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let len = self.0.len();
-        let out = self
-            .0
-            .iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-            .join("\n");
-        if len > 1 {
-            write!(f, "{{\n{}\n}}", out)
-        } else {
-            write!(f, "{}", out)
+        match self.0.len() {
+            0 | 1 => write!(f, "{}", Node::join(&self.0, "\n")),
+            _ => write!(f, "{{\n{}\n}}", Node::join(&self.0, "\n")),
         }
+    }
+}
+
+impl fmt::Display for ExprBlockTop {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", Node::join(&self.0, "\n"))
+    }
+}
+
+impl fmt::Display for ExprBlockEnclosed {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{{\n{}\n}}", Node::join(&self.0, "\n"))
     }
 }
 
@@ -59,7 +67,9 @@ impl fmt::Display for Expr {
         match self {
             Self::Assign(lhs, rhs) => write!(f, "{} := {}", lhs, rhs),
             Self::Branch(val) => write!(f, "{}", val),
-            Self::Function { args, block } => write!(f, "({}) => {}", args, block),
+            Self::Function { args, block } => {
+                write!(f, "({}) => {}", args, block)
+            }
             Self::And(lhs, rhs) => write!(f, "{} and {}", lhs, rhs),
             Self::Or(lhs, rhs) => write!(f, "{} or {}", lhs, rhs),
             Self::Not(val) => write!(f, "not {}", val),
