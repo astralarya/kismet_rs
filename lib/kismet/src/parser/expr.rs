@@ -1,6 +1,10 @@
-use nom::multi::{many0, many1, separated_list0};
-use nom::sequence::preceded;
-use nom::{combinator::opt, sequence::tuple, Err};
+use nom::{
+    branch::alt,
+    combinator::opt,
+    multi::{many0, many1, separated_list0},
+    sequence::{preceded, tuple},
+    Err,
+};
 
 use crate::ast::{Expr, OpArith, OpEqs, OpRange, Primary, Range, Target};
 use crate::types::{Node, ONode, Span};
@@ -63,6 +67,33 @@ pub fn assignment_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> 
 }
 
 pub fn conditional_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    alt((
+        if_expr,
+        match_expr,
+        for_expr,
+        while_expr,
+        loop_expr,
+        lambda_expr,
+    ))(i)
+}
+
+pub fn if_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    lambda_expr(i)
+}
+
+pub fn match_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    lambda_expr(i)
+}
+
+pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    lambda_expr(i)
+}
+
+pub fn while_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+    lambda_expr(i)
+}
+
+pub fn loop_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     lambda_expr(i)
 }
 

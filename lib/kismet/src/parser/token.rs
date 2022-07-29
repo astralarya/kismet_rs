@@ -114,6 +114,18 @@ pub enum Token {
     #[regex(r"(?i)if")]
     IF,
 
+    #[regex(r"(?i)else")]
+    ELSE,
+
+    #[regex(r"(?i)match")]
+    MATCH,
+
+    #[regex(r"(?i)while")]
+    WHILE,
+
+    #[regex(r"(?i)loop")]
+    LOOP,
+
     #[regex(r"(?i)or")]
     OR,
 
@@ -382,6 +394,10 @@ impl fmt::Display for Token {
             Self::FOR => write!(f, "for"),
             Self::IN => write!(f, "in"),
             Self::IF => write!(f, "if"),
+            Self::ELSE => write!(f, "else"),
+            Self::MATCH => write!(f, "match"),
+            Self::WHILE => write!(f, "while"),
+            Self::LOOP => write!(f, "loop"),
             Self::AND => write!(f, "and"),
             Self::OR => write!(f, "or"),
             Self::NOT => write!(f, "not"),
