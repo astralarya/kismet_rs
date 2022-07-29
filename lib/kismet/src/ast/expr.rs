@@ -15,7 +15,6 @@ pub enum Expr {
     Assign(Node<Target>, Node<Expr>),
     Branch(Branch),
     Function {
-        id: Node<String>,
         args: Node<ArgsDef>,
         block: Node<ExprBlock>,
     },
@@ -57,7 +56,7 @@ impl fmt::Display for Expr {
         match self {
             Self::Assign(lhs, rhs) => write!(f, "{} := {}", lhs, rhs),
             Self::Branch(val) => write!(f, "{}", val),
-            Self::Function { id, args, block } => write!(f, "{}({}) {}", id, args, block),
+            Self::Function { args, block } => write!(f, "({}) => {}", args, block),
             Self::And(lhs, rhs) => write!(f, "{} and {}", lhs, rhs),
             Self::Or(lhs, rhs) => write!(f, "{} or {}", lhs, rhs),
             Self::Not(val) => write!(f, "not {}", val),
