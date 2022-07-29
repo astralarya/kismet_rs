@@ -39,15 +39,18 @@ pub enum Expr {
 
 impl fmt::Display for ExprBlock {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{{\n{}\n}}",
-            self.0
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join("\n")
-        )
+        let len = self.0.len();
+        let out = self
+            .0
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join("\n");
+        if len > 1 {
+            write!(f, "{{\n{}\n}}", out)
+        } else {
+            write!(f, "{}", out)
+        }
     }
 }
 
