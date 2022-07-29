@@ -3,8 +3,8 @@ use std::fmt;
 use crate::{ast::TargetKind, types::Node};
 
 use super::{
-    ArgsDef, Atom, Branch, DictItem, ListItem, OpArith, OpEqs, Primary, Range, Target,
-    TargetDictItem, TargetListItem,
+    ArgsDef, Atom, Branch, DictItem, ExprBlockEnclosed, ListItem, OpArith, OpEqs, Primary, Range,
+    Target, TargetDictItem, TargetListItem,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -32,34 +32,6 @@ pub enum Expr {
     Coefficient(Node<Atom>, Node<Expr>),
     Die(Node<Atom>),
     Primary(Primary),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExprBlock(pub Vec<Node<Expr>>);
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExprBlockTop(pub Vec<Node<Expr>>);
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExprBlockEnclosed(pub Vec<Node<Expr>>);
-
-impl fmt::Display for ExprBlock {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.0.len() {
-            0 | 1 => write!(f, "{}", Node::join(&self.0, "\n")),
-            _ => write!(f, "{{\n{}\n}}", Node::join(&self.0, "\n")),
-        }
-    }
-}
-
-impl fmt::Display for ExprBlockTop {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", Node::join(&self.0, "\n"))
-    }
-}
-
-impl fmt::Display for ExprBlockEnclosed {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{{\n{}\n}}", Node::join(&self.0, "\n"))
-    }
 }
 
 impl fmt::Display for Expr {

@@ -1,5 +1,6 @@
 mod args;
 mod atom;
+mod block;
 mod branch;
 mod comp_iter;
 mod dict_item;
@@ -12,6 +13,7 @@ mod target;
 
 pub use args::*;
 pub use atom::*;
+pub use block::*;
 pub use branch::*;
 pub use comp_iter::*;
 pub use dict_item::*;
