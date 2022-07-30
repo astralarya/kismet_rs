@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::types::Node;
 
-use super::Expr;
+use super::{Atom, Expr};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Target(pub TargetKind<Target>);
@@ -11,6 +11,12 @@ pub struct Target(pub TargetKind<Target>);
 pub enum TargetExpr {
     Target(TargetKind<TargetExpr>),
     TargetExpr(Node<Target>, Node<Expr>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Match {
+    Target(TargetKind<Match>),
+    Literal(Atom),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -46,6 +52,33 @@ impl fmt::Display for TargetExpr {
             Self::Target(tar) => write!(f, "{}", tar),
             Self::TargetExpr(tar, val) => write!(f, "{} = {}", tar, val),
         }
+    }
+}
+
+impl fmt::Display for Match {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Target(tar) => write!(f, "{}", tar),
+            Self::Literal(val) => write!(f, "{}", val),
+        }
+    }
+}
+
+impl From<TargetKind<Self>> for Target {
+    fn from(val: TargetKind<Self>) -> Self {
+        Target(val)
+    }
+}
+
+impl From<TargetKind<Self>> for TargetExpr {
+    fn from(val: TargetKind<Self>) -> Self {
+        Self::Target(val)
+    }
+}
+
+impl From<TargetKind<Self>> for Match {
+    fn from(val: TargetKind<Self>) -> Self {
+        Self::Target(val)
     }
 }
 

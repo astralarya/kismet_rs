@@ -13,85 +13,127 @@ use crate::{
 use super::{token_tag, token_tag_id, Input, KResult, Token};
 
 pub fn target<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
-    alt((target_id, target_tuple, target_list, target_dict))(i)
+    map(target_kind(&target), |x| Node::new(x.span, Target(*x.data)))(i)
 }
 
-pub fn target_id<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
+pub fn target_kind<'input, T>(
+    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetKind<T>>>
+where
+    T: From<TargetKind<T>>,
+{
+    move |i| {
+        alt((
+            target_id,
+            target_tuple(target_atom),
+            target_list(target_atom),
+            target_dict(target_atom),
+        ))(i)
+    }
+}
+
+pub fn target_id<'input, T>(i: Input<'input>) -> KResult<'input, Node<TargetKind<T>>> {
     map(token_tag_id, |x| {
-        Node::new(x.span, Target(TargetKind::Id(x.data.to_string())))
+        Node::new(x.span, TargetKind::Id(x.data.to_string()))
     })(i)
 }
 
-pub fn target_tuple<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
-    let (i, lhs) = token_tag(Token::LPAREN)(i)?;
-    let (i, val) = separated_list1(token_tag(Token::COMMA), target_list_item)(i)?;
-    let (i, _) = opt(token_tag(Token::COMMA))(i)?;
-    let (i, rhs) = token_tag(Token::RPAREN)(i)?;
-    Ok((
-        i,
-        Node::new(lhs.span + rhs.span, Target(TargetKind::TargetTuple(val))),
-    ))
-}
-
-pub fn target_list<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
-    let (i, lhs) = token_tag(Token::LBRACKET)(i)?;
-    let (i, val) = separated_list1(token_tag(Token::COMMA), target_list_item)(i)?;
-    let (i, _) = opt(token_tag(Token::COMMA))(i)?;
-    let (i, rhs) = token_tag(Token::RBRACKET)(i)?;
-    Ok((
-        i,
-        Node::new(lhs.span + rhs.span, Target(TargetKind::TargetList(val))),
-    ))
-}
-
-pub fn target_dict<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
-    let (i, lhs) = token_tag(Token::LBRACE)(i)?;
-    let (i, val) = separated_list1(token_tag(Token::COMMA), target_dict_item)(i)?;
-    let (i, _) = opt(token_tag(Token::COMMA))(i)?;
-    let (i, rhs) = token_tag(Token::RBRACE)(i)?;
-    Ok((
-        i,
-        Node::new(lhs.span + rhs.span, Target(TargetKind::TargetDict(val))),
-    ))
-}
-
-pub fn target_list_item<'input>(i: Input<'input>) -> KResult<'input, Node<TargetListItem<Target>>> {
-    let (i, op) = opt(token_tag(Token::SPREAD))(i)?;
-    let (i, val) = target(i)?;
-    match op {
-        Some(op) => Ok((
+pub fn target_tuple<'input, T>(
+    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetKind<T>>> {
+    move |i| {
+        let (i, lhs) = token_tag(Token::LPAREN)(i)?;
+        let (i, val) = separated_list1(token_tag(Token::COMMA), target_list_item(target_atom))(i)?;
+        let (i, _) = opt(token_tag(Token::COMMA))(i)?;
+        let (i, rhs) = token_tag(Token::RPAREN)(i)?;
+        Ok((
             i,
-            Node::new(op.span + val.span, TargetListItem::Spread(val)),
-        )),
-        None => Ok((i, Node::new(val.span, TargetListItem::Target(*val.data)))),
+            Node::new(lhs.span + rhs.span, TargetKind::TargetTuple(val)),
+        ))
     }
 }
 
-pub fn target_dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<TargetDictItem<Target>>> {
-    let (i, op) = opt(token_tag(Token::SPREAD))(i)?;
-    match op {
-        Some(op) => {
-            let (i, val) = target(i)?;
-            return Ok((
+pub fn target_list<'input, T>(
+    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetKind<T>>> {
+    move |i| {
+        let (i, lhs) = token_tag(Token::LBRACKET)(i)?;
+        let (i, val) = separated_list1(token_tag(Token::COMMA), target_list_item(target_atom))(i)?;
+        let (i, _) = opt(token_tag(Token::COMMA))(i)?;
+        let (i, rhs) = token_tag(Token::RBRACKET)(i)?;
+        Ok((
+            i,
+            Node::new(lhs.span + rhs.span, TargetKind::TargetList(val)),
+        ))
+    }
+}
+
+pub fn target_dict<'input, T>(
+    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetKind<T>>>
+where
+    T: From<TargetKind<T>>,
+{
+    move |i| {
+        let (i, lhs) = token_tag(Token::LBRACE)(i)?;
+        let (i, val) = separated_list1(token_tag(Token::COMMA), target_dict_item(target_atom))(i)?;
+        let (i, _) = opt(token_tag(Token::COMMA))(i)?;
+        let (i, rhs) = token_tag(Token::RBRACE)(i)?;
+        Ok((
+            i,
+            Node::new(lhs.span + rhs.span, TargetKind::TargetDict(val)),
+        ))
+    }
+}
+
+pub fn target_list_item<'input, T>(
+    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetListItem<T>>> {
+    move |i| {
+        let (i, op) = opt(token_tag(Token::SPREAD))(i)?;
+        let (i, val) = target_atom(i)?;
+        match op {
+            Some(op) => Ok((
                 i,
-                Node::new(op.span + val.span, TargetDictItem::Spread(val)),
-            ));
+                Node::new(op.span + val.span, TargetListItem::Spread(val)),
+            )),
+            None => Ok((i, Node::new(val.span, TargetListItem::Target(*val.data)))),
         }
-        None => (),
     }
-    let (i, key) = token_tag_id(i)?;
-    let (i, val) = opt(preceded(token_tag(Token::COLON), target))(i)?;
-    match val {
-        Some(val) => Ok((
-            i,
-            Node::new(key.span + val.span, TargetDictItem::Pair { key, val }),
-        )),
-        None => Ok((
-            i,
-            Node::new(
-                key.span,
-                TargetDictItem::Target(Target(TargetKind::Id(*key.data))),
-            ),
-        )),
+}
+
+pub fn target_dict_item<'input, T>(
+    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetDictItem<T>>>
+where
+    T: From<TargetKind<T>>,
+{
+    move |i| {
+        let (i, op) = opt(token_tag(Token::SPREAD))(i)?;
+        match op {
+            Some(op) => {
+                let (i, val) = target_atom(i)?;
+                return Ok((
+                    i,
+                    Node::new(op.span + val.span, TargetDictItem::Spread(val)),
+                ));
+            }
+            None => (),
+        }
+        let (i, key) = token_tag_id(i)?;
+        let (i, val) = opt(preceded(token_tag(Token::COLON), target_atom))(i)?;
+        match val {
+            Some(val) => Ok((
+                i,
+                Node::new(key.span + val.span, TargetDictItem::Pair { key, val }),
+            )),
+            None => Ok((
+                i,
+                Node::new(
+                    key.span,
+                    TargetDictItem::Target(T::from(TargetKind::Id(*key.data))),
+                ),
+            )),
+        }
     }
 }

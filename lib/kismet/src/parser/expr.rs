@@ -122,7 +122,11 @@ pub fn if_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn match_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    lambda_expr(i)
+    return lambda_expr(i);
+    let (i, lhs) = token_tag(Token::MATCH)(i)?;
+    let (i, val) = or_test(i)?;
+    let (i, _) = token_tag(Token::LBRACE)(i)?;
+    let (i, rhs) = token_tag(Token::RBRACE)(i)?;
 }
 
 pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
