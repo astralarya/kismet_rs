@@ -214,7 +214,10 @@ pub enum Token {
     #[regex(r"0x[[:xdigit:]_]*", Token::parse_int)]
     Number(NumberKind),
 
-    #[regex(r"([[:alpha:]--[dD]_]|[dD][[:alpha:]_])[[:word:]]*", Token::parse_id)]
+    #[regex(
+        r"([[:alpha:]--[dD]]|[dD][_[:alpha:]]|_[[:word:]])[[:word:]]*",
+        Token::parse_id
+    )]
     Id(String),
 
     #[regex(r"[ \t\f]+", logos::skip)]
