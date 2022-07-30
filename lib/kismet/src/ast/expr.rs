@@ -3,18 +3,18 @@ use std::fmt;
 use crate::{ast::TargetKind, types::Node};
 
 use super::{
-    ArgsDef, Atom, Branch, DictItem, ExprBlockEnclosed, ListItem, OpArith, OpEqs, Primary, Range,
-    Target, TargetDictItem, TargetListItem,
+    ArgsDef, Atom, Branch, DictItem, ExprBlock, ListItem, OpArith, OpEqs, Primary, Range, Target,
+    TargetDictItem, TargetListItem,
 };
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Assign(Node<Target>, Node<Expr>),
-    Branch(Branch),
     Function {
         args: Node<ArgsDef>,
-        block: Node<ExprBlockEnclosed>,
+        block: Node<ExprBlock>,
     },
+    Branch(Branch),
     And(Node<Expr>, Node<Expr>),
     Or(Node<Expr>, Node<Expr>),
     Not(Node<Expr>),
