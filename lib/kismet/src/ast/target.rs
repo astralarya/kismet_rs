@@ -31,7 +31,7 @@ pub enum TargetListItem<T> {
 pub enum TargetDictItem<T> {
     Pair { key: Node<String>, val: Node<T> },
     Spread(Node<T>),
-    Target(String),
+    Target(T),
 }
 
 impl fmt::Display for Target {

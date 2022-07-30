@@ -86,6 +86,12 @@ pub fn target_dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<Target
             i,
             Node::new(key.span + val.span, TargetDictItem::Pair { key, val }),
         )),
-        None => Ok((i, Node::new(key.span, TargetDictItem::Target(*key.data)))),
+        None => Ok((
+            i,
+            Node::new(
+                key.span,
+                TargetDictItem::Target(Target(TargetKind::Id(*key.data))),
+            ),
+        )),
     }
 }

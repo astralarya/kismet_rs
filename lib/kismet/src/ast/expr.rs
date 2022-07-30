@@ -153,26 +153,33 @@ impl TryFrom<Node<Atom>> for Node<Target> {
                 let x_len = x.len();
                 let y = x
                     .into_iter()
-                    .filter_map(|x| match *x.data {
-                        DictItem::Shorthand(y) => {
-                            Some(Node::new(x.span, TargetDictItem::Target(y.clone())))
-                        }
-                        DictItem::Spread(x) => match Node::<Target>::try_from(x) {
-                            Ok(x) => Some(Node::new(x.span, TargetDictItem::Spread(x))),
-                            Err(_) => None,
-                        },
-                        DictItem::KeyVal { key, val } => match Node::<Target>::try_from(val) {
-                            Ok(val) => Some(Node::new(
-                                x.span,
-                                TargetDictItem::Pair {
-                                    key: key.clone(),
-                                    val,
+                    .filter_map(
+                        |x: Node<DictItem>| -> Option<Node<TargetDictItem<Target>>> {
+                            match *x.data {
+                                DictItem::Shorthand(y) => Some(Node::new(
+                                    x.span,
+                                    TargetDictItem::Target(Target(TargetKind::Id(y))),
+                                )),
+                                DictItem::Spread(x) => match Node::<Target>::try_from(x) {
+                                    Ok(x) => Some(Node::new(x.span, TargetDictItem::Spread(x))),
+                                    Err(_) => None,
                                 },
-                            )),
-                            Err(_) => None,
+                                DictItem::KeyVal { key, val } => {
+                                    match Node::<Target>::try_from(val) {
+                                        Ok(val) => Some(Node::new(
+                                            x.span,
+                                            TargetDictItem::Pair {
+                                                key: key.clone(),
+                                                val,
+                                            },
+                                        )),
+                                        Err(_) => None,
+                                    }
+                                }
+                                _ => None,
+                            }
                         },
-                        _ => None,
-                    })
+                    )
                     .collect::<Vec<_>>();
                 if x_len != y.len() {
                     return Err(());
