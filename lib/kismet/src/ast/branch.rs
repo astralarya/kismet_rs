@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::types::Node;
 
-use super::{Expr, ExprBlock, ExprEnclosure, Target};
+use super::{Expr, ExprEnclosure, Match, MatchBlock, Target};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Branch {
@@ -34,8 +34,8 @@ pub enum Branch {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MatchArm {
-    tar: Node<Target>,
-    block: Node<ExprBlock>,
+    pub tar: Node<Match>,
+    pub block: Node<MatchBlock>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -52,7 +52,7 @@ impl fmt::Display for Branch {
                 0 => write!(f, "if {} {}", val, t_block),
                 _ => write!(f, "if {} {} else {}", val, t_block, f_block),
             },
-            Self::Match { val, arms } => write!(f, "match {} {{{}}}", val, Node::join(arms, ", ")),
+            Self::Match { val, arms } => write!(f, "match {} {{{}}}", val, Node::join(arms, " ")),
             Self::For {
                 label,
                 tar,

@@ -6,10 +6,10 @@ use nom::{
     Err,
 };
 
-use crate::ast::{Branch, Expr, ExprEnclosure, Target};
+use crate::ast::{Branch, Expr, ExprEnclosure, MatchArm, MatchBlock, Target};
 use crate::types::{Node, ONode, Span};
 
-use super::{or_test, token_tag, ErrorKind, Input, KResult, Token};
+use super::{or_test, target_match, token_tag, ErrorKind, Input, KResult, Token};
 
 pub fn expr_block0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<Vec<Node<Expr>>>>> {
     let i_span = match Span::get0(i) {
@@ -122,11 +122,75 @@ pub fn if_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn match_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    return lambda_expr(i);
     let (i, lhs) = token_tag(Token::MATCH)(i)?;
     let (i, val) = or_test(i)?;
     let (i, _) = token_tag(Token::LBRACE)(i)?;
+
+    let mut arms: Vec<Node<MatchArm>> = vec![];
+    let mut i_ = i;
+    let i = loop {
+        let i = i_;
+        let (i, tar) = opt(target_match)(i)?;
+        let tar = match tar {
+            Some(tar) => tar,
+            None => break i,
+        };
+        let (i, _) = token_tag(Token::ARROW)(i)?;
+        let (i, val) = opt(expr_enclosure)(i)?;
+        let i = match val {
+            Some(val) => {
+                arms.push(Node::new(
+                    tar.span + val.span,
+                    MatchArm {
+                        tar,
+                        block: Node::new(val.span, MatchBlock(val.data.0)),
+                    },
+                ));
+                i
+            }
+            None => {
+                let (i, val) = expr(i)?;
+                arms.push(Node::new(
+                    tar.span + val.span,
+                    MatchArm {
+                        tar,
+                        block: Node::new(val.span, MatchBlock(vec![val])),
+                    },
+                ));
+                let (i, sep) = opt(token_tag(Token::COMMA))(i)?;
+                match sep {
+                    Some(_) => i,
+                    None => break i,
+                }
+            }
+        };
+        i_ = i;
+    };
+
     let (i, rhs) = token_tag(Token::RBRACE)(i)?;
+    Ok((
+        i,
+        Node::new(
+            lhs.span + rhs.span,
+            Expr::Branch(Branch::Match { val, arms }),
+        ),
+    ))
+}
+
+pub fn match_arm<'input>(i: Input<'input>) -> KResult<'input, Node<MatchArm>> {
+    let (i, tar) = target_match(i)?;
+    let (i, _) = token_tag(Token::ARROW)(i)?;
+    let (i, val) = expr_enclosure(i)?;
+    Ok((
+        i,
+        Node::new(
+            tar.span + val.span,
+            MatchArm {
+                tar,
+                block: Node::new(val.span, MatchBlock(val.data.0)),
+            },
+        ),
+    ))
 }
 
 pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {

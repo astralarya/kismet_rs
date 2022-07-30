@@ -11,6 +11,9 @@ pub struct ExprTop(pub Vec<Node<Expr>>);
 pub struct ExprBlock(pub Vec<Node<Expr>>);
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct MatchBlock(pub Vec<Node<Expr>>);
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct ExprEnclosure(pub Vec<Node<Expr>>);
 
 impl Deref for ExprTop {
@@ -29,11 +32,25 @@ impl Deref for ExprBlock {
     }
 }
 
+impl Deref for MatchBlock {
+    type Target = Vec<Node<Expr>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl Deref for ExprEnclosure {
     type Target = Vec<Node<Expr>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl fmt::Display for ExprTop {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", Node::join(&self.0, "\n"))
     }
 }
 
@@ -46,9 +63,12 @@ impl fmt::Display for ExprBlock {
     }
 }
 
-impl fmt::Display for ExprTop {
+impl fmt::Display for MatchBlock {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", Node::join(&self.0, "\n"))
+        match self.0.len() {
+            0 | 1 => write!(f, "{},", Node::join(self, "; ")),
+            _ => write!(f, "{{ {} }}", Node::join(self, "; ")),
+        }
     }
 }
 
