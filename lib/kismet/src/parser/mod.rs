@@ -1,7 +1,7 @@
 use nom::{Err, IResult};
 
 use crate::{
-    ast::ExprBlockTop,
+    ast::ExprTop,
     types::{Node, ONode, Span},
 };
 
@@ -29,7 +29,7 @@ pub type Input<'a> = &'a [Node<Token>];
 pub type Error = ONode<ErrorKind>;
 pub type KResult<'a, O> = IResult<Input<'a>, O, Error>;
 
-pub type ParseNode = Node<ExprBlockTop>;
+pub type ParseNode = Node<ExprTop>;
 
 pub fn parse<'a>(input: &'a str) -> Result<ParseNode, Error> {
     run_parser(start, input)

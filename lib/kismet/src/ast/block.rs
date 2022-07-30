@@ -5,13 +5,21 @@ use crate::types::Node;
 use super::Expr;
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct ExprTop(pub Vec<Node<Expr>>);
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct ExprBlock(pub Vec<Node<Expr>>);
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExprBlockTop(pub Vec<Node<Expr>>);
+pub struct ExprEnclosure(pub Vec<Node<Expr>>);
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExprBlockEnclosed(pub Vec<Node<Expr>>);
+impl Deref for ExprTop {
+    type Target = Vec<Node<Expr>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl Deref for ExprBlock {
     type Target = Vec<Node<Expr>>;
@@ -21,15 +29,7 @@ impl Deref for ExprBlock {
     }
 }
 
-impl Deref for ExprBlockTop {
-    type Target = Vec<Node<Expr>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl Deref for ExprBlockEnclosed {
+impl Deref for ExprEnclosure {
     type Target = Vec<Node<Expr>>;
 
     fn deref(&self) -> &Self::Target {
@@ -40,20 +40,20 @@ impl Deref for ExprBlockEnclosed {
 impl fmt::Display for ExprBlock {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.0.len() {
-            0 | 1 => write!(f, "{}", Node::join(self, "\n")),
-            _ => write!(f, "{{\n{}\n}}", Node::join(self, "\n")),
+            0 | 1 => write!(f, "{}", Node::join(self, "; ")),
+            _ => write!(f, "{{ {} }}", Node::join(self, "; ")),
         }
     }
 }
 
-impl fmt::Display for ExprBlockTop {
+impl fmt::Display for ExprTop {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", Node::join(&self.0, "\n"))
     }
 }
 
-impl fmt::Display for ExprBlockEnclosed {
+impl fmt::Display for ExprEnclosure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{{\n{}\n}}", Node::join(&self.0, "\n"))
+        write!(f, "{{ {} }}", Node::join(&self.0, "; "))
     }
 }

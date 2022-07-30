@@ -2,10 +2,11 @@ use nom::{
     branch::alt,
     combinator::opt,
     multi::{many0, many1, separated_list0},
+    sequence::preceded,
     Err,
 };
 
-use crate::ast::{Expr, Target};
+use crate::ast::{Branch, Expr, ExprEnclosure, Target};
 use crate::types::{Node, ONode, Span};
 
 use super::{or_test, token_tag, ErrorKind, Input, KResult, Token};
@@ -46,6 +47,16 @@ pub fn expr_block1<'input>(i: Input<'input>) -> KResult<'input, Node<Vec<Node<Ex
     ))
 }
 
+pub fn expr_enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<ExprEnclosure>> {
+    let (i, lhs) = token_tag(Token::LBRACE)(i)?;
+    let (i, val) = expr_block0(i)?;
+    let (i, rhs) = token_tag(Token::RBRACE)(i)?;
+    match val {
+        Some(val) => Ok((i, Node::new(lhs.span + rhs.span, ExprEnclosure(*val.data)))),
+        None => Ok((i, Node::new(lhs.span + rhs.span, ExprEnclosure(vec![])))),
+    }
+}
+
 pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     assignment_expr(i)
 }
@@ -77,7 +88,37 @@ pub fn conditional_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>>
 }
 
 pub fn if_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    lambda_expr(i)
+    let (i, lhs) = token_tag(Token::IF)(i)?;
+    let (i, val) = or_test(i)?;
+    let (i, t_block) = expr_enclosure(i)?;
+    let (i, f_block) = opt(preceded(token_tag(Token::ELSE), expr_enclosure))(i)?;
+    match f_block {
+        Some(f_block) => Ok((
+            i,
+            Node::new(
+                lhs.span + f_block.span,
+                Expr::Branch(Branch::If {
+                    val,
+                    t_block,
+                    f_block,
+                }),
+            ),
+        )),
+        None => {
+            let rhs_end = t_block.span.end;
+            Ok((
+                i,
+                Node::new(
+                    lhs.span + t_block.span,
+                    Expr::Branch(Branch::If {
+                        val,
+                        t_block,
+                        f_block: Node::new(rhs_end..rhs_end, ExprEnclosure(vec![])),
+                    }),
+                ),
+            ))
+        }
+    }
 }
 
 pub fn match_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {

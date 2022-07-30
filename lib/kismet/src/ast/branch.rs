@@ -2,14 +2,14 @@ use std::fmt;
 
 use crate::types::Node;
 
-use super::{Expr, ExprBlock, ExprBlockEnclosed, Target};
+use super::{Expr, ExprBlock, ExprEnclosure, Target};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Branch {
     If {
         val: Node<Expr>,
-        t_block: Node<ExprBlockEnclosed>,
-        f_block: Node<ExprBlockEnclosed>,
+        t_block: Node<ExprEnclosure>,
+        f_block: Node<ExprEnclosure>,
     },
     Match {
         val: Node<Expr>,
@@ -19,16 +19,16 @@ pub enum Branch {
         label: Label,
         tar: Node<Target>,
         val: Node<Expr>,
-        block: Node<ExprBlockEnclosed>,
+        block: Node<ExprEnclosure>,
     },
     While {
         label: Label,
         val: Node<Expr>,
-        block: Node<ExprBlockEnclosed>,
+        block: Node<ExprEnclosure>,
     },
     Loop {
         label: Label,
-        block: Node<ExprBlockEnclosed>,
+        block: Node<ExprEnclosure>,
     },
 }
 
@@ -48,7 +48,10 @@ impl fmt::Display for Branch {
                 val,
                 t_block,
                 f_block,
-            } => write!(f, "if {} {} else {}", val, t_block, f_block),
+            } => match f_block.data.len() {
+                0 => write!(f, "if {} {}", val, t_block),
+                _ => write!(f, "if {} {} else {}", val, t_block, f_block),
+            },
             Self::Match { val, arms } => write!(f, "match {} {{{}}}", val, Node::join(arms, ", ")),
             Self::For {
                 label,
