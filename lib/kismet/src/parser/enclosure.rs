@@ -15,8 +15,8 @@ use crate::{
 };
 
 use super::{
-    expr, expr_block1, or_test, target, target_expr, target_list_item, token_tag, ConvertKind,
-    Error, ErrorKind, Input, KResult, Token,
+    expr, expr_block1, or_test, target, target_dict_item, target_expr, target_list_item, token_tag,
+    ConvertKind, Error, ErrorKind, Input, KResult, Token,
 };
 
 pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
@@ -215,9 +215,8 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
 
     let (i, lhs) = open(i)?;
     let (i, rhs) = opt(close)(i)?;
-    match rhs {
-        Some(rhs) => return Ok((i, Node::new(lhs.span + rhs.span, Atom::DictDisplay(vec![])))),
-        None => (),
+    if let Some(rhs) = rhs {
+        return Ok((i, Node::new(lhs.span + rhs.span, Atom::DictDisplay(vec![]))));
     };
 
     let (i, val) = opt(expr_block1)(i)?;
@@ -375,6 +374,50 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
                 Error::Error(ErrorKind::Grammar),
             )))
         }
+    }
+}
+
+pub fn dict_item_convert<'input>(
+    lhs_span: Span,
+) -> impl Fn(Input<'input>) -> KResult<'input, Node<DictItem>> {
+    let separator = token_tag(Token::COMMA);
+    let close = token_tag(Token::RBRACKET);
+
+    move |i| match dict_item(i) {
+        Ok((i, val)) => Ok((i, val)),
+        Err(Err::Failure(val)) => {
+            let span = val.span;
+            match *val.data {
+                Error::Convert(i, ConvertKind::TargetDictItemExpr(val)) => {
+                    let (i, vals) = opt(preceded(
+                        &separator,
+                        separated_list1(&separator, target_dict_item(&target_expr)),
+                    ))(i)?;
+                    let (i, _) = opt(&separator)(i)?;
+                    let vals = match vals {
+                        Some(mut vals) => {
+                            vals.insert(0, val);
+                            vals
+                        }
+                        _ => vec![val],
+                    };
+                    let (i, rhs) = close(i)?;
+
+                    return Err(Err::Failure(ONode::new(
+                        span,
+                        Error::Convert(
+                            i,
+                            ConvertKind::TargetKindExpr(Node::new(
+                                lhs_span + rhs.span,
+                                TargetKind::TargetDict(vals),
+                            )),
+                        ),
+                    )));
+                }
+                _ => return Err(Err::Failure(val)),
+            }
+        }
+        Err(e) => return Err(e),
     }
 }
 
