@@ -10,7 +10,7 @@ pub struct Target(pub TargetKind<Target>);
 #[derive(Clone, Debug, PartialEq)]
 pub enum TargetExpr {
     Target(TargetKind<TargetExpr>),
-    TargetExpr(Node<Target>, Node<Expr>),
+    TargetExpr(Node<TargetKind<TargetExpr>>, Node<Expr>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

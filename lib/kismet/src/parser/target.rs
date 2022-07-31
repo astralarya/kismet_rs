@@ -10,7 +10,7 @@ use crate::{
     types::Node,
 };
 
-use super::{literal, token_tag, token_tag_id, Input, KResult, Token};
+use super::{expr, literal, token_tag, token_tag_id, Input, KResult, Token};
 
 pub fn target<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
     map(target_kind(&target), |x| Node::new(x.span, Target(*x.data)))(i)
@@ -18,8 +18,14 @@ pub fn target<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
 
 pub fn target_expr<'input>(i: Input<'input>) -> KResult<'input, Node<TargetExpr>> {
     let (i, tar) = target_kind(&target_expr)(i)?;
-    let (i, val) = target_kind(&target_expr)(i)?;
-    todo!()
+    let (i, val) = opt(preceded(token_tag(Token::ASSIGN), expr))(i)?;
+    match val {
+        Some(val) => Ok((
+            i,
+            Node::new(tar.span + val.span, TargetExpr::TargetExpr(tar, val)),
+        )),
+        None => Ok((i, Node::new(tar.span, TargetExpr::Target(*tar.data)))),
+    }
 }
 
 pub fn target_match<'input>(i: Input<'input>) -> KResult<'input, Node<Match>> {
