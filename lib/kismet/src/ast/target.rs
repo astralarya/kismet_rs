@@ -70,15 +70,72 @@ impl From<TargetKind<Self>> for Target {
     }
 }
 
+impl From<TargetKind<Self>> for Match {
+    fn from(val: TargetKind<Self>) -> Self {
+        Self::Target(val)
+    }
+}
+
 impl From<TargetKind<Self>> for TargetExpr {
     fn from(val: TargetKind<Self>) -> Self {
         Self::Target(val)
     }
 }
 
-impl From<TargetKind<Self>> for Match {
-    fn from(val: TargetKind<Self>) -> Self {
-        Self::Target(val)
+impl From<Target> for TargetExpr {
+    fn from(val: Target) -> Self {
+        TargetExpr::Target(match val.0 {
+            TargetKind::Id(x) => TargetKind::Id(x),
+            TargetKind::TargetTuple(x) => {
+                let x = x
+                    .into_iter()
+                    .map(|x| Node::new(x.span, TargetListItem::<TargetExpr>::convert(*x.data)))
+                    .collect::<Vec<_>>();
+                TargetKind::TargetTuple(x)
+            }
+            TargetKind::TargetList(x) => {
+                let x = x
+                    .into_iter()
+                    .map(|x| Node::new(x.span, TargetListItem::<TargetExpr>::convert(*x.data)))
+                    .collect::<Vec<_>>();
+                TargetKind::TargetList(x)
+            }
+            TargetKind::TargetDict(x) => {
+                let x = x
+                    .into_iter()
+                    .map(|x| Node::new(x.span, TargetDictItem::<TargetExpr>::convert(*x.data)))
+                    .collect::<Vec<_>>();
+                TargetKind::TargetDict(x)
+            }
+        })
+    }
+}
+
+impl<T> TargetListItem<T> {
+    fn convert<U>(val: TargetListItem<U>) -> Self
+    where
+        T: From<U>,
+    {
+        match val {
+            TargetListItem::Spread(x) => Self::Spread(Node::new(x.span, T::from(*x.data))),
+            TargetListItem::Target(x) => Self::Target(T::from(x)),
+        }
+    }
+}
+
+impl<T> TargetDictItem<T> {
+    fn convert<U>(val: TargetDictItem<U>) -> Self
+    where
+        T: From<U>,
+    {
+        match val {
+            TargetDictItem::Pair { key, val } => Self::Pair {
+                key,
+                val: Node::new(val.span, T::from(*val.data)),
+            },
+            TargetDictItem::Spread(x) => Self::Spread(Node::new(x.span, T::from(*x.data))),
+            TargetDictItem::Target(x) => Self::Target(T::from(x)),
+        }
     }
 }
 

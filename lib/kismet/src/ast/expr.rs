@@ -1,15 +1,15 @@
 use std::fmt;
 
-use crate::types::Node;
+use crate::types::{CommaList, Node};
 
-use super::{ArgsDef, Atom, Branch, ExprBlock, Loop, Op, Primary, Target};
+use super::{Atom, Branch, ExprEnclosure, Loop, Op, Primary, Target, TargetExpr};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Assign(Node<Target>, Node<Expr>),
     Function {
-        args: Node<ArgsDef>,
-        block: Node<ExprBlock>,
+        args: Node<CommaList<TargetExpr>>,
+        block: Node<ExprEnclosure>,
     },
     Branch(Branch),
     Loop(Loop),

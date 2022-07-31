@@ -6,8 +6,14 @@ use nom::{
     Err,
 };
 
-use crate::ast::{Branch, Expr, ExprEnclosure, Loop, LoopKind, MatchArm, MatchBlock, Target};
-use crate::types::{Node, ONode, Span};
+use crate::{
+    ast::TargetExpr,
+    types::{Node, ONode, Span},
+};
+use crate::{
+    ast::{Branch, Expr, ExprEnclosure, Loop, LoopKind, MatchArm, Target},
+    types::CommaList,
+};
 
 use super::{
     or_test, target, target_match, token_tag, token_tag_id, ErrorKind, Input, KResult, Token,
@@ -64,12 +70,12 @@ pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 }
 
 pub fn assignment_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    let (i, lhs) = conditional_expr(i)?;
+    let (i, lhs) = branch_expr(i)?;
     let (i, op) = opt(token_tag(Token::ASSIGNE))(i)?;
     match op {
         Some(op) => match Node::<Target>::try_from(lhs) {
             Ok(lhs) => {
-                let (i, rhs) = conditional_expr(i)?;
+                let (i, rhs) = branch_expr(i)?;
                 Ok((i, Node::new(lhs.span + rhs.span, Expr::Assign(lhs, rhs))))
             }
             Err(_) => Err(Err::Failure(ONode::new(op.span, ErrorKind::Grammar))),
@@ -78,7 +84,7 @@ pub fn assignment_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> 
     }
 }
 
-pub fn conditional_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn branch_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     alt((
         if_expr,
         match_expr,
@@ -143,7 +149,7 @@ pub fn match_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
                     tar.span + val.span,
                     MatchArm {
                         tar,
-                        block: Node::new(val.span, MatchBlock(val.data.0)),
+                        block: Node::new(val.span, ExprEnclosure(val.data.0)),
                     },
                 ));
                 i
@@ -154,7 +160,7 @@ pub fn match_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
                     tar.span + val.span,
                     MatchArm {
                         tar,
-                        block: Node::new(val.span, MatchBlock(vec![val])),
+                        block: Node::new(val.span, ExprEnclosure(vec![val])),
                     },
                 ));
                 let (i, sep) = opt(token_tag(Token::COMMA))(i)?;
@@ -187,7 +193,7 @@ pub fn match_arm<'input>(i: Input<'input>) -> KResult<'input, Node<MatchArm>> {
             tar.span + val.span,
             MatchArm {
                 tar,
-                block: Node::new(val.span, MatchBlock(val.data.0)),
+                block: Node::new(val.span, ExprEnclosure(val.data.0)),
             },
         ),
     ))
@@ -247,5 +253,26 @@ pub fn loop_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
 }
 
 pub fn lambda_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    or_test(i)
+    let (i, lhs) = or_test(i)?;
+    let lhs_span = lhs.span;
+    let (i, op) = opt(token_tag(Token::ARROW))(i)?;
+    let tar = match op {
+        Some(_) => Node::<Target>::try_from(lhs)
+            .map_err(|_| Err::Failure(ONode::new(lhs_span, ErrorKind::Grammar)))?,
+        None => return Ok((i, lhs)),
+    };
+    let (i, block) = expr_enclosure(i)?;
+    Ok((
+        i,
+        Node::new(
+            lhs_span + block.span,
+            Expr::Function {
+                args: Node::new(
+                    tar.span,
+                    CommaList(vec![Node::new(tar.span, TargetExpr::from(*tar.data))]),
+                ),
+                block,
+            },
+        ),
+    ))
 }

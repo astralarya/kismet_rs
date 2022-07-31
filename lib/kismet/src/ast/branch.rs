@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::types::Node;
 
-use super::{Expr, ExprEnclosure, Match, MatchBlock, Target};
+use super::{Expr, ExprEnclosure, Match, Target};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Branch {
@@ -42,7 +42,7 @@ pub enum LoopKind {
 #[derive(Clone, Debug, PartialEq)]
 pub struct MatchArm {
     pub tar: Node<Match>,
-    pub block: Node<MatchBlock>,
+    pub block: Node<ExprEnclosure>,
 }
 
 impl fmt::Display for Branch {
