@@ -16,12 +16,12 @@ pub fn assert_stmt(node: Node<Expr>, input: &str) {
 
 #[allow(dead_code)]
 pub fn new_arith<'input>(lhs: Node<Expr>, op: Node<OpArith>, rhs: Node<Expr>) -> Node<Expr> {
-    Node::new(lhs.span + rhs.span, Expr::Arith(lhs, op, rhs))
+    Node::new(lhs.span + rhs.span, Expr::Op(Op::Arith(lhs, op, rhs)))
 }
 
 #[allow(dead_code)]
 pub fn new_unary<'input>(op: Node<OpArith>, val: Node<Expr>) -> Node<Expr> {
-    Node::new(op.span + val.span, Expr::Unary(op, val))
+    Node::new(op.span + val.span, Expr::Op(Op::Unary(op, val)))
 }
 
 #[allow(dead_code)]
