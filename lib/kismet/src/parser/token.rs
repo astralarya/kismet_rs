@@ -6,7 +6,7 @@ use syn::{parse_str, LitFloat, LitInt, LitStr};
 
 use crate::types::{Float, Integer, Node, ONode};
 
-use super::{ErrorKind, Input, KResult};
+use super::{Error, ErrorKind, Input, KResult};
 
 pub struct TokenIterator<'a> {
     iter: SpannedIter<'a, Token>,
@@ -34,22 +34,27 @@ impl Iterator for TokenIterator<'_> {
 pub fn token<'input>(i: Input<'input>) -> KResult<'input, &Node<Token>> {
     match i.get(0) {
         Some(x) => match *x.data {
-            Token::ERROR => Err(Err::Error(ONode::new(x.span, ErrorKind::Lex))),
+            Token::ERROR => Err(Err::Error(ONode::new(x.span, Error::Error(ErrorKind::Lex)))),
             _ => Ok((&i[1..], x)),
         },
-        None => Err(Err::Error(ONode::new(None, ErrorKind::Eof))),
+        None => Err(Err::Error(ONode::new(None, Error::Error(ErrorKind::Eof)))),
     }
 }
 
-pub fn token_if<'input, P>(predicate: P) -> impl Fn(Input<'input>) -> KResult<'input, &Node<Token>>
+pub fn token_if<'input, P>(
+    predicate: P,
+) -> impl Fn(Input<'input>) -> KResult<'input, &'input Node<Token>>
 where
-    P: Fn(&Node<Token>) -> bool,
+    P: Fn(&'input Node<Token>) -> bool,
 {
     move |input| {
         let (tail, head) = token(input)?;
         match predicate(head) {
             true => Ok((tail, head)),
-            false => Err(Err::Error(ONode::new(head.span, ErrorKind::Predicate))),
+            false => Err(Err::Error(ONode::new(
+                head.span,
+                Error::Error(ErrorKind::Predicate),
+            ))),
         }
     }
 }
@@ -58,29 +63,40 @@ pub fn token_tag_id<'input>(input: Input<'input>) -> KResult<'input, Node<String
     let (tail, head) = token(input)?;
     match &*head.data {
         Token::Id(val) => Ok((tail, Node::new(head.span, val.clone()))),
-        _ => Err(Err::Error(ONode::new(head.span, ErrorKind::Predicate))),
+        _ => Err(Err::Error(ONode::new(
+            head.span,
+            Error::Error(ErrorKind::Predicate),
+        ))),
     }
 }
 
-pub fn token_tag<'input>(tag: Token) -> impl Fn(Input<'input>) -> KResult<'input, &Node<Token>> {
+pub fn token_tag<'input>(
+    tag: Token,
+) -> impl Fn(Input<'input>) -> KResult<'input, &'input Node<Token>> {
     move |input| {
         let (tail, head) = token(input)?;
         match *head.data == tag {
             true => Ok((tail, head)),
-            false => Err(Err::Error(ONode::new(head.span, ErrorKind::Predicate))),
+            false => Err(Err::Error(ONode::new(
+                head.span,
+                Error::Error(ErrorKind::Predicate),
+            ))),
         }
     }
 }
 
 pub fn token_action<'input, T, Q>(action: Q) -> impl Fn(Input<'input>) -> KResult<'input, T>
 where
-    Q: Fn(&Node<Token>) -> Option<T>,
+    Q: Fn(&'input Node<Token>) -> Option<T>,
 {
     move |input| {
         let (tail, head) = token(input)?;
         match action(head) {
             Some(t) => Ok((tail, t)),
-            None => Err(Err::Error(ONode::new(head.span, ErrorKind::Predicate))),
+            None => Err(Err::Error(ONode::new(
+                head.span,
+                Error::Error(ErrorKind::Predicate),
+            ))),
         }
     }
 }

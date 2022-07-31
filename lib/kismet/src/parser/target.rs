@@ -38,7 +38,7 @@ pub fn target_match<'input>(i: Input<'input>) -> KResult<'input, Node<Match>> {
 }
 
 pub fn target_kind<'input, T>(
-    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+    target_atom: &'static impl Fn(Input<'input>) -> KResult<'input, Node<T>>,
 ) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetKind<T>>>
 where
     T: From<TargetKind<T>>,
@@ -60,7 +60,7 @@ pub fn target_id<'input, T>(i: Input<'input>) -> KResult<'input, Node<TargetKind
 }
 
 pub fn target_tuple<'input, T>(
-    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+    target_atom: &'static impl Fn(Input<'input>) -> KResult<'input, Node<T>>,
 ) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetKind<T>>> {
     move |i| {
         let (i, lhs) = token_tag(Token::LPAREN)(i)?;
@@ -75,7 +75,7 @@ pub fn target_tuple<'input, T>(
 }
 
 pub fn target_list<'input, T>(
-    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+    target_atom: &'static impl Fn(Input<'input>) -> KResult<'input, Node<T>>,
 ) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetKind<T>>> {
     move |i| {
         let (i, lhs) = token_tag(Token::LBRACKET)(i)?;
@@ -90,7 +90,7 @@ pub fn target_list<'input, T>(
 }
 
 pub fn target_dict<'input, T>(
-    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+    target_atom: &'static impl Fn(Input<'input>) -> KResult<'input, Node<T>>,
 ) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetKind<T>>>
 where
     T: From<TargetKind<T>>,
@@ -108,7 +108,7 @@ where
 }
 
 pub fn target_list_item<'input, T>(
-    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+    target_atom: &'static impl Fn(Input<'input>) -> KResult<'input, Node<T>>,
 ) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetListItem<T>>> {
     move |i| {
         let (i, op) = opt(token_tag(Token::SPREAD))(i)?;
@@ -124,7 +124,7 @@ pub fn target_list_item<'input, T>(
 }
 
 pub fn target_dict_item<'input, T>(
-    target_atom: &'input dyn Fn(Input<'input>) -> KResult<'input, Node<T>>,
+    target_atom: &'static impl Fn(Input<'input>) -> KResult<'input, Node<T>>,
 ) -> impl Fn(Input<'input>) -> KResult<'input, Node<TargetDictItem<T>>>
 where
     T: From<TargetKind<T>>,

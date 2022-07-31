@@ -7,7 +7,9 @@ use nom::{
 use crate::ast::{Expr, Op, OpArith, OpEqs, OpRange, Primary, Range};
 use crate::types::{Node, ONode, Span};
 
-use super::{numeric_literal, primary, token_action, token_tag, ErrorKind, Input, KResult, Token};
+use super::{
+    numeric_literal, primary, token_action, token_tag, Error, ErrorKind, Input, KResult, Token,
+};
 
 pub fn or_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = and_test(i)?;
@@ -123,7 +125,10 @@ pub fn r_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             Node::new(op.span.clone(), Expr::Op(Op::Range(Range::RangeFull))),
         )),
         (Some(lhs), None) => Ok((i, lhs)),
-        (None, None) => Err(Err::Error(ONode::new(Span::get0(i), ErrorKind::Grammar))),
+        (None, None) => Err(Err::Error(ONode::new(
+            Span::get0(i),
+            Error::Error(ErrorKind::Grammar),
+        ))),
     }
 }
 
@@ -203,7 +208,10 @@ pub fn coefficient<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             Node::new(lhs.span.clone(), Expr::Primary(Primary::Atom(*lhs.data))),
         )),
         (None, Some(rhs)) => Ok((i, rhs)),
-        (None, None) => Err(Err::Error(ONode::new(Span::get0(i), ErrorKind::Grammar))),
+        (None, None) => Err(Err::Error(ONode::new(
+            Span::get0(i),
+            Error::Error(ErrorKind::Grammar),
+        ))),
     }
 }
 

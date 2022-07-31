@@ -16,7 +16,7 @@ use crate::{
 };
 
 use super::{
-    or_test, target, target_match, token_tag, token_tag_id, ErrorKind, Input, KResult, Token,
+    or_test, target, target_match, token_tag, token_tag_id, Error, ErrorKind, Input, KResult, Token,
 };
 
 pub fn expr_block0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<Vec<Node<Expr>>>>> {
@@ -78,7 +78,10 @@ pub fn assignment_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> 
                 let (i, rhs) = branch_expr(i)?;
                 Ok((i, Node::new(lhs.span + rhs.span, Expr::Assign(lhs, rhs))))
             }
-            Err(_) => Err(Err::Failure(ONode::new(op.span, ErrorKind::Grammar))),
+            Err(_) => Err(Err::Failure(ONode::new(
+                op.span,
+                Error::Error(ErrorKind::Grammar),
+            ))),
         },
         None => Ok((i, lhs)),
     }
@@ -205,7 +208,7 @@ pub fn loop_node<'input>(i: Input<'input>) -> KResult<'input, Node<Loop>> {
     Ok((
         i,
         Node::new(
-            Span::get_option(&id) + val.span,
+            Span::option(&id) + val.span,
             Loop {
                 id,
                 data: *val.data,
@@ -258,7 +261,7 @@ pub fn lambda_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, op) = opt(token_tag(Token::ARROW))(i)?;
     let tar = match op {
         Some(_) => Node::<Target>::try_from(lhs)
-            .map_err(|_| Err::Failure(ONode::new(lhs_span, ErrorKind::Grammar)))?,
+            .map_err(|_| Err::Failure(ONode::new(lhs_span, Error::Error(ErrorKind::Grammar))))?,
         None => return Ok((i, lhs)),
     };
     let (i, block) = expr_enclosure(i)?;

@@ -50,12 +50,22 @@ impl Span {
         self.end - self.start
     }
 
-    pub fn get_option<'input, T>(val: &'input Option<T>) -> Option<Span>
+    pub fn option<'input, T>(val: &'input Option<T>) -> Option<Span>
     where
         Span: From<&'input T>,
     {
         match val {
-            Some(val) => Some(Span::from(&val)),
+            Some(val) => Some(Span::from(val)),
+            None => None,
+        }
+    }
+
+    pub fn option_ref<'input, T>(val: &'input Option<&'input T>) -> Option<Span>
+    where
+        Span: From<&'input T>,
+    {
+        match val {
+            Some(val) => Some(Span::from(val)),
             None => None,
         }
     }

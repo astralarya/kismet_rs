@@ -26,16 +26,15 @@ pub use target::*;
 pub use token::*;
 
 pub type Input<'a> = &'a [Node<Token>];
-pub type Error = ONode<ErrorKind>;
-pub type KResult<'a, O> = IResult<Input<'a>, O, Error>;
+pub type KResult<'a, O> = IResult<Input<'a>, O, ONode<Error<'a>>>;
 
 pub type ParseNode = Node<ExprTop>;
 
-pub fn parse<'a>(input: &'a str) -> Result<ParseNode, Error> {
+pub fn parse<'a>(input: &'a str) -> Result<ParseNode, ONode<ErrorKind>> {
     run_parser(start, input)
 }
 
-pub fn run_parser<'a, P>(parser: P, i: &'a str) -> Result<ParseNode, Error>
+pub fn run_parser<'a, P>(parser: P, i: &'a str) -> Result<ParseNode, ONode<ErrorKind>>
 where
     P: Fn(Input<'_>) -> KResult<'_, ParseNode>,
 {
@@ -43,7 +42,7 @@ where
     let i = TokenIterator::new(i).collect::<Vec<_>>();
     let x = match parser(&i) {
         Ok((_, data)) => Ok(data),
-        Err(Err::Error(e)) | Err(Err::Failure(e)) => Err(e),
+        Err(Err::Error(e)) | Err(Err::Failure(e)) => Err(ONode::<ErrorKind>::convert_from(e)),
         Err(Err::Incomplete(e)) => Err(ONode::new(
             Span::new(span.end..span.end),
             ErrorKind::Incomplete(e),

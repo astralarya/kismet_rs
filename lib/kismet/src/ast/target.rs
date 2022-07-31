@@ -189,6 +189,23 @@ impl TryFrom<Node<Expr>> for Node<Target> {
     }
 }
 
+impl TryFrom<Node<Expr>> for Node<TargetKind<TargetExpr>> {
+    type Error = ();
+
+    fn try_from(val: Node<Expr>) -> Result<Self, Self::Error> {
+        match Node::<Target>::try_from(val) {
+            Ok(x) => {
+                let x = Node::<TargetExpr>::convert_from(x);
+                match *x.data {
+                    TargetExpr::Target(y) => Ok(Node::new(x.span, y)),
+                    _ => Err(()),
+                }
+            }
+            Err(_) => Err(()),
+        }
+    }
+}
+
 impl TryFrom<Node<Atom>> for Node<Target> {
     type Error = ();
 
@@ -277,6 +294,34 @@ impl TryFrom<Node<Atom>> for Node<Target> {
                 }
                 Ok(Node::new(val.span, Target(TargetKind::TargetDict(y))))
             }
+            _ => Err(()),
+        }
+    }
+}
+
+impl TryFrom<Node<DictItem>> for Node<TargetDictItem<Target>> {
+    type Error = ();
+
+    fn try_from(x: Node<DictItem>) -> Result<Self, Self::Error> {
+        match *x.data {
+            DictItem::Shorthand(y) => Ok(Node::new(
+                x.span,
+                TargetDictItem::Target(Target(TargetKind::Id(y))),
+            )),
+            DictItem::Spread(x) => match Node::<Target>::try_from(x) {
+                Ok(x) => Ok(Node::new(x.span, TargetDictItem::Spread(x))),
+                Err(_) => Err(()),
+            },
+            DictItem::KeyVal { key, val } => match Node::<Target>::try_from(val) {
+                Ok(val) => Ok(Node::new(
+                    x.span,
+                    TargetDictItem::Pair {
+                        key: key.clone(),
+                        val,
+                    },
+                )),
+                Err(_) => Err(()),
+            },
             _ => Err(()),
         }
     }

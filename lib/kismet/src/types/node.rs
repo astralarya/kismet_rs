@@ -27,6 +27,12 @@ impl<T> From<&Node<T>> for Span {
     }
 }
 
+impl<T> From<Node<T>> for Span {
+    fn from(item: Node<T>) -> Self {
+        item.span
+    }
+}
+
 impl<N, T> BaseNode<N, T> {
     pub fn new<S>(range: S, val: T) -> BaseNode<N, T>
     where
@@ -36,6 +42,17 @@ impl<N, T> BaseNode<N, T> {
             span: N::from(range),
             data: Box::new(val),
         }
+    }
+
+    pub fn convert<U>(fun: impl Fn(U) -> T, val: BaseNode<N, U>) -> Self {
+        BaseNode::new(val.span, fun(*val.data))
+    }
+
+    pub fn convert_from<U>(val: BaseNode<N, U>) -> Self
+    where
+        T: From<U>,
+    {
+        BaseNode::new(val.span, T::from(*val.data))
     }
 }
 
