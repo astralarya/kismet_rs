@@ -6,7 +6,7 @@ use nom::{
 };
 
 use crate::{
-    ast::{Match, Target, TargetDictItem, TargetKind, TargetListItem},
+    ast::{Match, Target, TargetDictItem, TargetExpr, TargetKind, TargetListItem},
     types::Node,
 };
 
@@ -14,6 +14,12 @@ use super::{literal, token_tag, token_tag_id, Input, KResult, Token};
 
 pub fn target<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
     map(target_kind(&target), |x| Node::new(x.span, Target(*x.data)))(i)
+}
+
+pub fn target_expr<'input>(i: Input<'input>) -> KResult<'input, Node<TargetExpr>> {
+    let (i, tar) = target_kind(&target_expr)(i)?;
+    let (i, val) = target_kind(&target_expr)(i)?;
+    todo!()
 }
 
 pub fn target_match<'input>(i: Input<'input>) -> KResult<'input, Node<Match>> {
