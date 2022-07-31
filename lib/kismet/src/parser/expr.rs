@@ -195,7 +195,7 @@ pub fn match_arm<'input>(i: Input<'input>) -> KResult<'input, Node<MatchArm>> {
 
 pub fn loop_node<'input>(i: Input<'input>) -> KResult<'input, Node<Loop>> {
     let (i, id) = opt(loop_label)(i)?;
-    let (i, val) = alt((for_expr, loop_expr))(i)?;
+    let (i, val) = alt((for_expr, while_expr, loop_expr))(i)?;
     Ok((
         i,
         Node::new(
@@ -227,8 +227,14 @@ pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
     ))
 }
 
-pub fn while_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    lambda_expr(i)
+pub fn while_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
+    let (i, lhs) = token_tag(Token::WHILE)(i)?;
+    let (i, val) = or_test(i)?;
+    let (i, block) = expr_enclosure(i)?;
+    Ok((
+        i,
+        Node::new(lhs.span + block.span, LoopKind::While { val, block }),
+    ))
 }
 
 pub fn loop_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
