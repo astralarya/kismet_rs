@@ -15,19 +15,26 @@ pub enum Branch {
         val: Node<Expr>,
         arms: Vec<Node<MatchArm>>,
     },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Loop {
+    pub id: Option<Node<String>>,
+    pub data: LoopKind,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum LoopKind {
     For {
-        label: Label,
         tar: Node<Target>,
         val: Node<Expr>,
         block: Node<ExprEnclosure>,
     },
     While {
-        label: Label,
         val: Node<Expr>,
         block: Node<ExprEnclosure>,
     },
     Loop {
-        label: Label,
         block: Node<ExprEnclosure>,
     },
 }
@@ -37,9 +44,6 @@ pub struct MatchArm {
     pub tar: Node<Match>,
     pub block: Node<MatchBlock>,
 }
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct Label(Option<Node<String>>);
 
 impl fmt::Display for Branch {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -53,27 +57,29 @@ impl fmt::Display for Branch {
                 _ => write!(f, "if {} {} else {}", val, t_block, f_block),
             },
             Self::Match { val, arms } => write!(f, "match {} {{{}}}", val, Node::join(arms, " ")),
-            Self::For {
-                label,
-                tar,
-                val,
-                block,
-            } => write!(f, "{}for {} in {} {}", label, tar, val, block),
-            Self::While { label, val, block } => {
-                write!(f, "{}while {} {}", label, val, block)
+        }
+    }
+}
+
+impl fmt::Display for LoopKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::For { tar, val, block } => write!(f, "for {} in {} {}", tar, val, block),
+            Self::While { val, block } => {
+                write!(f, "while {} {}", val, block)
             }
-            Self::Loop { label, block } => {
-                write!(f, "{}loop {}", label, block)
+            Self::Loop { block } => {
+                write!(f, "loop {}", block)
             }
         }
     }
 }
 
-impl fmt::Display for Label {
+impl fmt::Display for Loop {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.0 {
-            Some(x) => write!(f, "'{} : ", x),
-            None => write!(f, ""),
+        match &self.id {
+            Some(id) => write!(f, ":{}: {}", id, self.data),
+            None => write!(f, "{}", self.data),
         }
     }
 }

@@ -50,6 +50,16 @@ impl Span {
         self.end - self.start
     }
 
+    pub fn get_option<'input, T>(val: &'input Option<T>) -> Option<Span>
+    where
+        Span: From<&'input T>,
+    {
+        match val {
+            Some(val) => Some(Span::from(&val)),
+            None => None,
+        }
+    }
+
     pub fn add_option(lhs: Option<Span>, rhs: Option<Span>) -> Option<Span> {
         match (lhs, rhs) {
             (Some(l), Some(r)) => Some(l + r),

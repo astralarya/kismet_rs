@@ -3,8 +3,8 @@ use std::fmt;
 use crate::{ast::TargetKind, types::Node};
 
 use super::{
-    ArgsDef, Atom, Branch, DictItem, ExprBlock, ListItem, OpArith, OpEqs, Primary, Range, Target,
-    TargetDictItem, TargetListItem,
+    ArgsDef, Atom, Branch, DictItem, ExprBlock, ListItem, Loop, OpArith, OpEqs, Primary, Range,
+    Target, TargetDictItem, TargetListItem,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -15,6 +15,7 @@ pub enum Expr {
         block: Node<ExprBlock>,
     },
     Branch(Branch),
+    Loop(Loop),
     And(Node<Expr>, Node<Expr>),
     Or(Node<Expr>, Node<Expr>),
     Not(Node<Expr>),
@@ -39,6 +40,7 @@ impl fmt::Display for Expr {
         match self {
             Self::Assign(lhs, rhs) => write!(f, "{} := {}", lhs, rhs),
             Self::Branch(val) => write!(f, "{}", val),
+            Self::Loop(val) => write!(f, "{}", val),
             Self::Function { args, block } => {
                 write!(f, "({}) => {}", args, block)
             }

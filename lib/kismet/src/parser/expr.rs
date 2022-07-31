@@ -1,15 +1,17 @@
 use nom::{
     branch::alt,
-    combinator::opt,
+    combinator::{map, opt},
     multi::{many0, many1, separated_list0},
     sequence::preceded,
     Err,
 };
 
-use crate::ast::{Branch, Expr, ExprEnclosure, MatchArm, MatchBlock, Target};
+use crate::ast::{Branch, Expr, ExprEnclosure, Loop, LoopKind, MatchArm, MatchBlock, Target};
 use crate::types::{Node, ONode, Span};
 
-use super::{or_test, target_match, token_tag, ErrorKind, Input, KResult, Token};
+use super::{
+    or_test, target, target_match, token_tag, token_tag_id, ErrorKind, Input, KResult, Token,
+};
 
 pub fn expr_block0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<Vec<Node<Expr>>>>> {
     let i_span = match Span::get0(i) {
@@ -80,9 +82,7 @@ pub fn conditional_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>>
     alt((
         if_expr,
         match_expr,
-        for_expr,
-        while_expr,
-        loop_expr,
+        map(loop_node, |x| Node::new(x.span, Expr::Loop(*x.data))),
         lambda_expr,
     ))(i)
 }
@@ -193,8 +193,38 @@ pub fn match_arm<'input>(i: Input<'input>) -> KResult<'input, Node<MatchArm>> {
     ))
 }
 
-pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    lambda_expr(i)
+pub fn loop_node<'input>(i: Input<'input>) -> KResult<'input, Node<Loop>> {
+    let (i, id) = opt(loop_label)(i)?;
+    let (i, val) = for_expr(i)?;
+    Ok((
+        i,
+        Node::new(
+            Span::get_option(&id) + val.span,
+            Loop {
+                id,
+                data: *val.data,
+            },
+        ),
+    ))
+}
+
+pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
+    let (i, lhs) = token_tag(Token::FOR)(i)?;
+    let (i, tar) = target(i)?;
+    let (i, _) = token_tag(Token::IN)(i)?;
+    let (i, val) = or_test(i)?;
+    let (i, block) = expr_enclosure(i)?;
+    Ok((
+        i,
+        Node::new(lhs.span + block.span, LoopKind::For { tar, val, block }),
+    ))
+}
+
+pub fn loop_label<'input>(i: Input<'input>) -> KResult<'input, Node<String>> {
+    let (i, _) = token_tag(Token::COLON)(i)?;
+    let (i, val) = token_tag_id(i)?;
+    let (i, _) = token_tag(Token::COLON)(i)?;
+    Ok((i, val))
 }
 
 pub fn while_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
