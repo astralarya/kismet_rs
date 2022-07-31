@@ -89,7 +89,7 @@ pub fn conditional_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>>
 
 pub fn if_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = token_tag(Token::IF)(i)?;
-    let (i, val) = or_test(i)?;
+    let (i, val) = expr(i)?;
     let (i, t_block) = expr_enclosure(i)?;
     let (i, f_block) = opt(preceded(token_tag(Token::ELSE), expr_enclosure))(i)?;
     match f_block {
@@ -123,7 +123,7 @@ pub fn if_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 
 pub fn match_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     let (i, lhs) = token_tag(Token::MATCH)(i)?;
-    let (i, val) = or_test(i)?;
+    let (i, val) = expr(i)?;
     let (i, _) = token_tag(Token::LBRACE)(i)?;
 
     let mut arms: Vec<Node<MatchArm>> = vec![];
@@ -219,7 +219,7 @@ pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
     let (i, lhs) = token_tag(Token::FOR)(i)?;
     let (i, tar) = target(i)?;
     let (i, _) = token_tag(Token::IN)(i)?;
-    let (i, val) = or_test(i)?;
+    let (i, val) = expr(i)?;
     let (i, block) = expr_enclosure(i)?;
     Ok((
         i,
@@ -229,7 +229,7 @@ pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
 
 pub fn while_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
     let (i, lhs) = token_tag(Token::WHILE)(i)?;
-    let (i, val) = or_test(i)?;
+    let (i, val) = expr(i)?;
     let (i, block) = expr_enclosure(i)?;
     Ok((
         i,
