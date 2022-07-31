@@ -208,6 +208,13 @@ pub fn loop_node<'input>(i: Input<'input>) -> KResult<'input, Node<Loop>> {
     ))
 }
 
+pub fn loop_label<'input>(i: Input<'input>) -> KResult<'input, Node<String>> {
+    let (i, _) = token_tag(Token::COLON)(i)?;
+    let (i, val) = token_tag_id(i)?;
+    let (i, _) = token_tag(Token::COLON)(i)?;
+    Ok((i, val))
+}
+
 pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
     let (i, lhs) = token_tag(Token::FOR)(i)?;
     let (i, tar) = target(i)?;
@@ -218,13 +225,6 @@ pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
         i,
         Node::new(lhs.span + block.span, LoopKind::For { tar, val, block }),
     ))
-}
-
-pub fn loop_label<'input>(i: Input<'input>) -> KResult<'input, Node<String>> {
-    let (i, _) = token_tag(Token::COLON)(i)?;
-    let (i, val) = token_tag_id(i)?;
-    let (i, _) = token_tag(Token::COLON)(i)?;
-    Ok((i, val))
 }
 
 pub fn while_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
