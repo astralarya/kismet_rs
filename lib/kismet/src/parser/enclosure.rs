@@ -8,8 +8,8 @@ use nom::{
 
 use crate::{
     ast::{
-        Atom, CompIter, DictItem, DictItemComp, ListItem, TargetDictItem, TargetExpr, TargetKind,
-        TargetListItem,
+        Atom, CompIter, DictItem, DictItemComp, Id, ListItem, TargetDictItem, TargetExpr,
+        TargetKind, TargetListItem,
     },
     types::{Node, ONode, Span},
 };
@@ -325,7 +325,7 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
     if let (Some(lhs), None) = (&lhs, &ass) {
         return Ok((i, Node::new(lhs.span + key.span, DictItem::Spread(key))));
     }
-    match Node::<String>::try_from(&key) {
+    match Node::<Id>::try_from(&key) {
         Ok(key) => match ass {
             Some(ass) => {
                 let span = Span::option_ref(&lhs) + key.span + ass.span;
@@ -342,15 +342,18 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
                                 )),
                                 (Some(_), None) => TargetDictItem::Spread(Node::new(
                                     span,
-                                    TargetExpr::TargetExpr(Node::convert(TargetKind::Id, key), ass),
+                                    TargetExpr::TargetExpr(
+                                        Node::<TargetKind<TargetExpr>>::convert_from(key),
+                                        ass,
+                                    ),
                                 )),
-                                (None, Some(val)) => match Node::<String>::try_from(&val) {
-                                    Ok(val) => TargetDictItem::Pair {
+                                (None, Some(val)) => match Node::<Id>::try_from(&val) {
+                                    Ok(val) => TargetDictItem::KeyVal {
                                         key,
                                         val: Node::new(
                                             span,
                                             TargetExpr::TargetExpr(
-                                                Node::convert(TargetKind::Id, val),
+                                                Node::<TargetKind<TargetExpr>>::convert_from(val),
                                                 ass,
                                             ),
                                         ),

@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::types::Node;
 
-use super::{Atom, DictItem, Expr, ListItem, Primary};
+use super::{Atom, DictItem, Expr, Id, ListItem, Primary};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Target(pub TargetKind<Target>);
@@ -21,7 +21,7 @@ pub enum Match {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TargetKind<T> {
-    Id(String),
+    Id(Id),
     TargetTuple(Vec<Node<TargetListItem<T>>>),
     TargetList(Vec<Node<TargetListItem<T>>>),
     TargetDict(Vec<Node<TargetDictItem<T>>>),
@@ -35,7 +35,7 @@ pub enum TargetListItem<T> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TargetDictItem<T> {
-    Pair { key: Node<String>, val: Node<T> },
+    KeyVal { key: Node<Id>, val: Node<T> },
     Spread(Node<T>),
     Target(T),
 }
@@ -73,6 +73,12 @@ impl From<TargetKind<Self>> for Target {
 impl From<TargetKind<Self>> for Match {
     fn from(val: TargetKind<Self>) -> Self {
         Self::Target(val)
+    }
+}
+
+impl<T> From<Id> for TargetKind<T> {
+    fn from(val: Id) -> Self {
+        Self::Id(val)
     }
 }
 
@@ -129,7 +135,7 @@ impl<T> TargetDictItem<T> {
         T: From<U>,
     {
         match val {
-            TargetDictItem::Pair { key, val } => Self::Pair {
+            TargetDictItem::KeyVal { key, val } => Self::KeyVal {
                 key,
                 val: Node::new(val.span, T::from(*val.data)),
             },
@@ -173,7 +179,7 @@ where
         match self {
             Self::Target(val) => write!(f, "{}", val),
             Self::Spread(val) => write!(f, "...{}", val),
-            Self::Pair { key, val } => write!(f, "{}: {}", key, val),
+            Self::KeyVal { key, val } => write!(f, "{}: {}", key, val),
         }
     }
 }
@@ -227,7 +233,7 @@ impl TryFrom<Node<Atom>> for Node<Target> {
         }
 
         match *val.data {
-            Atom::Id(x) => Ok(Node::new(val.span, Target(TargetKind::Id(x.clone())))),
+            Atom::Id(x) => Ok(Node::new(val.span, Target(TargetKind::Id(Id(x.clone()))))),
             Atom::Paren(x) => {
                 let x = list_item(x)?;
                 Ok(Node::new(
@@ -276,10 +282,7 @@ impl TryFrom<Node<Atom>> for Node<Target> {
                                     match Node::<Target>::try_from(val) {
                                         Ok(val) => Some(Node::new(
                                             x.span,
-                                            TargetDictItem::Pair {
-                                                key: key.clone(),
-                                                val,
-                                            },
+                                            TargetDictItem::KeyVal { key, val },
                                         )),
                                         Err(_) => None,
                                     }
@@ -308,17 +311,17 @@ where
     fn try_from(x: &Node<ListItem>) -> Result<Self, Self::Error> {
         let span = x.span;
         match &*x.data {
-            ListItem::Expr(x) => match Node::<String>::try_from(&Node::new(span, x)) {
+            ListItem::Expr(x) => match Node::<Id>::try_from(&Node::new(span, x)) {
                 Ok(x) => Ok(Node::new(
                     span,
                     TargetListItem::Target(T::from(TargetKind::Id(*x.data))),
                 )),
                 Err(_) => Err(()),
             },
-            ListItem::Spread(x) => match Node::<String>::try_from(x) {
+            ListItem::Spread(x) => match Node::<Id>::try_from(x) {
                 Ok(x) => Ok(Node::new(
                     span,
-                    TargetListItem::Spread(Node::new(x.span, T::from(TargetKind::Id(*x.data)))),
+                    TargetListItem::Spread(Node::convert(|x| T::from(TargetKind::Id(x)), x)),
                 )),
                 Err(_) => Err(()),
             },
@@ -349,7 +352,7 @@ where
             DictItem::KeyVal { key, val } => match Node::<Target>::try_from(val) {
                 Ok(val) => Ok(Node::new(
                     x.span,
-                    TargetDictItem::Pair {
+                    TargetDictItem::KeyVal {
                         key: key.clone(),
                         val: Node::<T>::convert_from(val),
                     },

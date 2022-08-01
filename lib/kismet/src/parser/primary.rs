@@ -6,7 +6,7 @@ use nom::{
 };
 
 use crate::{
-    ast::{Args, Expr, Primary},
+    ast::{Args, Expr, Id, Primary},
     types::Node,
 };
 
@@ -51,7 +51,7 @@ pub fn primary_iter<'input>(
     }
 }
 
-pub fn attribute<'input>(i: Input<'input>) -> KResult<'input, Node<String>> {
+pub fn attribute<'input>(i: Input<'input>) -> KResult<'input, Node<Id>> {
     preceded(token_tag(Token::DOT), token_tag_id)(i)
 }
 

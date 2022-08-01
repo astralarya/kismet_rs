@@ -7,12 +7,12 @@ use nom::{
 };
 
 use crate::{
-    ast::TargetExpr,
-    types::{Node, ONode, Span},
-};
-use crate::{
     ast::{Branch, Expr, ExprEnclosure, Loop, LoopKind, MatchArm, Target},
     types::CommaList,
+};
+use crate::{
+    ast::{Id, TargetExpr},
+    types::{Node, ONode, Span},
 };
 
 use super::{
@@ -217,7 +217,7 @@ pub fn loop_node<'input>(i: Input<'input>) -> KResult<'input, Node<Loop>> {
     ))
 }
 
-pub fn loop_label<'input>(i: Input<'input>) -> KResult<'input, Node<String>> {
+pub fn loop_label<'input>(i: Input<'input>) -> KResult<'input, Node<Id>> {
     let (i, _) = token_tag(Token::COLON)(i)?;
     let (i, val) = token_tag_id(i)?;
     let (i, _) = token_tag(Token::COLON)(i)?;

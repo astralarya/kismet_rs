@@ -4,7 +4,10 @@ use logos::{Lexer, Logos, SpannedIter};
 use nom::Err;
 use syn::{parse_str, LitFloat, LitInt, LitStr};
 
-use crate::types::{Float, Integer, Node, ONode};
+use crate::{
+    ast::Id,
+    types::{Float, Integer, Node, ONode},
+};
 
 use super::{Error, ErrorKind, Input, KResult};
 
@@ -59,10 +62,10 @@ where
     }
 }
 
-pub fn token_tag_id<'input>(input: Input<'input>) -> KResult<'input, Node<String>> {
+pub fn token_tag_id<'input>(input: Input<'input>) -> KResult<'input, Node<Id>> {
     let (tail, head) = token(input)?;
     match &*head.data {
-        Token::Id(val) => Ok((tail, Node::new(head.span, val.clone()))),
+        Token::Id(val) => Ok((tail, Node::new(head.span, Id(val.clone())))),
         _ => Err(Err::Error(ONode::new(
             head.span,
             Error::Error(ErrorKind::Predicate),

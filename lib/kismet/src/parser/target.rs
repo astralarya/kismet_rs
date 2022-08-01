@@ -54,9 +54,7 @@ where
 }
 
 pub fn target_id<'input, T>(i: Input<'input>) -> KResult<'input, Node<TargetKind<T>>> {
-    map(token_tag_id, |x| {
-        Node::new(x.span, TargetKind::Id(x.data.to_string()))
-    })(i)
+    map(token_tag_id, |x| Node::new(x.span, TargetKind::Id(*x.data)))(i)
 }
 
 pub fn target_tuple<'input, T>(
@@ -146,7 +144,7 @@ where
         match val {
             Some(val) => Ok((
                 i,
-                Node::new(key.span + val.span, TargetDictItem::Pair { key, val }),
+                Node::new(key.span + val.span, TargetDictItem::KeyVal { key, val }),
             )),
             None => Ok((
                 i,

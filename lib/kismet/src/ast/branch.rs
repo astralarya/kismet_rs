@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::types::Node;
 
-use super::{Expr, ExprEnclosure, Match, Target};
+use super::{Expr, ExprEnclosure, Id, Match, Target};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Branch {
@@ -19,7 +19,7 @@ pub enum Branch {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Loop {
-    pub id: Option<Node<String>>,
+    pub id: Option<Node<Id>>,
     pub data: LoopKind,
 }
 

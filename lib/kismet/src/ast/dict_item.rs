@@ -1,13 +1,13 @@
 use std::fmt;
 
-use super::Expr;
+use super::{Expr, Id};
 use crate::types::Node;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum DictItem {
-    KeyVal { key: Node<String>, val: Node<Expr> },
+    KeyVal { key: Node<Id>, val: Node<Expr> },
     DynKeyVal { key: Node<Expr>, val: Node<Expr> },
-    Shorthand(String),
+    Shorthand(Id),
     Spread(Node<Expr>),
 }
 

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, ops::Deref};
 
 use crate::types::{Float, Integer, Node};
 
@@ -27,6 +27,23 @@ pub enum Atom {
     String(String),
     Float(Float),
     Integer(Integer),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Id(pub String);
+
+impl Deref for Id {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl fmt::Display for Id {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 impl fmt::Display for Atom {

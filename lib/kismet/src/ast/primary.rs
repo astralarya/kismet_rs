@@ -1,11 +1,11 @@
 use std::fmt;
 
-use super::{Args, Atom, Expr};
+use super::{Args, Atom, Expr, Id};
 use crate::types::Node;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Primary {
-    Attribute(Node<Primary>, Node<String>),
+    Attribute(Node<Primary>, Node<Id>),
     Subscription(Node<Primary>, Vec<Node<Expr>>),
     Call(Node<Primary>, Node<Args>),
     Atom(Atom),
