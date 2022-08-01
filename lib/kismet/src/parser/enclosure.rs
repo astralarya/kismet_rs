@@ -35,7 +35,7 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     };
 
     let vals = vec![];
-    let (i, (_, val)) = list_item_convert(TargetKind::TargetTuple, lhs.span, vals, list_item(i))?;
+    let (i, (_, val)) = tuple_item_convert(lhs.span, vals, list_item(i))?;
     let (i, rhs) = opt(close)(i)?;
     if let Some(rhs) = rhs {
         return Ok((i, Node::new(lhs.span + rhs.span, Atom::Paren(val))));
@@ -66,8 +66,7 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
             break (i, vals);
         }
 
-        let (i, (mut vals, val)) =
-            list_item_convert(TargetKind::TargetTuple, lhs.span, vals, opt(list_item)(i))?;
+        let (i, (mut vals, val)) = tuple_item_convert(lhs.span, vals, opt(list_item)(i))?;
         match val {
             Some(val) => vals.push(val),
             None => break (i, vals),
@@ -90,7 +89,7 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         return Ok((i, Node::new(lhs.span + rhs.span, Atom::ListDisplay(vec![]))));
     };
 
-    let (i, (_, val)) = list_item_convert(TargetKind::TargetList, lhs.span, vec![], list_item(i))?;
+    let (i, (_, val)) = list_item_convert(lhs.span, vec![], list_item(i))?;
 
     let (i, comp_val) = opt(comp_for)(i)?;
     if let Some(comp_val) = comp_val {
@@ -120,8 +119,7 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
             break (i, vals);
         }
 
-        let (i, (mut vals, val)) =
-            list_item_convert(TargetKind::TargetList, lhs.span, vals, opt(list_item)(i))?;
+        let (i, (mut vals, val)) = list_item_convert(lhs.span, vals, opt(list_item)(i))?;
         match val {
             Some(val) => vals.push(val),
             None => break (i, vals),
@@ -169,12 +167,66 @@ pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
     }
 }
 
-pub fn list_item_convert<'input, T>(
-    kind: impl Fn(Vec<Node<TargetListItem<TargetExpr>>>) -> TargetKind<TargetExpr>,
+pub fn tuple_item_convert<'input, T>(
     lhs_span: Span,
     vals: Vec<Node<ListItem>>,
     result: KResult<'input, T>,
 ) -> KResult<'input, (Vec<Node<ListItem>>, T)> {
+    let kind = TargetKind::TargetTuple;
+    let separator = token_tag(Token::COMMA);
+    let close = token_tag(Token::RPAREN);
+
+    match result {
+        Ok((i, val)) => Ok((i, (vals, val))),
+        Err(Err::Failure(val)) => {
+            let span = val.span;
+            match *val.data {
+                Error::Convert(i, ConvertKind::TargetListItemExpr(val)) => {
+                    let vals = vals
+                        .iter()
+                        .map(|x| Node::<TargetListItem<TargetExpr>>::try_from(x))
+                        .collect::<Result<Vec<_>, _>>();
+                    let mut vals = match vals {
+                        Ok(vals) => vals,
+                        Err(_) => {
+                            return Err(Err::Failure(ONode::new(
+                                span,
+                                Error::Error(ErrorKind::Grammar),
+                            )))
+                        }
+                    };
+                    vals.push(val);
+                    let (i, more) = opt(preceded(
+                        &separator,
+                        separated_list1(&separator, target_list_item(&target_expr)),
+                    ))(i)?;
+                    let (i, _) = opt(&separator)(i)?;
+                    if let Some(mut more) = more {
+                        vals.append(&mut more)
+                    };
+                    let (i, rhs) = close(i)?;
+
+                    return Err(Err::Failure(ONode::new(
+                        span,
+                        Error::Convert(
+                            i,
+                            ConvertKind::TargetKindExpr(Node::new(lhs_span + rhs.span, kind(vals))),
+                        ),
+                    )));
+                }
+                _ => return Err(Err::Failure(val)),
+            }
+        }
+        Err(e) => return Err(e),
+    }
+}
+
+pub fn list_item_convert<'input, T>(
+    lhs_span: Span,
+    vals: Vec<Node<ListItem>>,
+    result: KResult<'input, T>,
+) -> KResult<'input, (Vec<Node<ListItem>>, T)> {
+    let kind = TargetKind::TargetList;
     let separator = token_tag(Token::COMMA);
     let close = token_tag(Token::RBRACKET);
 
