@@ -299,17 +299,51 @@ impl TryFrom<Node<Atom>> for Node<Target> {
     }
 }
 
-impl TryFrom<Node<DictItem>> for Node<TargetDictItem<Target>> {
+impl<T> TryFrom<&Node<ListItem>> for Node<TargetListItem<T>>
+where
+    T: From<TargetKind<T>>,
+{
+    type Error = ();
+
+    fn try_from(x: &Node<ListItem>) -> Result<Self, Self::Error> {
+        let span = x.span;
+        match &*x.data {
+            ListItem::Expr(x) => match Node::<String>::try_from(&Node::new(span, x)) {
+                Ok(x) => Ok(Node::new(
+                    span,
+                    TargetListItem::Target(T::from(TargetKind::Id(*x.data))),
+                )),
+                Err(_) => Err(()),
+            },
+            ListItem::Spread(x) => match Node::<String>::try_from(x) {
+                Ok(x) => Ok(Node::new(
+                    span,
+                    TargetListItem::Spread(Node::new(x.span, T::from(TargetKind::Id(*x.data)))),
+                )),
+                Err(_) => Err(()),
+            },
+        }
+    }
+}
+
+impl<T> TryFrom<Node<DictItem>> for Node<TargetDictItem<T>>
+where
+    T: From<TargetKind<T>>,
+    T: From<Target>,
+{
     type Error = ();
 
     fn try_from(x: Node<DictItem>) -> Result<Self, Self::Error> {
         match *x.data {
             DictItem::Shorthand(y) => Ok(Node::new(
                 x.span,
-                TargetDictItem::Target(Target(TargetKind::Id(y))),
+                TargetDictItem::Target(T::from(TargetKind::Id(y))),
             )),
             DictItem::Spread(x) => match Node::<Target>::try_from(x) {
-                Ok(x) => Ok(Node::new(x.span, TargetDictItem::Spread(x))),
+                Ok(x) => Ok(Node::new(
+                    x.span,
+                    TargetDictItem::Spread(Node::<T>::convert_from(x)),
+                )),
                 Err(_) => Err(()),
             },
             DictItem::KeyVal { key, val } => match Node::<Target>::try_from(val) {
@@ -317,7 +351,7 @@ impl TryFrom<Node<DictItem>> for Node<TargetDictItem<Target>> {
                     x.span,
                     TargetDictItem::Pair {
                         key: key.clone(),
-                        val,
+                        val: Node::<T>::convert_from(val),
                     },
                 )),
                 Err(_) => Err(()),

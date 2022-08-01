@@ -42,3 +42,14 @@ impl TryFrom<&Node<Expr>> for Node<String> {
         }
     }
 }
+
+impl TryFrom<&Node<&Expr>> for Node<String> {
+    type Error = ();
+
+    fn try_from(val: &Node<&Expr>) -> Result<Self, Self::Error> {
+        match &*val.data {
+            Expr::Primary(Primary::Atom(Atom::Id(x))) => Ok(Node::new(val.span, x.clone())),
+            _ => Err(()),
+        }
+    }
+}
