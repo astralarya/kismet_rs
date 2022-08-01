@@ -395,29 +395,41 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
     }
 }
 
-pub fn dict_item_convert<'input>(
+pub fn dict_item_convert<'input, T>(
     lhs_span: Span,
-) -> impl Fn(Input<'input>) -> KResult<'input, Node<DictItem>> {
+    vals: Vec<Node<DictItem>>,
+    result: KResult<'input, T>,
+) -> KResult<'input, (Vec<Node<DictItem>>, T)> {
     let separator = token_tag(Token::COMMA);
-    let close = token_tag(Token::RBRACKET);
+    let close = token_tag(Token::RBRACE);
 
-    move |i| match dict_item(i) {
-        Ok((i, val)) => Ok((i, val)),
+    match result {
+        Ok((i, val)) => Ok((i, (vals, val))),
         Err(Err::Failure(val)) => {
             let span = val.span;
             match *val.data {
                 Error::Convert(i, ConvertKind::TargetDictItemExpr(val)) => {
-                    let (i, vals) = opt(preceded(
+                    let vals = vals
+                        .iter()
+                        .map(|x| Node::<TargetDictItem<TargetExpr>>::try_from(x))
+                        .collect::<Result<Vec<_>, _>>();
+                    let mut vals = match vals {
+                        Ok(vals) => vals,
+                        Err(_) => {
+                            return Err(Err::Failure(ONode::new(
+                                span,
+                                Error::Error(ErrorKind::Grammar),
+                            )))
+                        }
+                    };
+                    vals.push(val);
+                    let (i, more) = opt(preceded(
                         &separator,
                         separated_list1(&separator, target_dict_item(&target_expr)),
                     ))(i)?;
                     let (i, _) = opt(&separator)(i)?;
-                    let vals = match vals {
-                        Some(mut vals) => {
-                            vals.insert(0, val);
-                            vals
-                        }
-                        _ => vec![val],
+                    if let Some(mut more) = more {
+                        vals.append(&mut more)
                     };
                     let (i, rhs) = close(i)?;
 

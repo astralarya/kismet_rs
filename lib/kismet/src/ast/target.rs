@@ -329,27 +329,27 @@ where
     }
 }
 
-impl<T> TryFrom<Node<DictItem>> for Node<TargetDictItem<T>>
+impl<T> TryFrom<&Node<DictItem>> for Node<TargetDictItem<T>>
 where
     T: From<TargetKind<T>>,
     T: From<Target>,
 {
     type Error = ();
 
-    fn try_from(x: Node<DictItem>) -> Result<Self, Self::Error> {
-        match *x.data {
+    fn try_from(x: &Node<DictItem>) -> Result<Self, Self::Error> {
+        match &*x.data {
             DictItem::Shorthand(y) => Ok(Node::new(
                 x.span,
-                TargetDictItem::Target(T::from(TargetKind::Id(y))),
+                TargetDictItem::Target(T::from(TargetKind::Id(y.clone()))),
             )),
-            DictItem::Spread(x) => match Node::<Target>::try_from(x) {
+            DictItem::Spread(x) => match Node::<Target>::try_from(x.clone()) {
                 Ok(x) => Ok(Node::new(
                     x.span,
                     TargetDictItem::Spread(Node::<T>::convert_from(x)),
                 )),
                 Err(_) => Err(()),
             },
-            DictItem::KeyVal { key, val } => match Node::<Target>::try_from(val) {
+            DictItem::KeyVal { key, val } => match Node::<Target>::try_from(val.clone()) {
                 Ok(val) => Ok(Node::new(
                     x.span,
                     TargetDictItem::KeyVal {
