@@ -140,6 +140,21 @@ pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
             let span = val.span;
             match *val.data {
                 Error::Convert(i, ConvertKind::TargetKindExpr(val)) => {
+                    let (i, ass) = opt(token_tag(Token::ASSIGN))(i)?;
+                    if let Some(_) = ass {
+                        let (i, rhs) = expr(i)?;
+                        return Err(Err::Failure(ONode::new(
+                            span,
+                            Error::Convert(
+                                i,
+                                ConvertKind::TargetListItemExpr(Node::new(
+                                    val.span + rhs.span,
+                                    TargetListItem::Target(TargetExpr::TargetExpr(val, rhs)),
+                                )),
+                            ),
+                        )));
+                    }
+
                     return Err(Err::Failure(ONode::new(
                         span,
                         Error::Convert(
@@ -424,6 +439,21 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
             let span = val.span;
             match *val.data {
                 Error::Convert(i, ConvertKind::TargetKindExpr(val)) => {
+                    let (i, ass) = opt(token_tag(Token::ASSIGN))(i)?;
+                    if let Some(_) = ass {
+                        let (i, rhs) = expr(i)?;
+                        return Err(Err::Failure(ONode::new(
+                            span,
+                            Error::Convert(
+                                i,
+                                ConvertKind::TargetDictItemExpr(Node::new(
+                                    val.span + rhs.span,
+                                    TargetDictItem::Target(TargetExpr::TargetExpr(val, rhs)),
+                                )),
+                            ),
+                        )));
+                    }
+
                     return Err(Err::Failure(ONode::new(
                         span,
                         Error::Convert(
