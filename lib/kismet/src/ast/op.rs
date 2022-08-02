@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{
     exec::{Context, Exec, Primitive, Value},
-    types::{Integer, Node, UInteger},
+    types::{Float, Integer, Node, UInteger},
 };
 
 use super::{Atom, Expr, Range};
@@ -27,7 +27,7 @@ pub enum Op {
     Die(Node<Atom>),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum OpEqs {
     EQ,
     NE,
@@ -37,13 +37,13 @@ pub enum OpEqs {
     GE,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum OpRange {
     RANGE,
     RANGEI,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum OpArith {
     ADD,
     SUB,
@@ -137,6 +137,34 @@ impl Exec<Context> for Op {
     type Result = Value;
 
     fn exec(&self, c: Context) -> (Context, Self::Result) {
+        fn arith_float(lhs: Float, op: &OpArith, rhs: Float) -> Value {
+            Value::Primitive(Primitive::Float(match op {
+                OpArith::ADD => lhs + rhs,
+                OpArith::SUB => lhs - rhs,
+                OpArith::MUL => lhs * rhs,
+                OpArith::DIV => lhs / rhs,
+                OpArith::MOD => lhs % rhs,
+                OpArith::POW => lhs.powf(rhs),
+            }))
+        }
+
+        fn arith_int(lhs: Integer, op: &OpArith, rhs: Integer) -> Value {
+            match match op {
+                OpArith::ADD => lhs.checked_add(rhs),
+                OpArith::SUB => lhs.checked_sub(rhs),
+                OpArith::MUL => lhs.checked_mul(rhs),
+                OpArith::DIV => lhs.checked_div(rhs),
+                OpArith::MOD => lhs.checked_rem(rhs),
+                OpArith::POW => match UInteger::try_from(rhs) {
+                    Ok(rhs) => lhs.checked_pow(rhs),
+                    Err(_) => None,
+                },
+            } {
+                Some(x) => Value::Primitive(Primitive::Integer(x)),
+                None => arith_float(lhs as Float, op, rhs as Float),
+            }
+        }
+
         match self {
             Op::And(_, _) => todo!(),
             Op::Or(_, _) => todo!(),
@@ -157,50 +185,11 @@ impl Exec<Context> for Op {
                     (
                         Value::Primitive(Primitive::Integer(lhs)),
                         Value::Primitive(Primitive::Integer(rhs)),
-                    ) => match *op.data {
-                        OpArith::ADD => (
-                            c,
-                            match Integer::checked_add(lhs, rhs) {
-                                Some(x) => Value::Primitive(Primitive::Integer(x)),
-                                None => Value::Error,
-                            },
-                        ),
-                        OpArith::SUB => (
-                            c,
-                            match Integer::checked_sub(lhs, rhs) {
-                                Some(x) => Value::Primitive(Primitive::Integer(x)),
-                                None => Value::Error,
-                            },
-                        ),
-                        OpArith::MUL => (
-                            c,
-                            match Integer::checked_mul(lhs, rhs) {
-                                Some(x) => Value::Primitive(Primitive::Integer(x)),
-                                None => Value::Error,
-                            },
-                        ),
-                        OpArith::DIV => (
-                            c,
-                            match Integer::checked_div(lhs, rhs) {
-                                Some(x) => Value::Primitive(Primitive::Integer(x)),
-                                None => Value::Error,
-                            },
-                        ),
-                        OpArith::MOD => (c, Value::Primitive(Primitive::Integer(lhs % rhs))),
-                        OpArith::POW => {
-                            let rhs = match UInteger::try_from(rhs) {
-                                Ok(rhs) => rhs,
-                                Err(_) => return (c, Value::Error),
-                            };
-                            (
-                                c,
-                                match Integer::checked_pow(lhs, rhs) {
-                                    Some(x) => Value::Primitive(Primitive::Integer(x)),
-                                    None => Value::Error,
-                                },
-                            )
-                        }
-                    },
+                    ) => (c, arith_int(lhs, op, rhs)),
+                    (
+                        Value::Primitive(Primitive::Float(lhs)),
+                        Value::Primitive(Primitive::Float(rhs)),
+                    ) => (c, arith_float(lhs, op, rhs)),
                     _ => (c, Value::Error),
                 }
             }

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, ops::Deref};
 
 use crate::types::Span;
 
@@ -53,6 +53,14 @@ impl<S, T> BaseNode<S, T> {
         T: From<U>,
     {
         BaseNode::new(val.span, T::from(*val.data))
+    }
+}
+
+impl<S, T> Deref for BaseNode<S, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.data
     }
 }
 
