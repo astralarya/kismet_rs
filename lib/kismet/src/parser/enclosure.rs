@@ -35,7 +35,7 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     };
 
     let vals = vec![];
-    let (i, (_, val)) = tuple_item_convert(lhs.span, vals, list_item(i))?;
+    let (i, (_, val)) = target_tuple_result(lhs.span, vals, list_item(i))?;
     let (i, rhs) = opt(close)(i)?;
     if let Some(rhs) = rhs {
         return Ok((i, Node::new(lhs.span + rhs.span, Atom::Paren(val))));
@@ -66,7 +66,7 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
             break (i, vals);
         }
 
-        let (i, (mut vals, val)) = tuple_item_convert(lhs.span, vals, opt(list_item)(i))?;
+        let (i, (mut vals, val)) = target_tuple_result(lhs.span, vals, opt(list_item)(i))?;
         match val {
             Some(val) => vals.push(val),
             None => break (i, vals),
@@ -89,7 +89,7 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         return Ok((i, Node::new(lhs.span + rhs.span, Atom::ListDisplay(vec![]))));
     };
 
-    let (i, (_, val)) = list_item_convert(lhs.span, vec![], list_item(i))?;
+    let (i, (_, val)) = target_list_result(lhs.span, vec![], list_item(i))?;
 
     let (i, comp_val) = opt(comp_for)(i)?;
     if let Some(comp_val) = comp_val {
@@ -119,7 +119,7 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
             break (i, vals);
         }
 
-        let (i, (mut vals, val)) = list_item_convert(lhs.span, vals, opt(list_item)(i))?;
+        let (i, (mut vals, val)) = target_list_result(lhs.span, vals, opt(list_item)(i))?;
         match val {
             Some(val) => vals.push(val),
             None => break (i, vals),
@@ -195,7 +195,7 @@ pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
     }
 }
 
-pub fn tuple_item_convert<'input, T>(
+pub fn target_tuple_result<'input, T>(
     lhs_span: Span,
     vals: Vec<Node<ListItem>>,
     result: KResult<'input, T>,
@@ -249,7 +249,7 @@ pub fn tuple_item_convert<'input, T>(
     }
 }
 
-pub fn list_item_convert<'input, T>(
+pub fn target_list_result<'input, T>(
     lhs_span: Span,
     vals: Vec<Node<ListItem>>,
     result: KResult<'input, T>,
@@ -314,7 +314,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         return Ok((i, Node::new(lhs.span + rhs.span, Atom::DictDisplay(vec![]))));
     };
 
-    let result = dict_item_convert(lhs.span, vec![], dict_item(i));
+    let result = target_dict_result(lhs.span, vec![], dict_item(i));
     let (i, (_, val)) = match result {
         Ok(x) => x,
         Err(Err::Failure(val)) => match *val.data {
@@ -379,7 +379,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
             break (i, vals);
         }
 
-        let result = dict_item_convert(lhs.span, vals, opt(dict_item)(i));
+        let result = target_dict_result(lhs.span, vals, opt(dict_item)(i));
         let (i, (mut vals, val)) = match result {
             Ok(x) => x,
             Err(Err::Failure(val)) => match *val.data {
@@ -547,7 +547,7 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
     }
 }
 
-pub fn dict_item_convert<'input, T>(
+pub fn target_dict_result<'input, T>(
     lhs_span: Span,
     vals: Vec<Node<DictItem>>,
     result: KResult<'input, T>,
