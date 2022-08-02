@@ -1,7 +1,10 @@
 use std::fmt;
 
 use super::{Args, Atom, Expr, Id};
-use crate::types::Node;
+use crate::{
+    exec::{Context, Exec, Value},
+    types::Node,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Primary {
@@ -20,6 +23,19 @@ impl fmt::Display for Primary {
             }
             Self::Call(lhs, val) => write!(f, "{}({})", lhs, val),
             Self::Atom(val) => write!(f, "{}", val),
+        }
+    }
+}
+
+impl Exec<Context> for Primary {
+    type Result = Value;
+
+    fn exec(&self, c: Context) -> (Context, Self::Result) {
+        match self {
+            Self::Attribute(_, _) => todo!(),
+            Self::Subscription(_, _) => todo!(),
+            Self::Call(_, _) => todo!(),
+            Self::Atom(x) => x.exec(c),
         }
     }
 }

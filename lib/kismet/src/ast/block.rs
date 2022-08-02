@@ -1,6 +1,9 @@
 use std::{fmt, ops::Deref};
 
-use crate::types::Node;
+use crate::{
+    exec::{Context, Exec, Primitive, Value},
+    types::Node,
+};
 
 use super::Expr;
 
@@ -35,5 +38,17 @@ impl fmt::Display for ExprTop {
 impl fmt::Display for ExprEnclosure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{{ {} }}", Node::join(&self.0, "; "))
+    }
+}
+
+impl Exec<Context> for ExprTop {
+    type Result = Value;
+
+    fn exec(&self, mut c: Context) -> (Context, Self::Result) {
+        let mut r = Value::Primitive(Primitive::Undefined);
+        for x in &self.0 {
+            (c, r) = x.exec(c);
+        }
+        (c, r)
     }
 }

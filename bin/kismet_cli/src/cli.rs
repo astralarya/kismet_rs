@@ -1,4 +1,5 @@
 use clap::ArgEnum;
+use kismet::exec::Exec;
 use kismet::parse;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -34,11 +35,15 @@ pub fn run(state: &mut State) {
                     break;
                 } else {
                     match parse(&line) {
-                        Ok(x) => match state.print {
-                            PrintLevel::Debug => println!("{:#?}\n{}", x, x),
-                            PrintLevel::Output => println!("{}", x),
-                            PrintLevel::None => (),
-                        },
+                        Ok(x) => {
+                            match state.print {
+                                PrintLevel::Debug => println!("{:#?}\n{}", x, x),
+                                PrintLevel::Output => println!("{}", x),
+                                PrintLevel::None => (),
+                            }
+                            let (_, val) = x.exec_from(None);
+                            println!("{}", val);
+                        }
                         Err(e) => eprintln!("{:#?}", e),
                     }
                 }

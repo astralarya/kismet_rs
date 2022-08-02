@@ -1,6 +1,9 @@
 use std::fmt;
 
-use crate::types::Node;
+use crate::{
+    exec::{Context, Exec, Primitive, Value},
+    types::{Integer, Node, UInteger},
+};
 
 use super::{Atom, Expr, Range};
 
@@ -126,6 +129,84 @@ impl fmt::Display for OpArith {
             Self::DIV => write!(f, "/"),
             Self::MOD => write!(f, "%"),
             Self::POW => write!(f, "^"),
+        }
+    }
+}
+
+impl Exec<Context> for Op {
+    type Result = Value;
+
+    fn exec(&self, c: Context) -> (Context, Self::Result) {
+        match self {
+            Op::And(_, _) => todo!(),
+            Op::Or(_, _) => todo!(),
+            Op::Not(_) => todo!(),
+            Op::CompareBound {
+                l_val,
+                l_op,
+                val,
+                r_op,
+                r_val,
+            } => todo!(),
+            Op::Compare(_, _, _) => todo!(),
+            Op::Range(_) => todo!(),
+            Op::Arith(lhs, op, rhs) => {
+                let (c, lhs) = lhs.exec(c);
+                let (c, rhs) = rhs.exec(c);
+                match (lhs, rhs) {
+                    (
+                        Value::Primitive(Primitive::Integer(lhs)),
+                        Value::Primitive(Primitive::Integer(rhs)),
+                    ) => match *op.data {
+                        OpArith::ADD => (
+                            c,
+                            match Integer::checked_add(lhs, rhs) {
+                                Some(x) => Value::Primitive(Primitive::Integer(x)),
+                                None => Value::Error,
+                            },
+                        ),
+                        OpArith::SUB => (
+                            c,
+                            match Integer::checked_sub(lhs, rhs) {
+                                Some(x) => Value::Primitive(Primitive::Integer(x)),
+                                None => Value::Error,
+                            },
+                        ),
+                        OpArith::MUL => (
+                            c,
+                            match Integer::checked_mul(lhs, rhs) {
+                                Some(x) => Value::Primitive(Primitive::Integer(x)),
+                                None => Value::Error,
+                            },
+                        ),
+                        OpArith::DIV => (
+                            c,
+                            match Integer::checked_div(lhs, rhs) {
+                                Some(x) => Value::Primitive(Primitive::Integer(x)),
+                                None => Value::Error,
+                            },
+                        ),
+                        OpArith::MOD => (c, Value::Primitive(Primitive::Integer(lhs % rhs))),
+                        OpArith::POW => {
+                            let rhs = match UInteger::try_from(rhs) {
+                                Ok(rhs) => rhs,
+                                Err(_) => return (c, Value::Error),
+                            };
+                            (
+                                c,
+                                match Integer::checked_pow(lhs, rhs) {
+                                    Some(x) => Value::Primitive(Primitive::Integer(x)),
+                                    None => Value::Error,
+                                },
+                            )
+                        }
+                    },
+                    _ => (c, Value::Error),
+                }
+            }
+            Op::Unary(_, _) => todo!(),
+            Op::Coefficient(_, _) => todo!(),
+            Op::Die(_) => todo!(),
         }
     }
 }

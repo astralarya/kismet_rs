@@ -1,6 +1,9 @@
 use std::fmt;
 
-use crate::types::{CommaList, Node};
+use crate::{
+    exec::{Context, Exec, Value},
+    types::{CommaList, Node},
+};
 
 use super::{
     Atom, Branch, ExprEnclosure, Id, Loop, Op, Primary, Target, TargetExpr, TargetListItem,
@@ -52,6 +55,21 @@ impl TryFrom<&Node<&Expr>> for Node<Id> {
         match &*val.data {
             Expr::Primary(Primary::Atom(Atom::Id(x))) => Ok(Node::new(val.span, Id(x.clone()))),
             _ => Err(()),
+        }
+    }
+}
+
+impl Exec<Context> for Expr {
+    type Result = Value;
+
+    fn exec(&self, c: Context) -> (Context, Self::Result) {
+        match self {
+            Self::Assign(_, _) => todo!(),
+            Self::Function { args, block } => todo!(),
+            Self::Branch(_) => todo!(),
+            Self::Loop(_) => todo!(),
+            Self::Op(x) => x.exec(c),
+            Self::Primary(x) => x.exec(c),
         }
     }
 }

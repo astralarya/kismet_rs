@@ -1,6 +1,9 @@
 use std::{fmt, ops::Deref};
 
-use crate::types::{Float, Integer, Node};
+use crate::{
+    exec::{Context, Exec, Primitive, Value},
+    types::{Float, Integer, Node},
+};
 
 use super::{CompIter, DictItem, DictItemComp, Expr, ListItem};
 
@@ -29,7 +32,7 @@ pub enum Atom {
     Integer(Integer),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub struct Id(pub String);
 
 impl Deref for Id {
@@ -75,6 +78,27 @@ impl fmt::Display for Atom {
             Self::Float(val) => write!(f, "{}", val),
             Self::Integer(val) => write!(f, "{}", val),
             Self::Id(val) => write!(f, "{}", val),
+        }
+    }
+}
+
+impl Exec<Context> for Atom {
+    type Result = Value;
+
+    fn exec(&self, c: Context) -> (Context, Self::Result) {
+        match self {
+            Self::Block(_) => todo!(),
+            Self::Paren(_) => todo!(),
+            Self::ListDisplay(_) => todo!(),
+            Self::ListComprehension { val, iter } => todo!(),
+            Self::DictDisplay(_) => todo!(),
+            Self::DictComprehension { val, iter } => todo!(),
+            Self::Tuple(_) => todo!(),
+            Self::Generator { val, iter } => todo!(),
+            Self::Id(_) => todo!(),
+            Self::String(x) => (c, Value::Primitive(Primitive::String(x.clone()))),
+            Self::Float(x) => (c, Value::Primitive(Primitive::Float(*x))),
+            Self::Integer(x) => (c, Value::Primitive(Primitive::Integer(*x))),
         }
     }
 }

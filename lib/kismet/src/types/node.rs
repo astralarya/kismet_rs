@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::types::Span;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BaseNode<N, T> {
     pub span: N,
     pub data: Box<T>,
