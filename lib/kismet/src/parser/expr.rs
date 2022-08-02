@@ -7,7 +7,9 @@ use nom::{
 };
 
 use crate::{
-    ast::{Branch, Expr, ExprEnclosure, Loop, LoopKind, MatchArm, Target},
+    ast::{
+        Branch, Expr, ExprEnclosure, Loop, LoopKind, MatchArm, Target, TargetKind, TargetListItem,
+    },
     types::CommaList,
 };
 use crate::{
@@ -16,7 +18,8 @@ use crate::{
 };
 
 use super::{
-    or_test, target, target_match, token_tag, token_tag_id, Error, ErrorKind, Input, KResult, Token,
+    or_test, target, target_match, token_tag, token_tag_id, ConvertKind, Error, ErrorKind, Input,
+    KResult, Token,
 };
 
 pub fn expr_block0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<Vec<Node<Expr>>>>> {
@@ -238,7 +241,39 @@ pub fn loop_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
 }
 
 pub fn lambda_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
-    let (i, lhs) = or_test(i)?;
+    let (i, lhs) = match or_test(i) {
+        Ok(x) => x,
+        Err(Err::Failure(val)) => {
+            let span = val.span;
+            if let Error::Convert(i, ConvertKind::TargetKindExpr(lhs)) = *val.data {
+                let args = match *lhs.data {
+                    TargetKind::Id(x) => Node::new(
+                        lhs.span,
+                        CommaList(vec![Node::new(
+                            lhs.span,
+                            TargetListItem::Target(TargetExpr::Target(TargetKind::Id(x))),
+                        )]),
+                    ),
+                    TargetKind::TargetTuple(x) => Node::new(lhs.span, CommaList(x)),
+                    _ => {
+                        return Err(Err::Failure(ONode::new(
+                            span,
+                            Error::Error(ErrorKind::Grammar),
+                        )))
+                    }
+                };
+                let (i, _) = token_tag(Token::ARROW)(i)?;
+                let (i, block) = expr_enclosure(i)?;
+                return Ok((
+                    i,
+                    Node::new(lhs.span + block.span, Expr::Function { args, block }),
+                ));
+            } else {
+                return Err(Err::Failure(val));
+            }
+        }
+        Err(x) => return Err(x),
+    };
     let lhs_span = lhs.span;
     let (i, op) = opt(token_tag(Token::ARROW))(i)?;
     let tar = match op {
@@ -247,17 +282,31 @@ pub fn lambda_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
         None => return Ok((i, lhs)),
     };
     let (i, block) = expr_enclosure(i)?;
+    let args = match *tar.data {
+        Target(TargetKind::Id(x)) => Node::new(
+            lhs_span,
+            CommaList(vec![Node::new(
+                lhs_span,
+                TargetListItem::Target(TargetExpr::Target(TargetKind::Id(x))),
+            )]),
+        ),
+        Target(TargetKind::TargetTuple(x)) => Node::new(
+            lhs_span,
+            CommaList(
+                x.into_iter()
+                    .map(|x| Node::convert(|x| TargetListItem::<TargetExpr>::convert(x), x))
+                    .collect::<Vec<_>>(),
+            ),
+        ),
+        _ => {
+            return Err(Err::Failure(ONode::new(
+                tar.span,
+                Error::Error(ErrorKind::Grammar),
+            )))
+        }
+    };
     Ok((
         i,
-        Node::new(
-            lhs_span + block.span,
-            Expr::Function {
-                args: Node::new(
-                    tar.span,
-                    CommaList(vec![Node::new(tar.span, TargetExpr::from(*tar.data))]),
-                ),
-                block,
-            },
-        ),
+        Node::new(lhs_span + block.span, Expr::Function { args, block }),
     ))
 }

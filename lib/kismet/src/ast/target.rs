@@ -118,7 +118,7 @@ impl From<Target> for TargetExpr {
 }
 
 impl<T> TargetListItem<T> {
-    fn convert<U>(val: TargetListItem<U>) -> Self
+    pub fn convert<U>(val: TargetListItem<U>) -> Self
     where
         T: From<U>,
     {
@@ -130,7 +130,7 @@ impl<T> TargetListItem<T> {
 }
 
 impl<T> TargetDictItem<T> {
-    fn convert<U>(val: TargetDictItem<U>) -> Self
+    pub fn convert<U>(val: TargetDictItem<U>) -> Self
     where
         T: From<U>,
     {
