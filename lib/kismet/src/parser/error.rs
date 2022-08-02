@@ -33,7 +33,6 @@ pub enum ErrorKind {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ConvertKind {
     ExprBlock(Node<Vec<Node<Expr>>>),
-    TargetExpr(TargetExpr),
     TargetKindExpr(Node<TargetKind<TargetExpr>>),
     TargetListItemExpr(Node<TargetListItem<TargetExpr>>),
     TargetDictItemExpr(Node<TargetDictItem<TargetExpr>>),

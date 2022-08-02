@@ -246,6 +246,13 @@ pub fn lambda_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
         Err(Err::Failure(val)) => {
             let span = val.span;
             if let Error::Convert(i, ConvertKind::TargetKindExpr(lhs)) = *val.data {
+                let (i, op) = opt(token_tag(Token::ARROW))(i)?;
+                if let None = op {
+                    return Err(Err::Failure(ONode::new(
+                        span,
+                        Error::Convert(i, ConvertKind::TargetKindExpr(lhs)),
+                    )));
+                }
                 let args = match *lhs.data {
                     TargetKind::Id(x) => Node::new(
                         lhs.span,
@@ -262,7 +269,6 @@ pub fn lambda_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
                         )))
                     }
                 };
-                let (i, _) = token_tag(Token::ARROW)(i)?;
                 let (i, block) = expr_enclosure(i)?;
                 return Ok((
                     i,
