@@ -133,7 +133,35 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
 
 pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
     let (i, lhs) = opt(token_tag(Token::SPREAD))(i)?;
-    let (i, val) = expr(i)?;
+
+    let (i, val) = match expr(i) {
+        Ok(x) => x,
+        Err(Err::Failure(val)) => {
+            let span = val.span;
+            match *val.data {
+                Error::Convert(i, ConvertKind::TargetKindExpr(val)) => {
+                    return Err(Err::Failure(ONode::new(
+                        span,
+                        Error::Convert(
+                            i,
+                            ConvertKind::TargetListItemExpr(match lhs {
+                                Some(lhs) => Node::new(
+                                    lhs.span + val.span,
+                                    TargetListItem::Spread(Node::<TargetExpr>::convert_from(val)),
+                                ),
+                                None => Node::convert(
+                                    TargetListItem::Target,
+                                    Node::<TargetExpr>::convert_from(val),
+                                ),
+                            }),
+                        ),
+                    )));
+                }
+                _ => return Err(Err::Failure(val)),
+            }
+        }
+        Err(x) => return Err(x),
+    };
     let val_span = val.span;
 
     let (i, ass) = opt(token_tag(Token::ASSIGN))(i)?;
@@ -389,8 +417,37 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
         ));
     }
     let (i, lhs) = opt(token_tag(Token::SPREAD))(i)?;
-    let (i, key) = expr(i)?;
+
+    let (i, key) = match expr(i) {
+        Ok(x) => x,
+        Err(Err::Failure(val)) => {
+            let span = val.span;
+            match *val.data {
+                Error::Convert(i, ConvertKind::TargetKindExpr(val)) => {
+                    return Err(Err::Failure(ONode::new(
+                        span,
+                        Error::Convert(
+                            i,
+                            ConvertKind::TargetDictItemExpr(match lhs {
+                                Some(lhs) => Node::new(
+                                    lhs.span + val.span,
+                                    TargetDictItem::Spread(Node::<TargetExpr>::convert_from(val)),
+                                ),
+                                None => Node::convert(
+                                    TargetDictItem::Target,
+                                    Node::<TargetExpr>::convert_from(val),
+                                ),
+                            }),
+                        ),
+                    )));
+                }
+                _ => return Err(Err::Failure(val)),
+            }
+        }
+        Err(x) => return Err(x),
+    };
     let key_span = key.span;
+
     let (i, delim) = opt(token_tag(Token::DELIM))(i)?;
     match delim {
         Some(delim) => {
