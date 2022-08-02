@@ -14,7 +14,7 @@ pub fn start<'input>(i: Input<'input>) -> KResult<'input, Node<ExprTop>> {
     };
     let (i, val) = all_consuming(expr_block0)(i)?;
     match val {
-        Some(val) => Ok((i, Node::new(val.span, ExprTop(*val.data)))),
+        Some(val) => Ok((i, Node::convert(ExprTop, val))),
         None => Err(Err::Failure(ONode::new(
             i_span,
             Error::Error(ErrorKind::Eof),

@@ -13,7 +13,7 @@ use crate::{
 use super::{expr, literal, token_tag, token_tag_id, Input, KResult, Token};
 
 pub fn target<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
-    map(target_kind(&target), |x| Node::new(x.span, Target(*x.data)))(i)
+    map(target_kind(&target), |x| Node::convert(Target, x))(i)
 }
 
 pub fn target_expr<'input>(i: Input<'input>) -> KResult<'input, Node<TargetExpr>> {
@@ -24,16 +24,16 @@ pub fn target_expr<'input>(i: Input<'input>) -> KResult<'input, Node<TargetExpr>
             i,
             Node::new(tar.span + val.span, TargetExpr::TargetExpr(tar, val)),
         )),
-        None => Ok((i, Node::new(tar.span, TargetExpr::Target(*tar.data)))),
+        None => Ok((i, Node::convert(TargetExpr::Target, tar))),
     }
 }
 
 pub fn target_match<'input>(i: Input<'input>) -> KResult<'input, Node<Match>> {
     alt((
         map(target_kind(&target_match), |x| {
-            Node::new(x.span, Match::Target(*x.data))
+            Node::convert(Match::Target, x)
         }),
-        map(literal, |x| Node::new(x.span, Match::Literal(*x.data))),
+        map(literal, |x| Node::convert(Match::Literal, x)),
     ))(i)
 }
 
@@ -54,7 +54,7 @@ where
 }
 
 pub fn target_id<'input, T>(i: Input<'input>) -> KResult<'input, Node<TargetKind<T>>> {
-    map(token_tag_id, |x| Node::new(x.span, TargetKind::Id(*x.data)))(i)
+    map(token_tag_id, |x| Node::convert(TargetKind::Id, x))(i)
 }
 
 pub fn target_tuple<'input, T>(
@@ -116,7 +116,7 @@ pub fn target_list_item<'input, T>(
                 i,
                 Node::new(op.span + val.span, TargetListItem::Spread(val)),
             )),
-            None => Ok((i, Node::new(val.span, TargetListItem::Target(*val.data)))),
+            None => Ok((i, Node::convert(TargetListItem::Target, val))),
         }
     }
 }
@@ -148,10 +148,7 @@ where
             )),
             None => Ok((
                 i,
-                Node::new(
-                    key.span,
-                    TargetDictItem::Target(T::from(TargetKind::Id(*key.data))),
-                ),
+                Node::convert(|x| TargetDictItem::Target(T::from(TargetKind::Id(x))), key),
             )),
         }
     }

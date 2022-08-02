@@ -30,10 +30,7 @@ pub fn primary_iter<'input>(
     move |i| {
         alt((
             map(attribute, |val| {
-                Node::new(
-                    iter.span.clone() + val.span.clone(),
-                    Primary::Attribute(iter.clone(), val),
-                )
+                Node::new(iter.span + val.span, Primary::Attribute(iter.clone(), val))
             }),
             map(subscription, |(lhs, val, rhs)| {
                 Node::new(
@@ -42,10 +39,7 @@ pub fn primary_iter<'input>(
                 )
             }),
             map(call, |val| {
-                Node::new(
-                    iter.span.clone() + val.span.clone(),
-                    Primary::Call(iter.clone(), val),
-                )
+                Node::new(iter.span + val.span, Primary::Call(iter.clone(), val))
             }),
         ))(i)
     }
@@ -94,5 +88,5 @@ pub fn call<'input>(i: Input<'input>) -> KResult<'input, Node<Args>> {
 
 pub fn primary_node<'input>(i: Input<'input>) -> KResult<'input, Node<Primary>> {
     let (i, val) = atom(i)?;
-    Ok((i, Node::new(val.span.clone(), Primary::Atom(*val.data))))
+    Ok((i, Node::convert(Primary::Atom, val)))
 }

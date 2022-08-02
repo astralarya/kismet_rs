@@ -20,7 +20,7 @@ pub enum Branch {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Loop {
     pub id: Option<Node<Id>>,
-    pub data: LoopKind,
+    pub val: Node<LoopKind>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -78,8 +78,8 @@ impl fmt::Display for LoopKind {
 impl fmt::Display for Loop {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.id {
-            Some(id) => write!(f, ":{}: {}", id, self.data),
-            None => write!(f, "{}", self.data),
+            Some(id) => write!(f, ":{}: {}", id, self.val),
+            None => write!(f, "{}", self.val),
         }
     }
 }

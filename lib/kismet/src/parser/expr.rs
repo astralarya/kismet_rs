@@ -189,32 +189,14 @@ pub fn match_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
 pub fn match_arm<'input>(i: Input<'input>) -> KResult<'input, Node<MatchArm>> {
     let (i, tar) = target_match(i)?;
     let (i, _) = token_tag(Token::ARROW)(i)?;
-    let (i, val) = expr_enclosure(i)?;
-    Ok((
-        i,
-        Node::new(
-            tar.span + val.span,
-            MatchArm {
-                tar,
-                block: Node::new(val.span, ExprEnclosure(val.data.0)),
-            },
-        ),
-    ))
+    let (i, block) = expr_enclosure(i)?;
+    Ok((i, Node::new(tar.span + block.span, MatchArm { tar, block })))
 }
 
 pub fn loop_node<'input>(i: Input<'input>) -> KResult<'input, Node<Loop>> {
     let (i, id) = opt(loop_label)(i)?;
     let (i, val) = alt((for_expr, while_expr, loop_expr))(i)?;
-    Ok((
-        i,
-        Node::new(
-            Span::option(&id) + val.span,
-            Loop {
-                id,
-                data: *val.data,
-            },
-        ),
-    ))
+    Ok((i, Node::new(Span::option(&id) + val.span, Loop { id, val })))
 }
 
 pub fn loop_label<'input>(i: Input<'input>) -> KResult<'input, Node<Id>> {
