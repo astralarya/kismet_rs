@@ -15,7 +15,7 @@ use crate::{
 };
 
 use super::{
-    expr, expr_block1, or_test, target, target_dict_item, target_expr, target_list_item, token_tag,
+    expr, expr_block0, or_test, target, target_dict_item, target_expr, target_list_item, token_tag,
     ConvertKind, Error, ErrorKind, Input, KResult, Token,
 };
 
@@ -286,16 +286,18 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         return Ok((i, Node::new(lhs.span + rhs.span, Atom::DictDisplay(vec![]))));
     };
 
-    let (i, val) = opt(expr_block1)(i)?;
-    match val {
-        Some(val) => {
-            let (i, rhs) = close(i)?;
-            return Ok((i, Node::new(lhs.span + rhs.span, Atom::Block(*val.data))));
-        }
-        None => (),
-    }
+    let result = dict_item_convert(lhs.span, vec![], dict_item(i));
+    let (i, (_, val)) = match result {
+        Ok(x) => x,
+        Err(Err::Failure(val)) => match *val.data {
+            Error::Convert(i, ConvertKind::ExprBlock(val)) => {
+                return Ok((i, Node::convert(Atom::Block, val)));
+            }
+            _ => return Err(Err::Failure(val)),
+        },
+        Err(e) => return Err(e),
+    };
 
-    let (i, val) = dict_item(i)?;
     let (i, comp_val) = opt(comp_for)(i)?;
     let val = Node::new(
         val.span,
@@ -340,14 +342,34 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
         },
     );
 
-    let (i, vals) = opt(preceded(separator, separated_list1(separator, dict_item)))(i)?;
-    let (i, _) = opt(separator)(i)?;
-    let vals = match vals {
-        Some(mut vals) => {
-            vals.insert(0, val);
-            vals
+    let vals = vec![val];
+    let (mut _i, mut _vals) = (i, vals);
+    let (i, vals) = loop {
+        let (i, vals) = (_i, _vals);
+        let (i, sep) = opt(separator)(i)?;
+        if let None = sep {
+            break (i, vals);
         }
-        _ => vec![val],
+
+        let result = dict_item_convert(lhs.span, vals, opt(dict_item)(i));
+        let (i, (mut vals, val)) = match result {
+            Ok(x) => x,
+            Err(Err::Failure(val)) => match *val.data {
+                Error::Convert(_, ConvertKind::ExprBlock(_)) => {
+                    return Err(Err::Failure(ONode::new(
+                        val.span,
+                        Error::Error(ErrorKind::Grammar),
+                    )))
+                }
+                _ => return Err(Err::Failure(val)),
+            },
+            Err(e) => return Err(e),
+        };
+        match val {
+            Some(val) => vals.push(val),
+            None => break (i, vals),
+        };
+        (_i, _vals) = (i, vals);
     };
 
     let (i, rhs) = close(i)?;
@@ -358,7 +380,7 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
     let (i, lhs) = opt(token_tag(Token::LBRACKET))(i)?;
     if let Some(lhs) = lhs {
         let (i, key) = expr(i)?;
-        let (i, _) = token_tag(Token::RBRACKET)(i)?;
+        let (i, _) = token_tag(Token::RBRACE)(i)?;
         let (i, _) = token_tag(Token::COLON)(i)?;
         let (i, val) = expr(i)?;
         return Ok((
@@ -368,6 +390,27 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
     }
     let (i, lhs) = opt(token_tag(Token::SPREAD))(i)?;
     let (i, key) = expr(i)?;
+    let key_span = key.span;
+    let (i, delim) = opt(token_tag(Token::DELIM))(i)?;
+    match delim {
+        Some(delim) => {
+            let (i, vals) = expr_block0(i)?;
+            let mut vals = match vals {
+                Some(val) => *val.data,
+                None => vec![],
+            };
+            let (i, rhs) = token_tag(Token::RBRACE)(i)?;
+            vals.insert(0, key);
+            return Err(Err::Failure(ONode::new(
+                delim.span,
+                Error::Convert(
+                    i,
+                    ConvertKind::ExprBlock(Node::new(key_span + rhs.span, vals)),
+                ),
+            )));
+        }
+        None => (),
+    }
     let (i, val) = match lhs {
         Some(_) => (i, None),
         None => opt(preceded(token_tag(Token::COLON), expr))(i)?,

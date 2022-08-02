@@ -1,7 +1,7 @@
 use nom::{error::ParseError, Needed};
 
 use crate::{
-    ast::{TargetDictItem, TargetExpr, TargetKind, TargetListItem},
+    ast::{Expr, TargetDictItem, TargetExpr, TargetKind, TargetListItem},
     types::{Node, ONode, Span},
 };
 
@@ -28,6 +28,7 @@ pub enum ErrorKind {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ConvertKind {
+    ExprBlock(Node<Vec<Node<Expr>>>),
     TargetExpr(TargetExpr),
     TargetKindExpr(Node<TargetKind<TargetExpr>>),
     TargetListItemExpr(Node<TargetListItem<TargetExpr>>),
