@@ -1,4 +1,7 @@
-use nom::{error::ParseError, Needed};
+use nom::{
+    error::{ContextError, ParseError},
+    Needed,
+};
 
 use crate::{
     ast::{Expr, TargetDictItem, TargetExpr, TargetKind, TargetListItem},
@@ -23,6 +26,7 @@ pub enum ErrorKind {
     Predicate,
     Grammar,
     Chain(ONode<ErrorKind>, Box<ErrorKind>),
+    Context(ONode<ErrorKind>, String),
     Convert(ConvertKind),
 }
 
@@ -55,6 +59,18 @@ impl<'input> ParseError<Input<'input>> for ONode<Error<'input>> {
             Error::Error(ErrorKind::Chain(
                 ONode::<ErrorKind>::convert_from(other),
                 Box::new(ErrorKind::Nom(kind)),
+            )),
+        )
+    }
+}
+
+impl<'input> ContextError<Input<'input>> for ONode<Error<'input>> {
+    fn add_context(input: Input<'input>, ctx: &'static str, other: Self) -> Self {
+        ONode::new(
+            Span::get0(input),
+            Error::Error(ErrorKind::Context(
+                ONode::<ErrorKind>::convert_from(other),
+                String::from(ctx),
             )),
         )
     }
