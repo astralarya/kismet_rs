@@ -187,14 +187,17 @@ pub enum Token {
     #[token("-")]
     SUB,
 
-    #[token("%")]
-    MOD,
-
     #[token("*")]
     MUL,
 
     #[token("/")]
     DIV,
+
+    #[token("/%")]
+    IDIV,
+
+    #[token("%")]
+    MOD,
 
     #[token("^")]
     POW,
@@ -437,9 +440,10 @@ impl fmt::Display for Token {
             Self::RANGEI => write!(f, "..="),
             Self::ADD => write!(f, "+"),
             Self::SUB => write!(f, "-"),
-            Self::MOD => write!(f, "%"),
             Self::MUL => write!(f, "*"),
             Self::DIV => write!(f, "/"),
+            Self::IDIV => write!(f, "/%"),
+            Self::MOD => write!(f, "%"),
             Self::POW => write!(f, "^"),
             Self::DIE => write!(f, "d"),
             Self::DOT => write!(f, "."),

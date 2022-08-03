@@ -49,6 +49,7 @@ pub enum OpArith {
     SUB,
     MUL,
     DIV,
+    IDIV,
     MOD,
     POW,
 }
@@ -127,6 +128,7 @@ impl fmt::Display for OpArith {
             Self::SUB => write!(f, "-"),
             Self::MUL => write!(f, "*"),
             Self::DIV => write!(f, "/"),
+            Self::IDIV => write!(f, "/%"),
             Self::MOD => write!(f, "%"),
             Self::POW => write!(f, "^"),
         }
@@ -143,6 +145,7 @@ impl Exec<Context> for Op {
                 OpArith::SUB => lhs - rhs,
                 OpArith::MUL => lhs * rhs,
                 OpArith::DIV => lhs / rhs,
+                OpArith::IDIV => lhs.rem_euclid(rhs),
                 OpArith::MOD => lhs % rhs,
                 OpArith::POW => lhs.powf(rhs),
             }))
@@ -153,7 +156,8 @@ impl Exec<Context> for Op {
                 OpArith::ADD => lhs.checked_add(rhs),
                 OpArith::SUB => lhs.checked_sub(rhs),
                 OpArith::MUL => lhs.checked_mul(rhs),
-                OpArith::DIV => lhs.checked_div(rhs),
+                OpArith::DIV => return arith_float(lhs as Float, op, rhs as Float),
+                OpArith::IDIV => lhs.checked_div(rhs),
                 OpArith::MOD => lhs.checked_rem(rhs),
                 OpArith::POW => match UInteger::try_from(rhs) {
                     Ok(rhs) => lhs.checked_pow(rhs),
@@ -190,6 +194,26 @@ impl Exec<Context> for Op {
                         Value::Primitive(Primitive::Float(lhs)),
                         Value::Primitive(Primitive::Float(rhs)),
                     ) => (c, arith_float(lhs, op, rhs)),
+                    (
+                        Value::Primitive(Primitive::Integer(lhs)),
+                        Value::Primitive(Primitive::Float(rhs)),
+                    ) => (
+                        c,
+                        match (**op, lhs) {
+                            (OpArith::POW, 2) => Value::Primitive(Primitive::Float(rhs.exp2())),
+                            _ => arith_float(lhs as Float, op, rhs),
+                        },
+                    ),
+                    (
+                        Value::Primitive(Primitive::Float(lhs)),
+                        Value::Primitive(Primitive::Integer(rhs)),
+                    ) => (
+                        c,
+                        match **op {
+                            OpArith::POW => Value::Primitive(Primitive::Float(lhs.powi(rhs))),
+                            _ => arith_float(lhs, op, rhs as Float),
+                        },
+                    ),
                     _ => (c, Value::Error),
                 }
             }

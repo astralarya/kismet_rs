@@ -224,9 +224,10 @@ pub fn adds<'input>(i: Input<'input>) -> KResult<'input, Node<OpArith>> {
 
 pub fn muls<'input>(i: Input<'input>) -> KResult<'input, Node<OpArith>> {
     token_action(|x| match *x.data {
-        Token::MOD => Some(Node::new(x.span, OpArith::MOD)),
         Token::MUL => Some(Node::new(x.span, OpArith::MUL)),
         Token::DIV => Some(Node::new(x.span, OpArith::DIV)),
+        Token::IDIV => Some(Node::new(x.span, OpArith::IDIV)),
+        Token::MOD => Some(Node::new(x.span, OpArith::MOD)),
         _ => None,
     })(i)
 }
