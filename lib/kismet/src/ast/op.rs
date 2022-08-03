@@ -89,7 +89,7 @@ impl fmt::Display for Op {
                     rhs
                 )
             }
-            Self::Unary(lhs, val) => write!(f, "{}{}{}", lhs, lhs.data.space(), val),
+            Self::Unary(lhs, val) => write!(f, "{}{}", lhs, val),
             Self::Coefficient(lhs, rhs) => write!(f, "{}{}", lhs, rhs),
             Self::Die(val) => match *val.data {
                 Atom::Id(_) => write!(f, "d({})", val),
@@ -217,7 +217,31 @@ impl Exec<Context> for Op {
                     _ => (c, Value::Error),
                 }
             }
-            Op::Unary(_, _) => todo!(),
+            Op::Unary(op, rhs) => {
+                let (c, rhs) = rhs.exec(c);
+                match rhs {
+                    Value::Primitive(Primitive::Integer(val)) => (
+                        c,
+                        match **op {
+                            OpArith::ADD => rhs,
+                            OpArith::SUB => match val.checked_neg() {
+                                Some(val) => Value::Primitive(Primitive::Integer(val)),
+                                None => Value::Primitive(Primitive::Float((val as Float) * -1.)),
+                            },
+                            _ => Value::Error,
+                        },
+                    ),
+                    Value::Primitive(Primitive::Float(val)) => (
+                        c,
+                        match **op {
+                            OpArith::ADD => rhs,
+                            OpArith::SUB => Value::Primitive(Primitive::Float(val * -1.)),
+                            _ => Value::Error,
+                        },
+                    ),
+                    _ => (c, Value::Error),
+                }
+            }
             Op::Coefficient(_, _) => todo!(),
             Op::Die(_) => todo!(),
         }
