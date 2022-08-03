@@ -17,9 +17,9 @@ pub enum Primitive {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Collection {
-    Tuple(Vec<Primitive>),
-    List(Vec<Primitive>),
-    Dict(HashMap<Id, Primitive>),
+    Tuple(Vec<Value>),
+    List(Vec<Value>),
+    Dict(HashMap<Id, Value>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
