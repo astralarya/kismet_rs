@@ -29,6 +29,24 @@ pub enum Value {
     Error,
 }
 
+impl TryFrom<Value> for Primitive {
+    type Error = ();
+
+    fn try_from(val: Value) -> Result<Self, Self::Error> {
+        match val {
+            Value::Primitive(x) => Ok(x),
+            Value::Collection(_) => Err(()),
+            Value::Error => Err(()),
+        }
+    }
+}
+
+impl From<Primitive> for Value {
+    fn from(val: Primitive) -> Self {
+        Value::Primitive(val)
+    }
+}
+
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
