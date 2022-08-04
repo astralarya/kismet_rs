@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    exec::{Context, Exec1, Primitive, Value},
+    exec::{Primitive, Value},
     types::{Float, Integer, Node, UInteger},
 };
 
@@ -135,6 +135,7 @@ impl fmt::Display for OpArith {
     }
 }
 
+/*
 impl Exec1<Context> for Op {
     type Result = Value;
 
@@ -247,3 +248,5 @@ impl Exec1<Context> for Op {
         }
     }
 }
+
+ */

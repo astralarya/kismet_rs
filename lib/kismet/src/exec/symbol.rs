@@ -7,29 +7,49 @@ use crate::ast::Id;
 
 use super::Value;
 
-pub struct Symbol {
+#[derive(Clone, Debug, PartialEq)]
+pub struct SymbolIdx {
     map: HashMap<Id, usize>,
     len: usize,
 }
 
-impl Symbol {
+impl SymbolIdx {
     pub fn new() -> Self {
-        Symbol {
+        SymbolIdx {
             map: HashMap::new(),
             len: 0,
         }
     }
 
     pub fn get(&mut self, key: Id) -> usize {
-        *self.map.entry(key).or_insert_with(|| {
-            self.len += 1;
-            self.len
-        })
+        let len = self.map.len();
+        *self.map.entry(key).or_insert(len)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct SymbolTable<V>(HashMap<Id, V>);
+
+impl<V> SymbolTable<V>
+where
+    V: Clone + Default,
+{
+    pub fn new() -> Self {
+        SymbolTable(HashMap::new())
+    }
+
+    pub fn get(&mut self, key: Id) -> V {
+        self.0.entry(key).or_default().clone()
+    }
+
+    pub fn set(&mut self, key: Id, val: V) -> Option<V> {
+        self.0.insert(key, val)
     }
 }
 
 //
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Stack {
     val: Vec<Value>,
     pos: Vec<usize>,
