@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    exec::{Context, Exec, Primitive, Value},
+    exec::{Context, Exec1, Primitive, Value},
     types::{Float, Integer, Node, UInteger},
 };
 
@@ -135,7 +135,7 @@ impl fmt::Display for OpArith {
     }
 }
 
-impl Exec<Context> for Op {
+impl Exec1<Context> for Op {
     type Result = Value;
 
     fn exec(&self, c: Context) -> (Context, Self::Result) {

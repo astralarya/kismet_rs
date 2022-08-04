@@ -2,7 +2,7 @@ use std::fmt;
 
 use super::{Args, Atom, Expr, Id};
 use crate::{
-    exec::{Context, Exec, Value},
+    exec::{Context, Exec1, Value},
     types::Node,
 };
 
@@ -27,7 +27,7 @@ impl fmt::Display for Primary {
     }
 }
 
-impl Exec<Context> for Primary {
+impl Exec1<Context> for Primary {
     type Result = Value;
 
     fn exec(&self, c: Context) -> (Context, Self::Result) {

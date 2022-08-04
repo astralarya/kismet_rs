@@ -1,7 +1,7 @@
 use std::{fmt, ops::Deref};
 
 use crate::{
-    exec::{Context, Exec, Primitive, Value},
+    exec::{Context, Exec1, Primitive, Value},
     types::{Float, Integer, Node},
 };
 
@@ -82,7 +82,7 @@ impl fmt::Display for Atom {
     }
 }
 
-impl Exec<Context> for Atom {
+impl Exec1<Context> for Atom {
     type Result = Value;
 
     fn exec(&self, c: Context) -> (Context, Self::Result) {

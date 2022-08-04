@@ -1,7 +1,7 @@
 use std::{fmt, ops::Deref};
 
 use crate::{
-    exec::{Context, Exec, Primitive, Value},
+    exec::{Context, Exec1, Primitive, Value},
     types::Node,
 };
 
@@ -41,7 +41,7 @@ impl fmt::Display for ExprEnclosure {
     }
 }
 
-impl Exec<Context> for ExprTop {
+impl Exec1<Context> for ExprTop {
     type Result = Value;
 
     fn exec(&self, mut c: Context) -> (Context, Self::Result) {

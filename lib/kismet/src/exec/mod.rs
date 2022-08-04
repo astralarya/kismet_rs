@@ -1,9 +1,9 @@
 mod program;
-mod stack;
+mod symbol;
 mod types;
 
 pub use program::*;
-pub use stack::*;
+pub use symbol::*;
 pub use types::*;
 
 use crate::types::BaseNode;
@@ -20,7 +20,7 @@ impl From<Option<Context>> for Context {
     }
 }
 
-pub trait Exec<T> {
+pub trait Exec1<T> {
     type Result;
 
     fn exec(&self, c: T) -> (T, Self::Result);
@@ -33,9 +33,9 @@ pub trait Exec<T> {
     }
 }
 
-impl<T, S, N, R> Exec<T> for BaseNode<S, N>
+impl<T, S, N, R> Exec1<T> for BaseNode<S, N>
 where
-    N: Exec<T, Result = R>,
+    N: Exec1<T, Result = R>,
 {
     type Result = R;
 

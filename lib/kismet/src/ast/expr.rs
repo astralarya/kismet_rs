@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    exec::{Context, Exec, Value},
+    exec::{Context, Exec1, Value},
     types::{CommaList, Node},
 };
 
@@ -59,7 +59,7 @@ impl TryFrom<&Node<&Expr>> for Node<Id> {
     }
 }
 
-impl Exec<Context> for Expr {
+impl Exec1<Context> for Expr {
     type Result = Value;
 
     fn exec(&self, c: Context) -> (Context, Self::Result) {
