@@ -2,36 +2,29 @@ use crate::ast::Id;
 
 use super::SymbolTable;
 
+pub trait Exec<T, U> {
+    fn exec(&self, i: SymbolTable<T>) -> (SymbolTable<T>, U);
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Program<T, V>(Vec<Instruction<T, V>>)
 where
-    T: Action<V>;
+    T: Exec<V, V>;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Instruction<T, V>
 where
-    T: Action<V>,
+    T: Exec<V, V>,
 {
     Value(V),
     Variable(Id),
-    Action {
-        args: Vec<Instruction<T, V>>,
-        action: T,
-    },
+    Action(T),
     Assign(Id, Box<Instruction<T, V>>),
 }
 
-pub trait Exec<V> {
-    fn exec(&self, i: SymbolTable<V>) -> (SymbolTable<V>, V);
-}
-
-pub trait Action<V> {
-    fn action(&self, i: Vec<V>) -> V;
-}
-
-impl<T, V> Exec<V> for Instruction<T, V>
+impl<T, V> Exec<V, V> for Instruction<T, V>
 where
-    T: Action<V>,
+    T: Exec<V, V>,
     V: Clone + Default,
 {
     fn exec(&self, i: SymbolTable<V>) -> (SymbolTable<V>, V) {
@@ -42,13 +35,15 @@ where
                 let v = i.get(k.clone());
                 (i, v)
             }
-            Self::Action { args, action } => {
+            Self::Action(x) => {
+                /*
                 let (i, args) = args.iter().fold((i, vec![]), |(i, mut vec), val| {
                     let (i, val) = val.exec(i);
                     vec.push(val);
                     (i, vec)
                 });
-                (i, action.action(args))
+                 */
+                x.exec(i)
             }
             Self::Assign(key, val) => {
                 let (mut i, val) = val.exec(i);
@@ -59,9 +54,9 @@ where
     }
 }
 
-impl<T, V> Exec<V> for Program<T, V>
+impl<T, V> Exec<V, V> for Program<T, V>
 where
-    T: Action<V>,
+    T: Exec<V, V>,
     V: Clone + Default,
 {
     fn exec(&self, i: SymbolTable<V>) -> (SymbolTable<V>, V) {
