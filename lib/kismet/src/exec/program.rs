@@ -1,4 +1,4 @@
-use crate::ast::Id;
+use crate::{ast::Id, types::Node};
 
 use super::SymbolTable;
 
@@ -21,6 +21,15 @@ pub enum Instruction<T, U, V> {
 pub struct Call<F, T, U, V> {
     pub args: Vec<Instruction<T, U, V>>,
     pub action: F,
+}
+
+impl<T, U, V> Exec<U, V> for Node<T>
+where
+    T: Exec<U, V>,
+{
+    fn exec(&self, i: U) -> V {
+        self.data.exec(i)
+    }
 }
 
 impl<F, T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V)> for Call<F, T, U, V>
