@@ -5,13 +5,14 @@ use crate::{
     types::{Float, Integer},
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq)]
 pub enum Primitive {
     Boolean(bool),
     Integer(Integer),
     Float(Float),
     String(String),
     Null,
+    #[default]
     Undefined,
 }
 
@@ -29,6 +30,18 @@ pub enum Value {
     Error,
 }
 
+impl Default for Value {
+    fn default() -> Self {
+        Self::Primitive(Primitive::default())
+    }
+}
+
+impl From<Primitive> for Value {
+    fn from(val: Primitive) -> Self {
+        Value::Primitive(val)
+    }
+}
+
 impl TryFrom<Value> for Primitive {
     type Error = ();
 
@@ -38,12 +51,6 @@ impl TryFrom<Value> for Primitive {
             Value::Collection(_) => Err(()),
             Value::Error => Err(()),
         }
-    }
-}
-
-impl From<Primitive> for Value {
-    fn from(val: Primitive) -> Self {
-        Value::Primitive(val)
     }
 }
 

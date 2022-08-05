@@ -20,28 +20,33 @@ pub struct Action<T, U, V> {
     pub kind: T,
 }
 
-impl<T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for Action<T, U, V>
+impl<T, U, V, E> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for Action<T, U, V>
 where
     T: Exec<Vec<V>, V, Error>,
-    V: TryFrom<U, Error = Error> + Clone,
-    U: TryFrom<V, Error = Error> + Clone + Default,
+    U: TryFrom<V, Error = E> + Clone + Default,
+    V: From<U> + Clone + Default,
+    Error: From<E>,
 {
     fn exec(&self, i: SymbolTable<U>) -> SymbolTableResult<U, V> {
-        let (i, args) = self.args.iter().fold(Ok((i, vec![])), |acc, val| {
-            let (i, mut vec) = acc?;
-            let (i, val) = val.exec(i)?;
-            vec.push(val);
-            Ok((i, vec))
-        })?;
+        let (i, args) =
+            self.args
+                .iter()
+                .fold::<Result<_, Error>, _>(Ok((i, vec![])), |acc, val| {
+                    let (i, mut vec) = acc?;
+                    let (i, val) = val.exec(i)?;
+                    vec.push(val);
+                    Ok((i, vec))
+                })?;
         Ok((i, self.kind.exec(args)?))
     }
 }
 
-impl<T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for Instruction<T, U, V>
+impl<T, U, V, E> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for Instruction<T, U, V>
 where
     T: Exec<Vec<V>, V, Error>,
-    V: TryFrom<U, Error = Error> + Clone,
-    U: TryFrom<V, Error = Error> + Clone + Default,
+    U: TryFrom<V, Error = E> + Clone + Default,
+    V: From<U> + Clone + Default,
+    Error: From<E>,
 {
     fn exec(&self, i: SymbolTable<U>) -> SymbolTableResult<U, V> {
         match self {
@@ -49,7 +54,7 @@ where
             Self::Variable(key) => {
                 let mut i = i;
                 let val = i.get(key.clone());
-                Ok((i, V::try_from(val)?))
+                Ok((i, V::from(val)))
             }
             Self::Action(x) => x.exec(i),
             Self::Assign(key, val) => {
@@ -57,16 +62,17 @@ where
                 i.set(key.clone(), U::try_from(val.clone())?);
                 Ok((i, val))
             }
-            Self::Symbol(x) => Ok((i, V::try_from(x.clone())?)),
+            Self::Symbol(x) => Ok((i, V::from(x.clone()))),
         }
     }
 }
 
-impl<T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for BasicBlock<T, U, V>
+impl<T, U, V, E> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for BasicBlock<T, U, V>
 where
     T: Exec<Vec<V>, V, Error>,
-    V: TryFrom<U, Error = Error> + Clone + Default,
-    U: TryFrom<V, Error = Error> + Clone + Default,
+    U: TryFrom<V, Error = E> + Clone + Default,
+    V: From<U> + Clone + Default,
+    Error: From<E>,
 {
     fn exec(&self, i: SymbolTable<U>) -> SymbolTableResult<U, V> {
         self.0.iter().fold(Ok((i, V::default())), move |acc, val| {
