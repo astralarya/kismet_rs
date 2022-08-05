@@ -3,7 +3,7 @@ use crate::ast::Id;
 use super::{Error, Exec, SymbolTable};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Program<T, U, V>(Vec<Instruction<T, U, V>>);
+pub struct BasicBlock<T, U, V>(Vec<Instruction<T, U, V>>);
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Instruction<T, U, V> {
@@ -64,7 +64,7 @@ where
     }
 }
 
-impl<T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for Program<T, U, V>
+impl<T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for BasicBlock<T, U, V>
 where
     T: Exec<SymbolTable<U>, (SymbolTable<U>, V), Error>,
     V: From<U> + Clone + Default,
