@@ -1,6 +1,9 @@
 use std::{fmt, ops::Deref};
 
-use crate::types::Node;
+use crate::{
+    hlir::{self, BasicBlock, VBasicBlock, VInstruction},
+    types::Node,
+};
 
 use super::Expr;
 
@@ -35,5 +38,20 @@ impl fmt::Display for ExprTop {
 impl fmt::Display for ExprEnclosure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{{ {} }}", Node::join(&self.0, "; "))
+    }
+}
+
+impl TryFrom<ExprTop> for VBasicBlock {
+    type Error = hlir::Error;
+
+    fn try_from(val: ExprTop) -> Result<Self, Self::Error> {
+        match val
+            .iter()
+            .map(|x| Node::<VInstruction>::try_convert_from(x.clone()))
+            .collect::<Result<Vec<_>, _>>()
+        {
+            Ok(x) => Ok(BasicBlock(x)),
+            Err(x) => Err(x),
+        }
     }
 }

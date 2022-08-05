@@ -1,6 +1,9 @@
 use std::{fmt, ops::Deref};
 
-use crate::types::{Float, Integer, Node};
+use crate::{
+    hlir::{self, Primitive, VInstruction, Value},
+    types::{Float, Integer, Node},
+};
 
 use super::{CompIter, DictItem, DictItemComp, Expr, ListItem};
 
@@ -79,26 +82,23 @@ impl fmt::Display for Atom {
     }
 }
 
-/*
-impl Exec1<Context> for Atom {
-    type Result = Value;
+impl TryFrom<Atom> for VInstruction {
+    type Error = hlir::Error;
 
-    fn exec(&self, c: Context) -> (Context, Self::Result) {
-        match self {
-            Self::Block(_) => todo!(),
-            Self::Paren(_) => todo!(),
-            Self::ListDisplay(_) => todo!(),
-            Self::ListComprehension { val, iter } => todo!(),
-            Self::DictDisplay(_) => todo!(),
-            Self::DictComprehension { val, iter } => todo!(),
-            Self::Tuple(_) => todo!(),
-            Self::Generator { val, iter } => todo!(),
-            Self::Id(_) => todo!(),
-            Self::String(x) => (c, Value::Primitive(Primitive::String(x.clone()))),
-            Self::Float(x) => (c, Value::Primitive(Primitive::Float(*x))),
-            Self::Integer(x) => (c, Value::Primitive(Primitive::Integer(*x))),
+    fn try_from(val: Atom) -> Result<Self, Self::Error> {
+        match val {
+            Atom::Block(_) => todo!(),
+            Atom::Paren(_) => todo!(),
+            Atom::ListDisplay(_) => todo!(),
+            Atom::ListComprehension { val, iter } => todo!(),
+            Atom::DictDisplay(_) => todo!(),
+            Atom::DictComprehension { val, iter } => todo!(),
+            Atom::Tuple(_) => todo!(),
+            Atom::Generator { val, iter } => todo!(),
+            Atom::Id(_) => todo!(),
+            Atom::String(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::String(x)))),
+            Atom::Float(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::Float(x)))),
+            Atom::Integer(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::Integer(x)))),
         }
     }
 }
-
- */

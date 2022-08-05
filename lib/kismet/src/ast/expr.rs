@@ -1,6 +1,9 @@
 use std::fmt;
 
-use crate::types::{CommaList, Node};
+use crate::{
+    hlir::{self, VInstruction},
+    types::{CommaList, Node},
+};
 
 use super::{
     Atom, Branch, ExprEnclosure, Id, Loop, Op, Primary, Target, TargetExpr, TargetListItem,
@@ -52,6 +55,21 @@ impl TryFrom<&Node<&Expr>> for Node<Id> {
         match &*val.data {
             Expr::Primary(Primary::Atom(Atom::Id(x))) => Ok(Node::new(val.span, Id(x.clone()))),
             _ => Err(()),
+        }
+    }
+}
+
+impl TryFrom<Expr> for VInstruction {
+    type Error = hlir::Error;
+
+    fn try_from(val: Expr) -> Result<Self, Self::Error> {
+        match val {
+            Expr::Assign(_, _) => todo!(),
+            Expr::Function { args, block } => todo!(),
+            Expr::Branch(_) => todo!(),
+            Expr::Loop(_) => todo!(),
+            Expr::Op(x) => todo!(),
+            Expr::Primary(x) => VInstruction::try_from(x),
         }
     }
 }

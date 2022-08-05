@@ -1,6 +1,9 @@
 use std::fmt;
 
-use crate::types::Node;
+use crate::{
+    hlir::{self, Instruction, Primitive, VInstruction, Value},
+    types::{Float, Integer, Node, UInteger},
+};
 
 use super::{Atom, Expr, Range};
 
@@ -128,6 +131,122 @@ impl fmt::Display for OpArith {
             Self::IDIV => write!(f, "/%"),
             Self::MOD => write!(f, "%"),
             Self::POW => write!(f, "^"),
+        }
+    }
+}
+
+impl TryFrom<Op> for VInstruction {
+    type Error = hlir::Error;
+
+    fn try_from(val: Op) -> Result<Self, Self::Error> {
+        fn arith_float(lhs: Float, op: OpArith, rhs: Float) -> Result<VInstruction, hlir::Error> {
+            Ok(Instruction::Value(Value::Primitive(Primitive::Float(
+                match op {
+                    OpArith::ADD => lhs + rhs,
+                    OpArith::SUB => lhs - rhs,
+                    OpArith::MUL => lhs * rhs,
+                    OpArith::DIV => lhs / rhs,
+                    OpArith::IDIV => lhs.rem_euclid(rhs),
+                    OpArith::MOD => lhs % rhs,
+                    OpArith::POW => lhs.powf(rhs),
+                },
+            ))))
+        }
+
+        fn arith_int(lhs: Integer, op: OpArith, rhs: Integer) -> Result<VInstruction, hlir::Error> {
+            match match op {
+                OpArith::ADD => lhs.checked_add(rhs),
+                OpArith::SUB => lhs.checked_sub(rhs),
+                OpArith::MUL => lhs.checked_mul(rhs),
+                OpArith::DIV => return arith_float(lhs as Float, op, rhs as Float),
+                OpArith::IDIV => lhs.checked_div(rhs),
+                OpArith::MOD => lhs.checked_rem(rhs),
+                OpArith::POW => match UInteger::try_from(rhs) {
+                    Ok(rhs) => lhs.checked_pow(rhs),
+                    Err(_) => None,
+                },
+            } {
+                Some(x) => Ok(Instruction::Value(Value::Primitive(Primitive::Integer(x)))),
+                None => arith_float(lhs as Float, op, rhs as Float),
+            }
+        }
+
+        match val {
+            Op::And(_, _) => todo!(),
+            Op::Or(_, _) => todo!(),
+            Op::Not(_) => todo!(),
+            Op::CompareBound {
+                l_val,
+                l_op,
+                val,
+                r_op,
+                r_val,
+            } => todo!(),
+            Op::Compare(_, _, _) => todo!(),
+            Op::Range(_) => todo!(),
+            Op::Arith(lhs, op, rhs) => {
+                let lhs = Node::<VInstruction>::try_convert_from(lhs)?;
+                let rhs = Node::<VInstruction>::try_convert_from(rhs)?;
+                match (*lhs.data, *rhs.data) {
+                    (Instruction::Value(lhs), Instruction::Value(rhs)) => match (lhs, rhs) {
+                        (
+                            Value::Primitive(Primitive::Integer(lhs)),
+                            Value::Primitive(Primitive::Integer(rhs)),
+                        ) => arith_int(lhs, *op, rhs),
+                        (
+                            Value::Primitive(Primitive::Float(lhs)),
+                            Value::Primitive(Primitive::Float(rhs)),
+                        ) => arith_float(lhs, *op, rhs),
+                        (
+                            Value::Primitive(Primitive::Integer(lhs)),
+                            Value::Primitive(Primitive::Float(rhs)),
+                        ) => match (*op, lhs) {
+                            (OpArith::POW, 2) => Ok(Instruction::Value(Value::Primitive(
+                                Primitive::Float(rhs.exp2()),
+                            ))),
+                            _ => arith_float(lhs as Float, *op, rhs),
+                        },
+                        (
+                            Value::Primitive(Primitive::Float(lhs)),
+                            Value::Primitive(Primitive::Integer(rhs)),
+                        ) => match *op {
+                            OpArith::POW => Ok(Instruction::Value(Value::Primitive(
+                                Primitive::Float(lhs.powi(rhs)),
+                            ))),
+                            _ => arith_float(lhs, *op, rhs as Float),
+                        },
+                        _ => Err(hlir::Error::TypeMismatch),
+                    },
+                    _ => todo!(),
+                }
+            }
+            Op::Unary(op, rhs) => {
+                let rhs = Node::<VInstruction>::try_convert_from(rhs)?;
+                match *rhs.data {
+                    Instruction::Value(rhs) => Ok(Instruction::Value(match rhs {
+                        Value::Primitive(Primitive::Integer(val)) => match *op {
+                            OpArith::ADD => rhs,
+                            OpArith::SUB => Value::Primitive(match val.checked_neg() {
+                                Some(val) => Primitive::Integer(val),
+                                None => Primitive::Float((val as Float) * -1.),
+                            }),
+                            _ => return Err(hlir::Error::InvalidOp),
+                        },
+                        Value::Primitive(Primitive::Float(val)) => match *op {
+                            OpArith::ADD => rhs,
+                            OpArith::SUB => Value::Primitive(Primitive::Float(val * -1.)),
+                            _ => return Err(hlir::Error::InvalidOp),
+                        },
+                        _ => return Err(hlir::Error::TypeMismatch),
+                    })),
+                    Instruction::Variable(_) => todo!(),
+                    Instruction::Action(_) => todo!(),
+                    Instruction::Assign(_, _) => todo!(),
+                    Instruction::Symbol(_) => todo!(),
+                }
+            }
+            Op::Coefficient(_, _) => todo!(),
+            Op::Die(_) => todo!(),
         }
     }
 }

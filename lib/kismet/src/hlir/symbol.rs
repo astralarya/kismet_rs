@@ -5,7 +5,7 @@ use std::{
 
 use crate::ast::Id;
 
-use super::Value;
+use super::{Error, Value};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SymbolIdx {
@@ -29,6 +29,8 @@ impl SymbolIdx {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SymbolTable<V>(HashMap<Id, V>);
+
+pub type SymbolTableResult<U, V> = Result<(SymbolTable<U>, V), Error>;
 
 impl<V> SymbolTable<V>
 where

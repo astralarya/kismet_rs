@@ -1,32 +1,30 @@
-use crate::ast::Id;
+use crate::{ast::Id, types::Node};
 
-use super::{Error, Exec, SymbolTable};
+use super::{Error, Exec, SymbolTable, SymbolTableResult};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct BasicBlock<T, U, V>(Vec<Instruction<T, U, V>>);
+pub struct BasicBlock<T, U, V>(pub Vec<Node<Instruction<T, U, V>>>);
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Instruction<T, U, V> {
     Value(V),
     Variable(Id),
-    Action(T),
-    Assign(Id, Box<Instruction<T, U, V>>),
+    Action(Action<T, U, V>),
+    Assign(Id, Box<Node<Instruction<T, U, V>>>),
     Symbol(U),
 }
 
-pub struct Call<F, T, U, V> {
-    pub args: Vec<Instruction<T, U, V>>,
-    pub action: F,
+#[derive(Clone, Debug, PartialEq)]
+pub struct Action<T, U, V> {
+    pub args: Vec<Node<Instruction<T, U, V>>>,
+    pub kind: T,
 }
 
-pub type SymbolTableResult<U, V> = Result<(SymbolTable<U>, V), Error>;
-
-impl<F, T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for Call<F, T, U, V>
+impl<T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for Action<T, U, V>
 where
-    F: Exec<Vec<V>, V, Error>,
-    T: Exec<SymbolTable<U>, (SymbolTable<U>, V), Error>,
-    V: From<U> + Clone + Default,
-    U: From<V> + Clone + Default,
+    T: Exec<Vec<V>, V, Error>,
+    V: TryFrom<U, Error = Error> + Clone,
+    U: TryFrom<V, Error = Error> + Clone + Default,
 {
     fn exec(&self, i: SymbolTable<U>) -> SymbolTableResult<U, V> {
         let (i, args) = self.args.iter().fold(Ok((i, vec![])), |acc, val| {
@@ -35,15 +33,15 @@ where
             vec.push(val);
             Ok((i, vec))
         })?;
-        Ok((i, self.action.exec(args)?))
+        Ok((i, self.kind.exec(args)?))
     }
 }
 
 impl<T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for Instruction<T, U, V>
 where
-    T: Exec<SymbolTable<U>, (SymbolTable<U>, V), Error>,
-    V: From<U> + Clone,
-    U: From<V> + Clone + Default,
+    T: Exec<Vec<V>, V, Error>,
+    V: TryFrom<U, Error = Error> + Clone,
+    U: TryFrom<V, Error = Error> + Clone + Default,
 {
     fn exec(&self, i: SymbolTable<U>) -> SymbolTableResult<U, V> {
         match self {
@@ -51,24 +49,24 @@ where
             Self::Variable(key) => {
                 let mut i = i;
                 let val = i.get(key.clone());
-                Ok((i, V::from(val)))
+                Ok((i, V::try_from(val)?))
             }
             Self::Action(x) => x.exec(i),
             Self::Assign(key, val) => {
                 let (mut i, val) = val.exec(i)?;
-                i.set(key.clone(), U::from(val.clone()));
+                i.set(key.clone(), U::try_from(val.clone())?);
                 Ok((i, val))
             }
-            Self::Symbol(x) => Ok((i, V::from(x.clone()))),
+            Self::Symbol(x) => Ok((i, V::try_from(x.clone())?)),
         }
     }
 }
 
 impl<T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for BasicBlock<T, U, V>
 where
-    T: Exec<SymbolTable<U>, (SymbolTable<U>, V), Error>,
-    V: From<U> + Clone + Default,
-    U: From<V> + Clone + Default,
+    T: Exec<Vec<V>, V, Error>,
+    V: TryFrom<U, Error = Error> + Clone + Default,
+    U: TryFrom<V, Error = Error> + Clone + Default,
 {
     fn exec(&self, i: SymbolTable<U>) -> SymbolTableResult<U, V> {
         self.0.iter().fold(Ok((i, V::default())), move |acc, val| {

@@ -54,6 +54,13 @@ impl<S, T> BaseNode<S, T> {
     {
         BaseNode::new(val.span, T::from(*val.data))
     }
+
+    pub fn try_convert_from<U, E>(val: BaseNode<S, U>) -> Result<Self, E>
+    where
+        T: TryFrom<U, Error = E>,
+    {
+        Ok(BaseNode::new(val.span, T::try_from(*val.data)?))
+    }
 }
 
 impl<S, T> Deref for BaseNode<S, T> {

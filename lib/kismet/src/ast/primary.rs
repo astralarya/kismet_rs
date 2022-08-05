@@ -1,7 +1,10 @@
 use std::fmt;
 
 use super::{Args, Atom, Expr, Id};
-use crate::types::Node;
+use crate::{
+    hlir::{self, VInstruction},
+    types::Node,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Primary {
@@ -20,6 +23,19 @@ impl fmt::Display for Primary {
             }
             Self::Call(lhs, val) => write!(f, "{}({})", lhs, val),
             Self::Atom(val) => write!(f, "{}", val),
+        }
+    }
+}
+
+impl TryFrom<Primary> for VInstruction {
+    type Error = hlir::Error;
+
+    fn try_from(val: Primary) -> Result<Self, Self::Error> {
+        match val {
+            Primary::Attribute(_, _) => todo!(),
+            Primary::Subscription(_, _) => todo!(),
+            Primary::Call(_, _) => todo!(),
+            Primary::Atom(x) => VInstruction::try_from(x),
         }
     }
 }
