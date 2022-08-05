@@ -1,9 +1,6 @@
 use std::fmt;
 
-use crate::{
-    exec::{Primitive, Value},
-    types::{Float, Integer, Node, UInteger},
-};
+use crate::types::Node;
 
 use super::{Atom, Expr, Range};
 

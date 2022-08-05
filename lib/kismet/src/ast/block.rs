@@ -1,9 +1,6 @@
 use std::{fmt, ops::Deref};
 
-use crate::{
-    exec::{Instruction, Primitive, Program, Value},
-    types::Node,
-};
+use crate::types::Node;
 
 use super::Expr;
 

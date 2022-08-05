@@ -1,9 +1,6 @@
 use std::{fmt, ops::Deref};
 
-use crate::{
-    exec::{Instruction, Primitive, Value},
-    types::{Float, Integer, Node},
-};
+use crate::types::{Float, Integer, Node};
 
 use super::{CompIter, DictItem, DictItemComp, Expr, ListItem};
 

@@ -1,9 +1,6 @@
 use std::fmt;
 
-use crate::{
-    exec::{Instruction, Value},
-    types::{CommaList, Node},
-};
+use crate::types::{CommaList, Node};
 
 use super::{
     Atom, Branch, ExprEnclosure, Id, Loop, Op, Primary, Target, TargetExpr, TargetListItem,

@@ -1,7 +1,7 @@
 use std::fmt;
 
 use super::{Args, Atom, Expr, Id};
-use crate::{exec::Value, types::Node};
+use crate::types::Node;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Primary {

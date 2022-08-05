@@ -1,10 +1,6 @@
-use crate::{ast::Id, types::Node};
+use crate::ast::Id;
 
-use super::SymbolTable;
-
-pub trait Exec<T, U> {
-    fn exec(&self, i: T) -> U;
-}
+use super::{Exec, SymbolTable};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Program<T, U, V>(Vec<Instruction<T, U, V>>);
@@ -21,15 +17,6 @@ pub enum Instruction<T, U, V> {
 pub struct Call<F, T, U, V> {
     pub args: Vec<Instruction<T, U, V>>,
     pub action: F,
-}
-
-impl<T, U, V> Exec<U, V> for Node<T>
-where
-    T: Exec<U, V>,
-{
-    fn exec(&self, i: U) -> V {
-        self.data.exec(i)
-    }
 }
 
 impl<F, T, U, V> Exec<SymbolTable<U>, (SymbolTable<U>, V)> for Call<F, T, U, V>
