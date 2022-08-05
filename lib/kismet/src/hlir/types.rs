@@ -1,21 +1,8 @@
 use std::{collections::HashMap, fmt};
 
-use crate::{
-    ast::Id,
-    types::{Float, Integer},
-};
+use crate::ast::Id;
 
-#[derive(Clone, Default, Debug, PartialEq)]
-pub enum Primitive {
-    Boolean(bool),
-    Integer(Integer),
-    Float(Float),
-    String(String),
-    Null,
-    #[default]
-    Undefined,
-}
-
+use super::Primitive;
 #[derive(Clone, Debug, PartialEq)]
 pub enum Collection {
     Tuple(Vec<Value>),
@@ -92,19 +79,6 @@ impl fmt::Display for Collection {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
-        }
-    }
-}
-
-impl fmt::Display for Primitive {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &*self {
-            Self::Boolean(x) => write!(f, "{}", x),
-            Self::Integer(x) => write!(f, "{}", x),
-            Self::Float(x) => write!(f, "{}", x),
-            Self::String(x) => write!(f, "{}", x),
-            Self::Null => write!(f, "null"),
-            Self::Undefined => write!(f, "undefined"),
         }
     }
 }
