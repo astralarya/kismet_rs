@@ -68,7 +68,7 @@ impl TryFrom<Expr> for VInstruction {
             Expr::Function { args, block } => todo!(),
             Expr::Branch(_) => todo!(),
             Expr::Loop(_) => todo!(),
-            Expr::Op(x) => todo!(),
+            Expr::Op(x) => VInstruction::try_from(x),
             Expr::Primary(x) => VInstruction::try_from(x),
         }
     }
