@@ -1,9 +1,11 @@
+mod error;
 mod exec;
 mod op;
 mod program;
 mod symbol;
 mod types;
 
+pub use error::*;
 pub use exec::*;
 pub use op::*;
 pub use program::*;
