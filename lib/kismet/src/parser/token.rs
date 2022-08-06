@@ -6,7 +6,7 @@ use syn::{parse_str, LitFloat, LitInt, LitStr};
 
 use crate::{
     ast::Id,
-    types::{Float, Integer, Node, ONode},
+    types::{fmt_float, Float, Integer, Node, ONode},
 };
 
 use super::{Error, ErrorKind, Input, KResult};
@@ -502,9 +502,9 @@ impl fmt::Display for Token {
 impl fmt::Display for NumberKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            NumberKind::Float(value) => write!(f, "{}", value),
-            NumberKind::Integer(value) => write!(f, "{}", value),
-            NumberKind::Index(value) => write!(f, ".{}", value),
+            Self::Float(x) => fmt_float(f, x),
+            Self::Integer(x) => write!(f, "{}", x),
+            Self::Index(x) => write!(f, ".{}", x),
         }
     }
 }

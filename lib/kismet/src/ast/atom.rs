@@ -2,7 +2,7 @@ use std::{fmt, ops::Deref};
 
 use crate::{
     hlir::{self, Primitive, VInstruction, Value},
-    types::{Float, Integer, Node},
+    types::{fmt_float, Float, Integer, Node},
 };
 
 use super::{CompIter, DictItem, DictItemComp, Expr, ListItem};
@@ -75,7 +75,7 @@ impl fmt::Display for Atom {
                 write!(f, "({} {})", val, Node::join(&iter, " "))
             }
             Self::String(val) => write!(f, r#""{}""#, val),
-            Self::Float(val) => write!(f, "{}", val),
+            Self::Float(val) => fmt_float(f, val),
             Self::Integer(val) => write!(f, "{}", val),
             Self::Id(val) => write!(f, "{}", val),
         }
