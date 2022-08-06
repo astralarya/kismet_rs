@@ -73,6 +73,17 @@ pub fn token_tag_id<'input>(input: Input<'input>) -> KResult<'input, Node<Id>> {
     }
 }
 
+pub fn token_tag_idx<'input>(input: Input<'input>) -> KResult<'input, Node<usize>> {
+    let (tail, head) = token(input)?;
+    match &*head.data {
+        Token::Number(NumberKind::Index(val)) => Ok((tail, Node::new(head.span, *val))),
+        _ => Err(Err::Error(ONode::new(
+            head.span,
+            Error::Error(ErrorKind::Predicate),
+        ))),
+    }
+}
+
 pub fn token_tag<'input>(
     tag: Token,
 ) -> impl Fn(Input<'input>) -> KResult<'input, &'input Node<Token>> {
@@ -231,11 +242,7 @@ pub enum Token {
     String(String),
 
     #[regex(r"[[:digit:]][[:digit:]_]*", Token::parse_number(false, false))]
-    #[regex(r"\.0[[:digit:]_]*", Token::parse_number(true, false))]
-    #[regex(
-        r"\.[[:digit:]][[:digit:]_]*[eE][+-]?_*[[:digit:]][[:digit:]_]*",
-        Token::parse_number(true, true)
-    )]
+    #[regex(r"\.[[:digit:]][[:digit:]_]*", Token::parse_number(true, false))]
     #[regex(r"0b[0-1_]*", Token::parse_int)]
     #[regex(r"0o[0-7_]*", Token::parse_int)]
     #[regex(r"0x[[:xdigit:]_]*", Token::parse_int)]
@@ -256,8 +263,9 @@ pub enum Token {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum NumberKind {
-    Integer(Integer),
     Float(Float),
+    Integer(Integer),
+    Index(usize),
 }
 
 impl Token {
@@ -301,10 +309,33 @@ impl Token {
                     }
                 }
             }
-            match dot || exp {
-                true => Self::parse_float(t),
-                false => Self::parse_int(t),
+            match (dot, exp) {
+                (false, false) => Self::parse_int(t),
+                (true, false) => Self::parse_idx(t),
+                _ => Self::parse_float(t),
             }
+        }
+    }
+
+    fn parse_idx(t: &mut Lexer<Token>) -> Result<NumberKind, ()> {
+        let mut iter = t.slice().split(".");
+        let trunc = iter.next();
+        let frac = iter.next();
+        match (trunc, frac) {
+            (Some(""), Some(frac)) => match parse_str::<LitInt>(frac) {
+                Ok(n) => match n.base10_parse::<Integer>() {
+                    Ok(i) => {
+                        let mag = (i as Float).log10().ceil() as usize;
+                        match mag == frac.len() {
+                            true => Ok(NumberKind::Index(i as usize)),
+                            false => Self::parse_float(t),
+                        }
+                    }
+                    Err(_) => Err(()),
+                },
+                Err(_) => Self::parse_float(t),
+            },
+            _ => Self::parse_float(t),
         }
     }
 
@@ -473,6 +504,7 @@ impl fmt::Display for NumberKind {
         match self {
             NumberKind::Float(value) => write!(f, "{}", value),
             NumberKind::Integer(value) => write!(f, "{}", value),
+            NumberKind::Index(value) => write!(f, ".{}", value),
         }
     }
 }
