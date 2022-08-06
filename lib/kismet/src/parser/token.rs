@@ -230,7 +230,12 @@ pub enum Token {
     #[regex("r#*\"", Token::parse_rawstring)]
     String(String),
 
-    #[regex(r"[[:digit:]][[:digit:]_]*", Token::parse_number)]
+    #[regex(r"[[:digit:]][[:digit:]_]*", Token::parse_number(false, false))]
+    #[regex(r"\.0[[:digit:]_]*", Token::parse_number(true, false))]
+    #[regex(
+        r"\.[[:digit:]][[:digit:]_]*[eE][+-]?_*[[:digit:]][[:digit:]_]*",
+        Token::parse_number(true, true)
+    )]
     #[regex(r"0b[0-1_]*", Token::parse_int)]
     #[regex(r"0o[0-7_]*", Token::parse_int)]
     #[regex(r"0x[[:xdigit:]_]*", Token::parse_int)]
@@ -260,7 +265,7 @@ impl Token {
         t.slice().to_string()
     }
 
-    fn parse_number(t: &mut Lexer<Token>) -> Result<NumberKind, ()> {
+    fn parse_number(dot: bool, exp: bool) -> impl Fn(&mut Lexer<Token>) -> Result<NumberKind, ()> {
         #[derive(Logos, Debug, PartialEq)]
         enum Part<'input> {
             #[regex(r"\.([[:digit:]][[:digit:]_]*)?")]
@@ -277,27 +282,29 @@ impl Token {
             Error,
         }
 
-        let mut dot = false;
-        let mut exp = false;
-        for token in Part::lexer(&t.remainder()) {
-            match (token, dot, exp) {
-                (Part::Dot(s), false, _) => {
-                    t.bump(s.len());
-                    dot = true;
-                }
-                (Part::Exponent(s), _, false) => {
-                    t.bump(s.len());
-                    exp = true;
-                    dot = false;
-                }
-                _ => {
-                    break;
+        move |t| {
+            let mut dot = dot;
+            let mut exp = exp;
+            for token in Part::lexer(&t.remainder()) {
+                match (token, dot, exp) {
+                    (Part::Dot(s), false, _) => {
+                        t.bump(s.len());
+                        dot = true;
+                    }
+                    (Part::Exponent(s), _, false) => {
+                        t.bump(s.len());
+                        exp = true;
+                        dot = false;
+                    }
+                    _ => {
+                        break;
+                    }
                 }
             }
-        }
-        match dot || exp {
-            true => Self::parse_float(t),
-            false => Self::parse_int(t),
+            match dot || exp {
+                true => Self::parse_float(t),
+                false => Self::parse_int(t),
+            }
         }
     }
 
@@ -312,7 +319,7 @@ impl Token {
     }
 
     fn parse_float(t: &mut Lexer<Token>) -> Result<NumberKind, ()> {
-        match parse_str::<LitFloat>(t.slice()) {
+        match parse_str::<LitFloat>(format!("0{}", t.slice()).as_str()) {
             Ok(n) => match n.base10_parse::<Float>() {
                 Ok(i) => Ok(NumberKind::Float(i)),
                 Err(_) => Err(()),
