@@ -10,7 +10,7 @@ pub enum Instruction<T, U, V> {
     Value(V),
     Variable(Id),
     Action(Action<T, U, V>),
-    Assign(Id, Box<Node<Instruction<T, U, V>>>),
+    Assign(Id, Node<Instruction<T, U, V>>),
     Symbol(U),
 }
 
