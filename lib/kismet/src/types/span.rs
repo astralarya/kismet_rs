@@ -1,10 +1,9 @@
 use std::{
     cmp::{max, min},
-    ops::{self, Index, Range, RangeFrom, RangeFull, RangeTo},
+    ops::{Add, Index, Range, RangeFrom, RangeFull, RangeTo},
 };
 
 use nom::Err;
-use overload::overload;
 
 use crate::parser::ErrorKind;
 
@@ -152,28 +151,168 @@ impl Index<RangeFull> for Span {
     }
 }
 
-overload!((l: ?Span) + (r: ?Span) -> Span {
-    Span::new(min(l.start, r.start)..max(l.end, r.end))
-});
+impl Add<Span> for Span {
+    type Output = Span;
 
-overload!((l: ?Span) + (r: ?Option<Span>) -> Span {
-    match r {
-        Some(span) => l + span,
-        None => l.clone(),
+    fn add(self, rhs: Span) -> Self::Output {
+        Span::new(min(self.start, rhs.start)..max(self.end, rhs.end))
     }
-});
+}
 
-overload!((l: ?Option<Span>) + (r: ?Span) -> Span {
-    r + l
-});
+impl Add<&Span> for Span {
+    type Output = Span;
 
-overload!((l: ?Span) + (r: ?Option<&Span>) -> Span {
-    match r {
-        Some(span) => l + span.clone(),
-        None => l.clone(),
+    fn add(self, rhs: &Span) -> Self::Output {
+        self + *rhs
     }
-});
+}
 
-overload!((l: ?Option<&Span>) + (r: ?Span) -> Span {
-    r + l
-});
+impl Add<Span> for &Span {
+    type Output = Span;
+
+    fn add(self, rhs: Span) -> Self::Output {
+        *self + rhs
+    }
+}
+
+impl Add<&Span> for &Span {
+    type Output = Span;
+
+    fn add(self, rhs: &Span) -> Self::Output {
+        *self + *rhs
+    }
+}
+
+impl Add<Option<Span>> for Span {
+    type Output = Span;
+
+    fn add(self, rhs: Option<Span>) -> Self::Output {
+        match rhs {
+            Some(span) => self + span,
+            None => self,
+        }
+    }
+}
+
+impl Add<&Option<Span>> for Span {
+    type Output = Span;
+
+    fn add(self, rhs: &Option<Span>) -> Self::Output {
+        self + *rhs
+    }
+}
+
+impl Add<Option<Span>> for &Span {
+    type Output = Span;
+
+    fn add(self, rhs: Option<Span>) -> Self::Output {
+        *self + rhs
+    }
+}
+
+impl Add<&Option<Span>> for &Span {
+    type Output = Span;
+
+    fn add(self, rhs: &Option<Span>) -> Self::Output {
+        *self + *rhs
+    }
+}
+
+impl Add<Span> for Option<Span> {
+    type Output = Span;
+
+    fn add(self, rhs: Span) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl Add<&Span> for Option<Span> {
+    type Output = Span;
+
+    fn add(self, rhs: &Span) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl Add<Span> for &Option<Span> {
+    type Output = Span;
+
+    fn add(self, rhs: Span) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl Add<&Span> for &Option<Span> {
+    type Output = Span;
+
+    fn add(self, rhs: &Span) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl Add<Option<&Span>> for Span {
+    type Output = Span;
+
+    fn add(self, rhs: Option<&Span>) -> Self::Output {
+        match rhs {
+            Some(span) => self + span,
+            None => self,
+        }
+    }
+}
+
+impl Add<&Option<&Span>> for Span {
+    type Output = Span;
+
+    fn add(self, rhs: &Option<&Span>) -> Self::Output {
+        self + *rhs
+    }
+}
+
+impl Add<Option<&Span>> for &Span {
+    type Output = Span;
+
+    fn add(self, rhs: Option<&Span>) -> Self::Output {
+        *self + rhs
+    }
+}
+
+impl Add<&Option<&Span>> for &Span {
+    type Output = Span;
+
+    fn add(self, rhs: &Option<&Span>) -> Self::Output {
+        *self + *rhs
+    }
+}
+
+impl Add<Span> for Option<&Span> {
+    type Output = Span;
+
+    fn add(self, rhs: Span) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl Add<&Span> for Option<&Span> {
+    type Output = Span;
+
+    fn add(self, rhs: &Span) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl Add<Span> for &Option<&Span> {
+    type Output = Span;
+
+    fn add(self, rhs: Span) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl Add<&Span> for &Option<&Span> {
+    type Output = Span;
+
+    fn add(self, rhs: &Span) -> Self::Output {
+        rhs + self
+    }
+}
