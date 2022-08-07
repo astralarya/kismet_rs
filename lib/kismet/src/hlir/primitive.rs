@@ -2,6 +2,8 @@ use std::fmt;
 
 use crate::types::{fmt_float, Float, Integer};
 
+use super::Value;
+
 #[derive(Clone, Default, Debug, PartialEq)]
 pub enum Primitive {
     Boolean(bool),
