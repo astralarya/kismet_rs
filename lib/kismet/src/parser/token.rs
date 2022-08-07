@@ -27,10 +27,9 @@ impl Iterator for TokenIterator<'_> {
     type Item = Node<Token>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.iter.next() {
-            Some((token, range)) => Some(Node::new(range, token)),
-            None => None,
-        }
+        self.iter
+            .next()
+            .map(|(token, range)| Node::new(range, token))
     }
 }
 
@@ -62,7 +61,7 @@ where
     }
 }
 
-pub fn token_tag_id<'input>(input: Input<'input>) -> KResult<'input, Node<Id>> {
+pub fn token_tag_id(input: Input) -> KResult<Node<Id>> {
     let (tail, head) = token(input)?;
     match &*head.data {
         Token::Id(val) => Ok((tail, Node::new(head.span, Id(val.clone())))),
@@ -73,7 +72,7 @@ pub fn token_tag_id<'input>(input: Input<'input>) -> KResult<'input, Node<Id>> {
     }
 }
 
-pub fn token_tag_idx<'input>(input: Input<'input>) -> KResult<'input, Node<usize>> {
+pub fn token_tag_idx(input: Input) -> KResult<Node<usize>> {
     let (tail, head) = token(input)?;
     match &*head.data {
         Token::Number(NumberKind::Index(val)) => Ok((tail, Node::new(head.span, *val))),
@@ -293,7 +292,7 @@ impl Token {
         move |t| {
             let mut dot = dot;
             let mut exp = exp;
-            for token in Part::lexer(&t.remainder()) {
+            for token in Part::lexer(t.remainder()) {
                 match (token, dot, exp) {
                     (Part::Dot(s), false, _) => {
                         t.bump(s.len());
@@ -318,7 +317,7 @@ impl Token {
     }
 
     fn parse_idx(t: &mut Lexer<Token>) -> Result<NumberKind, ()> {
-        let mut iter = t.slice().split(".");
+        let mut iter = t.slice().split('.');
         let trunc = iter.next();
         let frac = iter.next();
         match (trunc, frac) {
@@ -376,7 +375,7 @@ impl Token {
             Error,
         }
 
-        for token in Part::lexer(&t.remainder()) {
+        for token in Part::lexer(t.remainder()) {
             match token {
                 Part::Quote => {
                     t.bump(1);
@@ -412,7 +411,7 @@ impl Token {
 
         let guard = t.span().end - t.span().start - 2;
         let mut signal: Option<usize> = None;
-        for token in Part::lexer(&t.remainder()) {
+        for token in Part::lexer(t.remainder()) {
             match token {
                 Part::Quote => {
                     t.bump(1);
@@ -451,7 +450,7 @@ impl Token {
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::DELIM => write!(f, "\n"),
+            Self::DELIM => write!(f, ";"),
             Self::COMMA => write!(f, ","),
             Self::COLON => write!(f, ":"),
             Self::ASSIGN => write!(f, "="),

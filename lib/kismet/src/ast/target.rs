@@ -152,9 +152,9 @@ where
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Id(val) => write!(f, "{}", val),
-            Self::TargetTuple(val) => write!(f, "({})", Node::join1(&val, ", ", ",")),
-            Self::TargetList(val) => write!(f, "[{}]", Node::join(&val, ", ")),
-            Self::TargetDict(val) => write!(f, "{{{}}}", Node::join(&val, ", ")),
+            Self::TargetTuple(val) => write!(f, "({})", Node::join1(val, ", ", ",")),
+            Self::TargetList(val) => write!(f, "[{}]", Node::join(val, ", ")),
+            Self::TargetDict(val) => write!(f, "{{{}}}", Node::join(val, ", ")),
         }
     }
 }
@@ -217,14 +217,12 @@ impl TryFrom<Node<Atom>> for Node<Target> {
 
     fn try_from(val: Node<Atom>) -> Result<Self, Self::Error> {
         fn list_item(val: Node<ListItem>) -> Result<Node<TargetListItem<Target>>, ()> {
-            let (val, node): (
-                Node<Expr>,
-                &dyn Fn(Node<Target>) -> Node<TargetListItem<Target>>,
-            ) = match *val.data {
+            type NewTargetListItem<'a> = &'a dyn Fn(Node<Target>) -> Node<TargetListItem<Target>>;
+            let (val, node): (Node<Expr>, NewTargetListItem) = match *val.data {
                 ListItem::Expr(y) => (Node::new(val.span, y), &|x: Node<Target>| {
                     Node::new(x.span, TargetListItem::Target(*x.data))
                 }),
-                ListItem::Spread(x) => (x.clone(), &|x: Node<Target>| {
+                ListItem::Spread(x) => (x, &|x: Node<Target>| {
                     Node::new(x.span, TargetListItem::Spread(x))
                 }),
             };
@@ -233,7 +231,7 @@ impl TryFrom<Node<Atom>> for Node<Target> {
         }
 
         match *val.data {
-            Atom::Id(x) => Ok(Node::new(val.span, Target(TargetKind::Id(Id(x.clone()))))),
+            Atom::Id(x) => Ok(Node::new(val.span, Target(TargetKind::Id(Id(x))))),
             Atom::Paren(x) => {
                 let x = list_item(x)?;
                 Ok(Node::new(

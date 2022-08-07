@@ -12,11 +12,11 @@ use crate::{
 
 use super::{expr, literal, token_tag, token_tag_id, Input, KResult, Token};
 
-pub fn target<'input>(i: Input<'input>) -> KResult<'input, Node<Target>> {
+pub fn target(i: Input) -> KResult<Node<Target>> {
     map(target_kind(&target), |x| Node::convert(Target, x))(i)
 }
 
-pub fn target_expr<'input>(i: Input<'input>) -> KResult<'input, Node<TargetExpr>> {
+pub fn target_expr(i: Input) -> KResult<Node<TargetExpr>> {
     let (i, tar) = target_kind(&target_expr)(i)?;
     let (i, val) = opt(preceded(token_tag(Token::ASSIGN), expr))(i)?;
     match val {
@@ -28,7 +28,7 @@ pub fn target_expr<'input>(i: Input<'input>) -> KResult<'input, Node<TargetExpr>
     }
 }
 
-pub fn target_match<'input>(i: Input<'input>) -> KResult<'input, Node<Match>> {
+pub fn target_match(i: Input) -> KResult<Node<Match>> {
     alt((
         map(target_kind(&target_match), |x| {
             Node::convert(Match::Target, x)
@@ -53,7 +53,7 @@ where
     }
 }
 
-pub fn target_id<'input, T>(i: Input<'input>) -> KResult<'input, Node<TargetKind<T>>> {
+pub fn target_id<T>(i: Input) -> KResult<Node<TargetKind<T>>> {
     map(token_tag_id, |x| Node::convert(TargetKind::Id, x))(i)
 }
 

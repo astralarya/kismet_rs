@@ -19,11 +19,11 @@ use super::{
     ConvertKind, Error, ErrorKind, Input, KResult, Token,
 };
 
-pub fn enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
+pub fn enclosure(i: Input) -> KResult<Node<Atom>> {
     alt((parens, brackets, brace))(i)
 }
 
-pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
+pub fn parens(i: Input) -> KResult<Node<Atom>> {
     let open = &token_tag(Token::LPAREN);
     let close = &token_tag(Token::RPAREN);
     let separator = &token_tag(Token::COMMA);
@@ -62,7 +62,7 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     let (i, vals) = loop {
         let (i, vals) = (_i, _vals);
         let (i, sep) = opt(separator)(i)?;
-        if let None = sep {
+        if sep.is_none() {
             break (i, vals);
         }
 
@@ -78,7 +78,7 @@ pub fn parens<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     Ok((i, Node::new(lhs.span + rhs.span, Atom::Tuple(vals))))
 }
 
-pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
+pub fn brackets(i: Input) -> KResult<Node<Atom>> {
     let open = &token_tag(Token::LBRACKET);
     let close = &token_tag(Token::RBRACKET);
     let separator = &token_tag(Token::COMMA);
@@ -115,7 +115,7 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     let (i, vals) = loop {
         let (i, vals) = (_i, _vals);
         let (i, sep) = opt(separator)(i)?;
-        if let None = sep {
+        if sep.is_none() {
             break (i, vals);
         }
 
@@ -131,7 +131,7 @@ pub fn brackets<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     Ok((i, Node::new(lhs.span + rhs.span, Atom::ListDisplay(vals))))
 }
 
-pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
+pub fn list_item(i: Input) -> KResult<Node<ListItem>> {
     let (i, lhs) = opt(token_tag(Token::SPREAD))(i)?;
 
     let (i, val) = match expr(i) {
@@ -141,7 +141,7 @@ pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
             match *val.data {
                 Error::Convert(i, ConvertKind::TargetKindExpr(val)) => {
                     let (i, ass) = opt(token_tag(Token::ASSIGN))(i)?;
-                    if let Some(_) = ass {
+                    if ass.is_some() {
                         let (i, rhs) = expr(i)?;
                         return Err(Err::Failure(ONode::new(
                             span,
@@ -210,11 +210,11 @@ pub fn list_item<'input>(i: Input<'input>) -> KResult<'input, Node<ListItem>> {
     }
 }
 
-pub fn target_tuple_result<'input, T>(
+pub fn target_tuple_result<T>(
     lhs_span: Span,
     vals: Vec<Node<ListItem>>,
-    result: KResult<'input, T>,
-) -> KResult<'input, (Vec<Node<ListItem>>, T)> {
+    result: KResult<T>,
+) -> KResult<(Vec<Node<ListItem>>, T)> {
     let kind = TargetKind::TargetTuple;
     let separator = token_tag(Token::COMMA);
     let close = token_tag(Token::RPAREN);
@@ -227,7 +227,7 @@ pub fn target_tuple_result<'input, T>(
                 Error::Convert(i, ConvertKind::TargetListItemExpr(val)) => {
                     let vals = vals
                         .iter()
-                        .map(|x| Node::<TargetListItem<TargetExpr>>::try_from(x))
+                        .map(Node::<TargetListItem<TargetExpr>>::try_from)
                         .collect::<Result<Vec<_>, _>>();
                     let mut vals = match vals {
                         Ok(vals) => vals,
@@ -257,18 +257,18 @@ pub fn target_tuple_result<'input, T>(
                         ),
                     )));
                 }
-                _ => return Err(Err::Failure(val)),
+                _ => Err(Err::Failure(val)),
             }
         }
-        Err(e) => return Err(e),
+        Err(e) => Err(e),
     }
 }
 
-pub fn target_list_result<'input, T>(
+pub fn target_list_result<T>(
     lhs_span: Span,
     vals: Vec<Node<ListItem>>,
-    result: KResult<'input, T>,
-) -> KResult<'input, (Vec<Node<ListItem>>, T)> {
+    result: KResult<T>,
+) -> KResult<(Vec<Node<ListItem>>, T)> {
     let kind = TargetKind::TargetList;
     let separator = token_tag(Token::COMMA);
     let close = token_tag(Token::RBRACKET);
@@ -281,7 +281,7 @@ pub fn target_list_result<'input, T>(
                 Error::Convert(i, ConvertKind::TargetListItemExpr(val)) => {
                     let vals = vals
                         .iter()
-                        .map(|x| Node::<TargetListItem<TargetExpr>>::try_from(x))
+                        .map(Node::<TargetListItem<TargetExpr>>::try_from)
                         .collect::<Result<Vec<_>, _>>();
                     let mut vals = match vals {
                         Ok(vals) => vals,
@@ -311,14 +311,14 @@ pub fn target_list_result<'input, T>(
                         ),
                     )));
                 }
-                _ => return Err(Err::Failure(val)),
+                _ => Err(Err::Failure(val)),
             }
         }
-        Err(e) => return Err(e),
+        Err(e) => Err(e),
     }
 }
 
-pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
+pub fn brace(i: Input) -> KResult<Node<Atom>> {
     let open = &token_tag(Token::LBRACE);
     let close = &token_tag(Token::RBRACE);
     let separator = &token_tag(Token::COMMA);
@@ -390,7 +390,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     let (i, vals) = loop {
         let (i, vals) = (_i, _vals);
         let (i, sep) = opt(separator)(i)?;
-        if let None = sep {
+        if sep.is_none() {
             break (i, vals);
         }
 
@@ -419,7 +419,7 @@ pub fn brace<'input>(i: Input<'input>) -> KResult<'input, Node<Atom>> {
     Ok((i, Node::new(lhs.span + rhs.span, Atom::DictDisplay(vals))))
 }
 
-pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
+pub fn dict_item(i: Input) -> KResult<Node<DictItem>> {
     let (i, lhs) = opt(token_tag(Token::LBRACKET))(i)?;
     if let Some(lhs) = lhs {
         let (i, key) = expr(i)?;
@@ -440,7 +440,7 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
             match *val.data {
                 Error::Convert(i, ConvertKind::TargetKindExpr(val)) => {
                     let (i, ass) = opt(token_tag(Token::ASSIGN))(i)?;
-                    if let Some(_) = ass {
+                    if ass.is_some() {
                         let (i, rhs) = expr(i)?;
                         return Err(Err::Failure(ONode::new(
                             span,
@@ -559,29 +559,25 @@ pub fn dict_item<'input>(i: Input<'input>) -> KResult<'input, Node<DictItem>> {
                 )));
             }
             None => match val {
-                Some(val) => {
-                    return Ok((
-                        i,
-                        Node::new(key.span + val.span, DictItem::KeyVal { key, val }),
-                    ))
-                }
-                None => return Ok((i, Node::convert(DictItem::Shorthand, key))),
+                Some(val) => Ok((
+                    i,
+                    Node::new(key.span + val.span, DictItem::KeyVal { key, val }),
+                )),
+                None => Ok((i, Node::convert(DictItem::Shorthand, key))),
             },
         },
-        Err(_) => {
-            return Err(Err::Failure(ONode::new(
-                key.span,
-                Error::Error(ErrorKind::Grammar),
-            )))
-        }
+        Err(_) => Err(Err::Failure(ONode::new(
+            key.span,
+            Error::Error(ErrorKind::Grammar),
+        ))),
     }
 }
 
-pub fn target_dict_result<'input, T>(
+pub fn target_dict_result<T>(
     lhs_span: Span,
     vals: Vec<Node<DictItem>>,
-    result: KResult<'input, T>,
-) -> KResult<'input, (Vec<Node<DictItem>>, T)> {
+    result: KResult<T>,
+) -> KResult<(Vec<Node<DictItem>>, T)> {
     let separator = token_tag(Token::COMMA);
     let close = token_tag(Token::RBRACE);
 
@@ -593,7 +589,7 @@ pub fn target_dict_result<'input, T>(
                 Error::Convert(i, ConvertKind::TargetDictItemExpr(val)) => {
                     let vals = vals
                         .iter()
-                        .map(|x| Node::<TargetDictItem<TargetExpr>>::try_from(x))
+                        .map(Node::<TargetDictItem<TargetExpr>>::try_from)
                         .collect::<Result<Vec<_>, _>>();
                     let mut vals = match vals {
                         Ok(vals) => vals,
@@ -626,14 +622,14 @@ pub fn target_dict_result<'input, T>(
                         ),
                     )));
                 }
-                _ => return Err(Err::Failure(val)),
+                _ => Err(Err::Failure(val)),
             }
         }
-        Err(e) => return Err(e),
+        Err(e) => Err(e),
     }
 }
 
-pub fn comp_for<'input>(i: Input<'input>) -> KResult<'input, Node<CompIter>> {
+pub fn comp_for(i: Input) -> KResult<Node<CompIter>> {
     let (i, lhs) = token_tag(Token::FOR)(i)?;
     let (i, tar) = target(i)?;
     let (i, _) = token_tag(Token::IN)(i)?;
@@ -644,7 +640,7 @@ pub fn comp_for<'input>(i: Input<'input>) -> KResult<'input, Node<CompIter>> {
     ))
 }
 
-pub fn comp_if<'input>(i: Input<'input>) -> KResult<'input, Node<CompIter>> {
+pub fn comp_if(i: Input) -> KResult<Node<CompIter>> {
     let (i, lhs) = token_tag(Token::IF)(i)?;
     let (i, val) = or_test(i)?;
     Ok((i, Node::new(lhs.span + val.span, CompIter::If(val))))

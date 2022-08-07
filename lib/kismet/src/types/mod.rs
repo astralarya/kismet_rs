@@ -20,7 +20,7 @@ pub fn fmt_float(f: &mut fmt::Formatter<'_>, x: &Float) -> fmt::Result {
         write!(f, "{:e}", x)
     } else {
         let s = x.to_string();
-        let mut s = s.split(".");
+        let mut s = s.split('.');
         let fract = s.nth(1);
         match fract {
             Some(fract) => write!(f, "{}.{}", x.trunc(), fract),

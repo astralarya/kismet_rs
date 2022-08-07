@@ -16,7 +16,7 @@ pub struct Span {
     pub end: usize,
 }
 
-impl<'input> From<Range<usize>> for Span {
+impl From<Range<usize>> for Span {
     fn from(input: Range<usize>) -> Self {
         Span::new(input.start..input.end)
     }
@@ -43,38 +43,28 @@ impl Span {
     }
 
     pub fn slice<T: SliceSpan>(&self, range: T) -> Self {
-        range.slice_span(&self)
-    }
-
-    pub fn len(&self) -> usize {
-        self.end - self.start
+        range.slice_span(self)
     }
 
     pub fn option<'input, T>(val: &'input Option<T>) -> Option<Span>
     where
         Span: From<&'input T>,
     {
-        match val {
-            Some(val) => Some(Span::from(val)),
-            None => None,
-        }
+        val.as_ref().map(Span::from)
     }
 
     pub fn option_ref<'input, T>(val: &'input Option<&'input T>) -> Option<Span>
     where
         Span: From<&'input T>,
     {
-        match val {
-            Some(val) => Some(Span::from(val)),
-            None => None,
-        }
+        val.as_ref().map(|val| Span::from(val))
     }
 
     pub fn add_option(lhs: Option<Span>, rhs: Option<Span>) -> Option<Span> {
         match (lhs, rhs) {
             (Some(l), Some(r)) => Some(l + r),
-            (Some(l), None) => Some(l.clone()),
-            (None, Some(r)) => Some(r.clone()),
+            (Some(l), None) => Some(l),
+            (None, Some(r)) => Some(r),
             (None, None) => None,
         }
     }
@@ -82,51 +72,47 @@ impl Span {
     pub fn add_option_ref(lhs: Option<&Span>, rhs: Option<&Span>) -> Option<Span> {
         match (lhs, rhs) {
             (Some(l), Some(r)) => Some(l + r),
-            (Some(l), None) => Some(l.clone()),
-            (None, Some(r)) => Some(r.clone()),
+            (Some(l), None) => Some(*l),
+            (None, Some(r)) => Some(*r),
             (None, None) => None,
         }
     }
 
-    pub fn reduce<'input, T>(vec: &'input Vec<T>) -> Option<Span>
+    pub fn reduce<'input, T>(vec: &'input [T]) -> Option<Span>
     where
         Span: From<&'input T>,
     {
-        vec.into_iter()
+        vec.iter().map(Span::from).reduce(|acc, next| acc + next)
+    }
+
+    pub fn reduce_ok<'input, T>(vec: &'input [T]) -> Result<Span, Err<ONode<ErrorKind>>>
+    where
+        Span: From<&'input T>,
+    {
+        Self::reduce(vec).ok_or_else(|| Err::Failure(ONode::new(None, ErrorKind::Runtime)))
+    }
+
+    pub fn reduce_ref<'input, T>(vec: &'input [&'input T]) -> Option<Span>
+    where
+        Span: From<&'input T>,
+    {
+        vec.iter()
             .map(|x| Span::from(x))
             .reduce(|acc, next| acc + next)
     }
 
-    pub fn reduce_ok<'input, T>(vec: &'input Vec<T>) -> Result<Span, Err<ONode<ErrorKind>>>
+    pub fn reduce_ref_ok<'input, T>(vec: &'input [&'input T]) -> Result<Span, Err<ONode<ErrorKind>>>
     where
         Span: From<&'input T>,
     {
-        Self::reduce(vec).ok_or(Err::Failure(ONode::new(None, ErrorKind::Runtime)))
-    }
-
-    pub fn reduce_ref<'input, T>(vec: &'input Vec<&'input T>) -> Option<Span>
-    where
-        Span: From<&'input T>,
-    {
-        vec.into_iter()
-            .map(|x| Span::from(x))
-            .reduce(|acc, next| acc + next)
-    }
-
-    pub fn reduce_ref_ok<'input, T>(
-        vec: &'input Vec<&'input T>,
-    ) -> Result<Span, Err<ONode<ErrorKind>>>
-    where
-        Span: From<&'input T>,
-    {
-        Self::reduce_ref(vec).ok_or(Err::Failure(ONode::new(None, ErrorKind::Runtime)))
+        Self::reduce_ref(vec).ok_or_else(|| Err::Failure(ONode::new(None, ErrorKind::Runtime)))
     }
 
     pub fn get0<'input, T>(input: &'input [T]) -> Option<Span>
     where
         Span: From<&'input T>,
     {
-        input.get(0).map(|x| Span::from(x))
+        input.get(0).map(Span::from)
     }
 }
 
@@ -162,7 +148,7 @@ impl Index<RangeFull> for Span {
     type Output = Span;
 
     fn index(&self, _: RangeFull) -> &Self::Output {
-        &self
+        self
     }
 }
 

@@ -65,7 +65,7 @@ impl TryFrom<Expr> for VInstruction {
     fn try_from(val: Expr) -> Result<Self, Self::Error> {
         match val {
             Expr::Assign(_, _) => todo!(),
-            Expr::Function { args, block } => todo!(),
+            Expr::Function { args: _, block: _ } => todo!(),
             Expr::Branch(_) => todo!(),
             Expr::Loop(_) => todo!(),
             Expr::Op(x) => VInstruction::try_from(x),

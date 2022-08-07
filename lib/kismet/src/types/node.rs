@@ -72,7 +72,7 @@ impl<S, T> Deref for BaseNode<S, T> {
 }
 
 impl<N, T: std::fmt::Display> BaseNode<N, T> {
-    pub fn join(nodes: &Vec<Node<T>>, delim: &'static str) -> String {
+    pub fn join(nodes: &[Node<T>], delim: &'static str) -> String {
         nodes
             .iter()
             .map(|node| node.to_string())
@@ -80,7 +80,7 @@ impl<N, T: std::fmt::Display> BaseNode<N, T> {
             .join(delim)
     }
 
-    pub fn join1(nodes: &Vec<Node<T>>, delim: &'static str, delim1: &'static str) -> String {
+    pub fn join1(nodes: &[Node<T>], delim: &'static str, delim1: &'static str) -> String {
         format!(
             "{}{}",
             Self::join(nodes, delim),

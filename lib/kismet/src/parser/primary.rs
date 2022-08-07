@@ -12,7 +12,7 @@ use crate::{
 
 use super::{atom, expr, token_tag, token_tag_id, token_tag_idx, Input, KResult, Token};
 
-pub fn primary<'input>(i: Input<'input>) -> KResult<'input, Node<Primary>> {
+pub fn primary(i: Input) -> KResult<Node<Primary>> {
     let (i, lhs) = opt(token_tag_idx)(i)?;
     let (mut i, mut iter) = match lhs {
         Some(lhs) => (
@@ -51,10 +51,10 @@ pub fn primary_iter<'input>(
             map(tuple_index, |val| {
                 Node::new(iter.span + val.span, Primary::Index(iter.clone(), val))
             }),
-            map(subscription, |(lhs, val, rhs)| {
+            map(subscription, |val| {
                 Node::new(
-                    lhs.span + rhs.span,
-                    Primary::Subscription(iter.clone(), val),
+                    iter.span + val.span,
+                    Primary::Subscription(iter.clone(), *val.data),
                 )
             }),
             map(call, |val| {
@@ -64,25 +64,26 @@ pub fn primary_iter<'input>(
     }
 }
 
-pub fn attribute<'input>(i: Input<'input>) -> KResult<'input, Node<Id>> {
+pub fn attribute(i: Input) -> KResult<Node<Id>> {
     preceded(token_tag(Token::DOT), token_tag_id)(i)
 }
 
-pub fn tuple_index<'input>(i: Input<'input>) -> KResult<'input, Node<usize>> {
+pub fn tuple_index(i: Input) -> KResult<Node<usize>> {
     token_tag_idx(i)
 }
 
-pub fn subscription<'input>(
-    i: Input<'input>,
-) -> KResult<'input, (&Node<Token>, Vec<Node<Expr>>, &Node<Token>)> {
-    tuple((
-        token_tag(Token::LBRACKET),
-        separated_list1(token_tag(Token::COMMA), expr),
-        token_tag(Token::RBRACKET),
-    ))(i)
+pub fn subscription(i: Input) -> KResult<Node<Vec<Node<Expr>>>> {
+    map(
+        tuple((
+            token_tag(Token::LBRACKET),
+            separated_list1(token_tag(Token::COMMA), expr),
+            token_tag(Token::RBRACKET),
+        )),
+        |(lhs, val, rhs)| Node::new(lhs.span + rhs.span, val),
+    )(i)
 }
 
-pub fn call<'input>(i: Input<'input>) -> KResult<'input, Node<Args>> {
+pub fn call(i: Input) -> KResult<Node<Args>> {
     let open = &token_tag(Token::LPAREN);
     let close = &token_tag(Token::RPAREN);
     let separator = &token_tag(Token::COMMA);
@@ -109,7 +110,7 @@ pub fn call<'input>(i: Input<'input>) -> KResult<'input, Node<Args>> {
     Ok((i, Node::new(lhs.span + rhs.span, Args(args))))
 }
 
-pub fn primary_node<'input>(i: Input<'input>) -> KResult<'input, Node<Primary>> {
+pub fn primary_node(i: Input) -> KResult<Node<Primary>> {
     let (i, val) = atom(i)?;
     Ok((i, Node::convert(Primary::Atom, val)))
 }

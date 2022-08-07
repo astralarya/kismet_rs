@@ -17,7 +17,7 @@ impl fmt::Display for Collection {
             Self::Tuple(x) => write!(
                 f,
                 "({}{})",
-                x.into_iter()
+                x.iter()
                     .map(|x| x.to_string())
                     .collect::<Vec<_>>()
                     .join(", "),
@@ -26,7 +26,7 @@ impl fmt::Display for Collection {
             Self::List(x) => write!(
                 f,
                 "[{}]",
-                x.into_iter()
+                x.iter()
                     .map(|x| x.to_string())
                     .collect::<Vec<_>>()
                     .join(", ")

@@ -22,7 +22,7 @@ use super::{
     KResult, Token,
 };
 
-pub fn expr_block0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<Vec<Node<Expr>>>>> {
+pub fn expr_block0(i: Input) -> KResult<Option<Node<Vec<Node<Expr>>>>> {
     let i_span = match Span::get0(i) {
         Some(x) => x,
         None => return Ok((i, None)),
@@ -33,15 +33,18 @@ pub fn expr_block0<'input>(i: Input<'input>) -> KResult<'input, Option<Node<Vec<
     Ok((
         i,
         Some(Node::new(
-            Span::reduce(&val).unwrap_or(Span::new(
-                i_span.start..Span::get0(i).map(|x| x.start).unwrap_or(i_span.end),
-            )),
+            match Span::reduce(&val) {
+                Some(x) => x,
+                None => {
+                    Span::new(i_span.start..Span::get0(i).map(|x| x.start).unwrap_or(i_span.end))
+                }
+            },
             val,
         )),
     ))
 }
 
-pub fn expr_block1<'input>(i: Input<'input>) -> KResult<'input, Node<Vec<Node<Expr>>>> {
+pub fn expr_block1(i: Input) -> KResult<Node<Vec<Node<Expr>>>> {
     let (i, lhs) = many0(token_tag(Token::DELIM))(i)?;
     let (i, head) = expr(i)?;
     let (i, _sep) = many1(token_tag(Token::DELIM))(i)?;
@@ -58,7 +61,7 @@ pub fn expr_block1<'input>(i: Input<'input>) -> KResult<'input, Node<Vec<Node<Ex
     ))
 }
 
-pub fn expr_enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<ExprEnclosure>> {
+pub fn expr_enclosure(i: Input) -> KResult<Node<ExprEnclosure>> {
     let (i, lhs) = token_tag(Token::LBRACE)(i)?;
     let (i, val) = expr_block0(i)?;
     let (i, rhs) = token_tag(Token::RBRACE)(i)?;
@@ -68,11 +71,11 @@ pub fn expr_enclosure<'input>(i: Input<'input>) -> KResult<'input, Node<ExprEncl
     }
 }
 
-pub fn expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn expr(i: Input) -> KResult<Node<Expr>> {
     assignment_expr(i)
 }
 
-pub fn assignment_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn assignment_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = branch_expr(i)?;
     let (i, op) = opt(token_tag(Token::ASSIGNE))(i)?;
     match op {
@@ -90,7 +93,7 @@ pub fn assignment_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> 
     }
 }
 
-pub fn branch_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn branch_expr(i: Input) -> KResult<Node<Expr>> {
     alt((
         if_expr,
         match_expr,
@@ -99,7 +102,7 @@ pub fn branch_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     ))(i)
 }
 
-pub fn if_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn if_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = token_tag(Token::IF)(i)?;
     let (i, val) = expr(i)?;
     let (i, t_block) = expr_enclosure(i)?;
@@ -133,7 +136,7 @@ pub fn if_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn match_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn match_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = token_tag(Token::MATCH)(i)?;
     let (i, val) = expr(i)?;
     let (i, _) = token_tag(Token::LBRACE)(i)?;
@@ -189,27 +192,27 @@ pub fn match_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     ))
 }
 
-pub fn match_arm<'input>(i: Input<'input>) -> KResult<'input, Node<MatchArm>> {
+pub fn match_arm(i: Input) -> KResult<Node<MatchArm>> {
     let (i, tar) = target_match(i)?;
     let (i, _) = token_tag(Token::ARROW)(i)?;
     let (i, block) = expr_enclosure(i)?;
     Ok((i, Node::new(tar.span + block.span, MatchArm { tar, block })))
 }
 
-pub fn loop_node<'input>(i: Input<'input>) -> KResult<'input, Node<Loop>> {
+pub fn loop_node(i: Input) -> KResult<Node<Loop>> {
     let (i, id) = opt(loop_label)(i)?;
     let (i, val) = alt((for_expr, while_expr, loop_expr))(i)?;
     Ok((i, Node::new(Span::option(&id) + val.span, Loop { id, val })))
 }
 
-pub fn loop_label<'input>(i: Input<'input>) -> KResult<'input, Node<Id>> {
+pub fn loop_label(i: Input) -> KResult<Node<Id>> {
     let (i, _) = token_tag(Token::COLON)(i)?;
     let (i, val) = token_tag_id(i)?;
     let (i, _) = token_tag(Token::COLON)(i)?;
     Ok((i, val))
 }
 
-pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
+pub fn for_expr(i: Input) -> KResult<Node<LoopKind>> {
     let (i, lhs) = token_tag(Token::FOR)(i)?;
     let (i, tar) = target(i)?;
     let (i, _) = token_tag(Token::IN)(i)?;
@@ -221,7 +224,7 @@ pub fn for_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
     ))
 }
 
-pub fn while_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
+pub fn while_expr(i: Input) -> KResult<Node<LoopKind>> {
     let (i, lhs) = token_tag(Token::WHILE)(i)?;
     let (i, val) = expr(i)?;
     let (i, block) = expr_enclosure(i)?;
@@ -231,7 +234,7 @@ pub fn while_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
     ))
 }
 
-pub fn loop_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
+pub fn loop_expr(i: Input) -> KResult<Node<LoopKind>> {
     let (i, lhs) = token_tag(Token::LOOP)(i)?;
     let (i, block) = expr_enclosure(i)?;
     Ok((
@@ -240,14 +243,14 @@ pub fn loop_expr<'input>(i: Input<'input>) -> KResult<'input, Node<LoopKind>> {
     ))
 }
 
-pub fn lambda_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn lambda_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = match or_test(i) {
         Ok(x) => x,
         Err(Err::Failure(val)) => {
             let span = val.span;
             if let Error::Convert(i, ConvertKind::TargetKindExpr(lhs)) = *val.data {
                 let (i, op) = opt(token_tag(Token::ARROW))(i)?;
-                if let None = op {
+                if op.is_none() {
                     return Err(Err::Failure(ONode::new(
                         span,
                         Error::Convert(i, ConvertKind::TargetKindExpr(lhs)),
@@ -300,7 +303,7 @@ pub fn lambda_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
             lhs_span,
             CommaList(
                 x.into_iter()
-                    .map(|x| Node::convert(|x| TargetListItem::<TargetExpr>::convert(x), x))
+                    .map(|x| Node::convert(TargetListItem::<TargetExpr>::convert, x))
                     .collect::<Vec<_>>(),
             ),
         ),

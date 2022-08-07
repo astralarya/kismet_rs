@@ -11,7 +11,7 @@ use super::{
     numeric_literal, primary, token_action, token_tag, Error, ErrorKind, Input, KResult, Token,
 };
 
-pub fn or_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn or_test(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = and_test(i)?;
     let (i, rhs) = opt(preceded(token_tag(Token::OR), or_test))(i)?;
     match rhs {
@@ -23,7 +23,7 @@ pub fn or_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn and_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn and_test(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = not_test(i)?;
     let (i, rhs) = opt(preceded(token_tag(Token::AND), and_test))(i)?;
     match rhs {
@@ -35,7 +35,7 @@ pub fn and_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn not_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn not_test(i: Input) -> KResult<Node<Expr>> {
     let (i, op) = opt(token_tag(Token::NOT))(i)?;
     let (i, rhs) = c_expr(i)?;
     match op {
@@ -44,7 +44,7 @@ pub fn not_test<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn c_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn c_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = r_expr(i)?;
     let (i, val) = opt(tuple((eqs, r_expr)))(i)?;
     let (i, rhs) = opt(tuple((eqs, r_expr)))(i)?;
@@ -55,9 +55,9 @@ pub fn c_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
                 lhs.span + rhs.span,
                 Expr::Op(Op::CompareBound {
                     l_val: lhs,
-                    l_op: l_op,
+                    l_op,
                     val,
-                    r_op: r_op,
+                    r_op,
                     r_val: rhs,
                 }),
             ),
@@ -74,7 +74,7 @@ pub fn c_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn r_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn r_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, start) = opt(a_expr)(i)?;
     let (i, rhs) = opt(tuple((ranges, opt(a_expr))))(i)?;
     match (start, rhs) {
@@ -116,7 +116,7 @@ pub fn r_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn a_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn a_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = m_expr(i)?;
     let (i, rhs) = opt(tuple((adds, a_expr)))(i)?;
     match rhs {
@@ -128,7 +128,7 @@ pub fn a_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn m_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn m_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = p_expr(i)?;
     let (i, rhs) = opt(tuple((muls, m_expr)))(i)?;
     match rhs {
@@ -140,7 +140,7 @@ pub fn m_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn p_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn p_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = u_expr(i)?;
     let (i, rhs) = opt(tuple((pow, p_expr)))(i)?;
     match rhs {
@@ -152,7 +152,7 @@ pub fn p_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn u_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn u_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, op) = opt(adds)(i)?;
     let (i, rhs) = coefficient(i)?;
     match op {
@@ -164,7 +164,7 @@ pub fn u_expr<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn coefficient<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn coefficient(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = opt(numeric_literal)(i)?;
     let (i, rhs) = opt(die)(i)?;
     match (lhs, rhs) {
@@ -181,7 +181,7 @@ pub fn coefficient<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn die<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn die(i: Input) -> KResult<Node<Expr>> {
     let (i, die_val) = opt(tuple((token_tag(Token::DIE), numeric_literal)))(i)?;
     match die_val {
         Some((op, rhs)) => Ok((i, Node::new(op.span + rhs.span, Expr::Op(Op::Die(rhs))))),
@@ -189,12 +189,12 @@ pub fn die<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
     }
 }
 
-pub fn expr_node<'input>(i: Input<'input>) -> KResult<'input, Node<Expr>> {
+pub fn expr_node(i: Input) -> KResult<Node<Expr>> {
     let (i, val) = primary(i)?;
     Ok((i, Node::convert(Expr::Primary, val)))
 }
 
-pub fn eqs<'input>(i: Input<'input>) -> KResult<'input, Node<OpEqs>> {
+pub fn eqs(i: Input) -> KResult<Node<OpEqs>> {
     token_action(|x| match *x.data {
         Token::EQ => Some(Node::new(x.span, OpEqs::EQ)),
         Token::NE => Some(Node::new(x.span, OpEqs::NE)),
@@ -206,7 +206,7 @@ pub fn eqs<'input>(i: Input<'input>) -> KResult<'input, Node<OpEqs>> {
     })(i)
 }
 
-pub fn ranges<'input>(i: Input<'input>) -> KResult<'input, Node<OpRange>> {
+pub fn ranges(i: Input) -> KResult<Node<OpRange>> {
     token_action(|x| match *x.data {
         Token::RANGE => Some(Node::new(x.span, OpRange::RANGE)),
         Token::RANGEI => Some(Node::new(x.span, OpRange::RANGEI)),
@@ -214,7 +214,7 @@ pub fn ranges<'input>(i: Input<'input>) -> KResult<'input, Node<OpRange>> {
     })(i)
 }
 
-pub fn adds<'input>(i: Input<'input>) -> KResult<'input, Node<OpArith>> {
+pub fn adds(i: Input) -> KResult<Node<OpArith>> {
     token_action(|x| match *x.data {
         Token::ADD => Some(Node::new(x.span, OpArith::ADD)),
         Token::SUB => Some(Node::new(x.span, OpArith::SUB)),
@@ -222,7 +222,7 @@ pub fn adds<'input>(i: Input<'input>) -> KResult<'input, Node<OpArith>> {
     })(i)
 }
 
-pub fn muls<'input>(i: Input<'input>) -> KResult<'input, Node<OpArith>> {
+pub fn muls(i: Input) -> KResult<Node<OpArith>> {
     token_action(|x| match *x.data {
         Token::MUL => Some(Node::new(x.span, OpArith::MUL)),
         Token::DIV => Some(Node::new(x.span, OpArith::DIV)),
@@ -232,7 +232,7 @@ pub fn muls<'input>(i: Input<'input>) -> KResult<'input, Node<OpArith>> {
     })(i)
 }
 
-pub fn pow<'input>(i: Input<'input>) -> KResult<'input, Node<OpArith>> {
+pub fn pow(i: Input) -> KResult<Node<OpArith>> {
     token_action(|x| match *x.data {
         Token::POW => Some(Node::new(x.span, OpArith::POW)),
         _ => None,
