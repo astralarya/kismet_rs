@@ -95,7 +95,7 @@ impl TryFrom<Atom> for VInstruction {
             Atom::DictComprehension { val: _, iter: _ } => todo!(),
             Atom::Tuple(_) => todo!(),
             Atom::Generator { val: _, iter: _ } => todo!(),
-            Atom::Id(_) => todo!(),
+            Atom::Id(x) => Ok(VInstruction::Variable(Id(x))),
             Atom::String(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::String(x)))),
             Atom::Float(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::Float(x)))),
             Atom::Integer(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::Integer(x)))),
