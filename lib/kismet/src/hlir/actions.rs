@@ -1,3 +1,5 @@
+use syn::Block;
+
 use super::{BasicBlock, Error, Exec, Instruction, Value};
 
 #[derive(Clone, Debug, PartialEq)]

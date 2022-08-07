@@ -241,6 +241,7 @@ impl TryFrom<Op> for VInstruction {
                     })),
                     Instruction::Variable(_) => todo!(),
                     Instruction::Action(_) => todo!(),
+                    Instruction::Block(_) => todo!(),
                     Instruction::Assign(_, _) => todo!(),
                     Instruction::Symbol(_) => todo!(),
                 }

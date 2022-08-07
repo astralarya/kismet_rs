@@ -1,7 +1,7 @@
 use std::{fmt, ops::Deref};
 
 use crate::{
-    hlir::{self, Primitive, VInstruction, Value},
+    hlir::{self, Primitive, VBasicBlock, VInstruction, Value},
     types::{fmt_float, Float, Integer, Node},
 };
 
@@ -87,7 +87,7 @@ impl TryFrom<Atom> for VInstruction {
 
     fn try_from(val: Atom) -> Result<Self, Self::Error> {
         match val {
-            Atom::Block(_) => todo!(),
+            Atom::Block(x) => Ok(VInstruction::Block(VBasicBlock::try_from(x.iter())?)),
             Atom::Paren(_) => todo!(),
             Atom::ListDisplay(_) => todo!(),
             Atom::ListComprehension { val, iter } => todo!(),

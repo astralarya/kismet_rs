@@ -1,7 +1,7 @@
 use std::{fmt, ops::Deref};
 
 use crate::{
-    hlir::{self, BasicBlock, VBasicBlock, VInstruction},
+    hlir::{self, VBasicBlock},
     types::Node,
 };
 
@@ -45,13 +45,14 @@ impl TryFrom<ExprTop> for VBasicBlock {
     type Error = hlir::Error;
 
     fn try_from(val: ExprTop) -> Result<Self, Self::Error> {
-        match val
-            .iter()
-            .map(|x| Node::<VInstruction>::try_convert_from(x.clone()))
-            .collect::<Result<Vec<_>, _>>()
-        {
-            Ok(x) => Ok(BasicBlock(x)),
-            Err(x) => Err(x),
-        }
+        VBasicBlock::try_from(val.iter())
+    }
+}
+
+impl TryFrom<ExprEnclosure> for VBasicBlock {
+    type Error = hlir::Error;
+
+    fn try_from(val: ExprEnclosure) -> Result<Self, Self::Error> {
+        VBasicBlock::try_from(val.iter())
     }
 }

@@ -1,3 +1,5 @@
+use std::slice::Iter;
+
 use crate::{ast::Id, types::Node};
 
 use super::{Error, Exec, SymbolTable, SymbolTableResult};
@@ -10,6 +12,7 @@ pub enum Instruction<T, U, V> {
     Value(V),
     Variable(Id),
     Action(Action<T, U, V>),
+    Block(BasicBlock<T, U, V>),
     Assign(Id, Node<Instruction<T, U, V>>),
     Symbol(U),
 }
@@ -57,6 +60,7 @@ where
                 Ok((i, V::from(val)))
             }
             Self::Action(x) => x.exec(i),
+            Self::Block(x) => x.exec(i),
             Self::Assign(key, val) => {
                 let (mut i, val) = val.exec(i)?;
                 i.set(key.clone(), U::try_from(val.clone())?);
@@ -79,5 +83,23 @@ where
             let (i, _) = acc?;
             val.exec(i)
         })
+    }
+}
+
+impl<N, T, U, V> TryFrom<Iter<'_, Node<N>>> for BasicBlock<T, U, V>
+where
+    Instruction<T, U, V>: TryFrom<N, Error = Error>,
+    N: Clone,
+{
+    type Error = Error;
+
+    fn try_from(val: Iter<Node<N>>) -> Result<Self, Self::Error> {
+        match val
+            .map(|x| Node::<Instruction<T, U, V>>::try_convert_from(x.clone()))
+            .collect::<Result<Vec<_>, Error>>()
+        {
+            Ok(x) => Ok(BasicBlock(x)),
+            Err(x) => Err(x),
+        }
     }
 }
