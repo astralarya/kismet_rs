@@ -88,7 +88,7 @@ impl TryFrom<Atom> for VInstruction {
     fn try_from(val: Atom) -> Result<Self, Self::Error> {
         match val {
             Atom::Block(x) => Ok(VInstruction::Block(VBasicBlock::try_from(x.iter())?)),
-            Atom::Paren(_) => todo!(),
+            Atom::Paren(x) => VInstruction::try_from(*x.data),
             Atom::ListDisplay(_) => todo!(),
             Atom::ListComprehension { val: _, iter: _ } => todo!(),
             Atom::DictDisplay(_) => todo!(),
