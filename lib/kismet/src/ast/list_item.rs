@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::ast::Expr;
-use crate::hlir::{self, VInstruction};
+use crate::hlir::{self, ListItemKind, VInstruction};
 use crate::types::Node;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -19,13 +19,16 @@ impl fmt::Display for ListItem {
     }
 }
 
-impl TryFrom<ListItem> for VInstruction {
+impl TryFrom<Node<ListItem>> for Node<(ListItemKind, VInstruction)> {
     type Error = hlir::Error;
 
-    fn try_from(val: ListItem) -> Result<Self, Self::Error> {
-        match val {
-            ListItem::Expr(x) => VInstruction::try_from(x),
-            ListItem::Spread(_) => todo!(),
-        }
+    fn try_from(val: Node<ListItem>) -> Result<Self, Self::Error> {
+        Node::try_convert(
+            |x| match x {
+                ListItem::Expr(x) => Ok((ListItemKind::Expr, VInstruction::try_from(x)?)),
+                ListItem::Spread(x) => Ok((ListItemKind::Spread, VInstruction::try_from(*x.data)?)),
+            },
+            val,
+        )
     }
 }

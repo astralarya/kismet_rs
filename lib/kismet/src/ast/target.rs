@@ -233,7 +233,7 @@ impl TryFrom<Node<Atom>> for Node<Target> {
         match *val.data {
             Atom::Id(x) => Ok(Node::new(val.span, Target(TargetKind::Id(Id(x))))),
             Atom::Paren(x) => {
-                let x = list_item(x)?;
+                let x = Node::convert(TargetListItem::Target, Node::<Target>::try_from(x)?);
                 Ok(Node::new(
                     val.span,
                     Target(TargetKind::TargetTuple(vec![x])),

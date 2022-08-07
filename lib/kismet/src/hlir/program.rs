@@ -2,7 +2,7 @@ use std::slice::Iter;
 
 use crate::{ast::Id, types::Node};
 
-use super::{Action, Error, Exec, SymbolTable, SymbolTableResult};
+use super::{Error, Exec, SymbolTable, SymbolTableResult};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct BasicBlock<T, U, V>(pub Vec<Node<Instruction<T, U, V>>>);
@@ -11,7 +11,7 @@ pub struct BasicBlock<T, U, V>(pub Vec<Node<Instruction<T, U, V>>>);
 pub enum Instruction<T, U, V> {
     Value(V),
     Variable(Id),
-    Action(Action<T, U, V>),
+    Action(T),
     Block(BasicBlock<T, U, V>),
     Assign(Id, Node<Instruction<T, U, V>>),
     Symbol(U),
@@ -19,7 +19,7 @@ pub enum Instruction<T, U, V> {
 
 impl<T, U, V, E> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for Instruction<T, U, V>
 where
-    T: Exec<Vec<V>, V, Error>,
+    T: Exec<SymbolTable<U>, (SymbolTable<U>, V), Error>,
     U: TryFrom<V, Error = E> + Clone + Default,
     V: From<U> + Clone + Default,
     Error: From<E>,
@@ -46,7 +46,7 @@ where
 
 impl<T, U, V, E> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for BasicBlock<T, U, V>
 where
-    T: Exec<Vec<V>, V, Error>,
+    T: Exec<SymbolTable<U>, (SymbolTable<U>, V), Error>,
     U: TryFrom<V, Error = E> + Clone + Default,
     V: From<U> + Clone + Default,
     Error: From<E>,

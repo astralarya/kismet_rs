@@ -37,8 +37,17 @@ pub fn parens(i: Input) -> KResult<Node<Atom>> {
     let vals = vec![];
     let (i, (_, val)) = target_tuple_result(lhs.span, vals, list_item(i))?;
     let (i, rhs) = opt(close)(i)?;
+    let val_span = val.span;
     if let Some(rhs) = rhs {
-        return Ok((i, Node::new(lhs.span + rhs.span, Atom::Paren(val))));
+        match *val.data {
+            ListItem::Expr(val) => {
+                return Ok((
+                    i,
+                    Node::new(lhs.span + rhs.span, Atom::Paren(Node::new(val_span, val))),
+                ))
+            }
+            _ => return Ok((i, Node::new(lhs.span + rhs.span, Atom::Tuple(vec![val])))),
+        }
     }
 
     let (i, comp_val) = opt(comp_for)(i)?;
