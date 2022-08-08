@@ -6,6 +6,7 @@ use crate::types::Node;
 pub enum Error {
     Never,
     Node(Node<Error>),
+    Vec(Vec<Node<Error>>),
     TypeMismatch,
     InvalidOp,
 }

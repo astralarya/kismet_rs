@@ -6,7 +6,7 @@ use super::{
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ValueAction {
-    ListDisplay(Vec<(ListItemKind, Node<VInstruction>)>),
+    ListDisplay(Vec<Node<(ListItemKind, VInstruction)>>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -24,7 +24,8 @@ impl Exec<SymbolTable<Value>, (SymbolTable<Value>, Value), Error> for ValueActio
             ValueAction::ListDisplay(x) => {
                 let (i, val) =
                     x.iter()
-                        .fold::<Result<_, Error>, _>(Ok((i, vec![])), |acc, (kind, val)| {
+                        .fold::<Result<_, Error>, _>(Ok((i, vec![])), |acc, val| {
+                            let (kind, val) = &*val.data;
                             let (i, mut vec) = acc?;
                             let (i, val) = val.exec(i)?;
                             match (kind, val) {

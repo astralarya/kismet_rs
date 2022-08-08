@@ -1,7 +1,7 @@
 use std::{fmt, ops::Deref};
 
 use crate::{
-    hlir::{Primitive, VBasicBlock, VInstruction, Value},
+    hlir::{Collection, ListItemKind, Primitive, VBasicBlock, VInstruction, Value, ValueAction},
     types::{fmt_float, Float, Integer, Node},
 };
 
@@ -89,7 +89,74 @@ impl TryFrom<Atom> for VInstruction {
         match val {
             Atom::Block(x) => Ok(VInstruction::Block(VBasicBlock::try_from(x.iter())?)),
             Atom::Paren(x) => VInstruction::try_from(*x.data),
-            Atom::ListDisplay(_) => todo!(),
+            Atom::ListDisplay(x) => {
+                let (x, err) = x
+                    .into_iter()
+                    .map(Node::<(ListItemKind, VInstruction)>::try_from)
+                    .fold::<(Vec<_>, Vec<_>), _>((vec![], vec![]), |mut acc, val| match val {
+                        Ok(x) => {
+                            acc.0.push(x);
+                            acc
+                        }
+                        Err(x) => {
+                            acc.1.push(x);
+                            acc
+                        }
+                    });
+                if !err.is_empty() {
+                    return Err(Error::Vec(err));
+                }
+                let as_value = x
+                    .into_iter()
+                    .map(|x| {
+                        Node::convert(
+                            |x| match x {
+                                (ListItemKind::Expr, crate::hlir::Instruction::Value(x)) => Ok(x),
+                                x => Err(x),
+                            },
+                            x,
+                        )
+                    })
+                    .fold::<Result<Vec<_>, Vec<_>>, _>(Ok(vec![]), |acc, val| {
+                        let span = val.span;
+                        match (acc, *val.data) {
+                            (Ok(mut acc), Ok(val)) => {
+                                acc.push(Node::new(span, val));
+                                Ok(acc)
+                            }
+                            (Ok(acc), Err(val)) => {
+                                let mut acc = acc
+                                    .into_iter()
+                                    .map(|x| {
+                                        Node::convert(
+                                            |x| (ListItemKind::Expr, VInstruction::Value(x)),
+                                            x,
+                                        )
+                                    })
+                                    .collect::<Vec<_>>();
+                                acc.push(Node::new(span, val));
+                                Err(acc)
+                            }
+                            (Err(mut acc), Ok(val)) => {
+                                acc.push(Node::new(
+                                    span,
+                                    (ListItemKind::Expr, VInstruction::Value(val)),
+                                ));
+                                Err(acc)
+                            }
+                            (Err(mut acc), Err(val)) => {
+                                acc.push(Node::new(span, val));
+                                Err(acc)
+                            }
+                        }
+                    });
+                match as_value {
+                    Ok(x) => Ok(VInstruction::Value(Value::Collection(Collection::List(
+                        x.into_iter().map(Node::data).collect::<Vec<_>>(),
+                    )))),
+                    Err(x) => Ok(VInstruction::Action(ValueAction::ListDisplay(x))),
+                }
+            }
             Atom::ListComprehension { val: _, iter: _ } => todo!(),
             Atom::DictDisplay(_) => todo!(),
             Atom::DictComprehension { val: _, iter: _ } => todo!(),

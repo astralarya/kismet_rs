@@ -44,6 +44,10 @@ impl<S, T> BaseNode<S, T> {
         }
     }
 
+    pub fn data(self) -> T {
+        *self.data
+    }
+
     pub fn convert<U>(fun: impl Fn(U) -> T, val: BaseNode<S, U>) -> Self {
         BaseNode::new(val.span, fun(*val.data))
     }
