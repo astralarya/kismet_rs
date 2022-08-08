@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
-use kismet::exec;
+use kismet::compile;
+use kismet::hlir::{Exec, SymbolTable, Value};
 use kismet::parse;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -21,6 +22,7 @@ pub fn run(state: &mut State) {
     );
 
     let mut rl = Editor::<()>::new();
+    let mut i = SymbolTable::<Value>::default();
     loop {
         let readline = rl.readline("> ");
         match readline {
@@ -38,20 +40,32 @@ pub fn run(state: &mut State) {
                             if state.print.contains(&Print::Loopback) {
                                 println!("{}", x)
                             }
-                            match exec(x) {
-                                Ok(x) => {
-                                    if state.print.contains(&Print::Output) {
-                                        println!("{}", x)
+                            match compile(x) {
+                                Ok(x) => match x.exec(i.clone()) {
+                                    Ok((i_, val)) => {
+                                        i = i_;
+                                        if state.print.contains(&Print::Output) {
+                                            println!("{}", val)
+                                        }
                                     }
-                                }
+                                    Err(x) => {
+                                        if state.print.contains(&Print::Error) {
+                                            println!("Runtime Error: {:#?}", x)
+                                        }
+                                    }
+                                },
                                 Err(x) => {
                                     if state.print.contains(&Print::Error) {
-                                        println!("ERROR: {:?}", x)
+                                        println!("Compile Error: {:#?}", x)
                                     }
                                 }
                             }
                         }
-                        Err(e) => eprintln!("{:#?}", e),
+                        Err(x) => {
+                            if state.print.contains(&Print::Error) {
+                                println!("Parse Error: {:#?}", x)
+                            }
+                        }
                     }
                 }
             }

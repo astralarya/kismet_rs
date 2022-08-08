@@ -20,12 +20,9 @@ pub use value::*;
 
 use crate::{ast, types::Node};
 
-pub fn exec<T>(input: Node<T>) -> Result<Value, Error>
+pub fn compile<T>(input: Node<T>) -> Result<Node<VBasicBlock>, Node<Error>>
 where
     VBasicBlock: TryFrom<T, Error = ast::Error>,
 {
-    let program =
-        Node::<VBasicBlock>::try_convert_from(input).map_err(Node::<Error>::convert_from)?;
-    let (_, val) = program.exec(SymbolTable::<Value>::default())?;
-    Ok(val)
+    Node::<VBasicBlock>::try_convert_from(input).map_err(Node::<Error>::convert_from)
 }
