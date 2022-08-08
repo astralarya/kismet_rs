@@ -37,7 +37,7 @@ impl Exec<SymbolTable<Value>, (SymbolTable<Value>, Value), Error> for ValueActio
                                     ListItemKind::Spread,
                                     Value::Collection(Collection::Tuple(mut val)),
                                 ) => vec.append(&mut val),
-                                _ => return Err(Error::InvalidOp),
+                                (ListItemKind::Spread, _) => return Err(Error::TypeMismatch),
                             }
                             Ok((i, vec))
                         })?;

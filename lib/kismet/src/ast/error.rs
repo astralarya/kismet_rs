@@ -4,7 +4,7 @@ use std::convert::Infallible;
 pub enum Error {
     Never,
     TypeMismatch,
-    //InvalidOp,
+    InvalidOp,
 }
 
 impl From<Infallible> for Error {

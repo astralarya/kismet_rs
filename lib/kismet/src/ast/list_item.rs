@@ -1,8 +1,10 @@
 use std::fmt;
 
 use crate::ast::Expr;
-use crate::hlir::{self, ListItemKind, VInstruction};
+use crate::hlir::{ListItemKind, VInstruction};
 use crate::types::Node;
+
+use super::Error;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ListItem {
@@ -20,7 +22,7 @@ impl fmt::Display for ListItem {
 }
 
 impl TryFrom<Node<ListItem>> for Node<(ListItemKind, VInstruction)> {
-    type Error = hlir::Error;
+    type Error = Error;
 
     fn try_from(val: Node<ListItem>) -> Result<Self, Self::Error> {
         Node::try_convert(

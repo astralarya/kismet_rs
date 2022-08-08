@@ -1,11 +1,11 @@
 use std::fmt;
 
 use crate::{
-    hlir::{self, Instruction, Primitive, VInstruction, Value},
+    hlir::{Instruction, Primitive, VInstruction, Value},
     types::{Float, Integer, Node, UInteger},
 };
 
-use super::{Atom, Expr, Range};
+use super::{Atom, Error, Expr, Range};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Op {
@@ -136,10 +136,10 @@ impl fmt::Display for OpArith {
 }
 
 impl TryFrom<Op> for VInstruction {
-    type Error = hlir::Error;
+    type Error = Error;
 
     fn try_from(val: Op) -> Result<Self, Self::Error> {
-        fn arith_float(lhs: Float, op: OpArith, rhs: Float) -> Result<VInstruction, hlir::Error> {
+        fn arith_float(lhs: Float, op: OpArith, rhs: Float) -> Result<VInstruction, Error> {
             Ok(Instruction::Value(Value::Primitive(Primitive::Float(
                 match op {
                     OpArith::ADD => lhs + rhs,
@@ -153,7 +153,7 @@ impl TryFrom<Op> for VInstruction {
             ))))
         }
 
-        fn arith_int(lhs: Integer, op: OpArith, rhs: Integer) -> Result<VInstruction, hlir::Error> {
+        fn arith_int(lhs: Integer, op: OpArith, rhs: Integer) -> Result<VInstruction, Error> {
             match match op {
                 OpArith::ADD => lhs.checked_add(rhs),
                 OpArith::SUB => lhs.checked_sub(rhs),
@@ -215,7 +215,7 @@ impl TryFrom<Op> for VInstruction {
                             ))),
                             _ => arith_float(lhs, *op, rhs as Float),
                         },
-                        _ => Err(hlir::Error::TypeMismatch),
+                        _ => Err(Error::TypeMismatch),
                     },
                     _ => todo!(),
                 }
@@ -230,14 +230,14 @@ impl TryFrom<Op> for VInstruction {
                                 Some(val) => Primitive::Integer(val),
                                 None => Primitive::Float((val as Float) * -1.),
                             }),
-                            _ => return Err(hlir::Error::InvalidOp),
+                            _ => return Err(Error::InvalidOp),
                         },
                         Value::Primitive(Primitive::Float(val)) => match *op {
                             OpArith::ADD => rhs,
                             OpArith::SUB => Value::Primitive(Primitive::Float(val * -1.)),
-                            _ => return Err(hlir::Error::InvalidOp),
+                            _ => return Err(Error::InvalidOp),
                         },
-                        _ => return Err(hlir::Error::TypeMismatch),
+                        _ => return Err(Error::TypeMismatch),
                     })),
                     Instruction::Variable(_) => todo!(),
                     Instruction::Action(_) => todo!(),

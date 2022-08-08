@@ -1,12 +1,12 @@
 use std::fmt;
 
 use crate::{
-    hlir::{self, VInstruction},
+    hlir::VInstruction,
     types::{CommaList, Node},
 };
 
 use super::{
-    Atom, Branch, ExprEnclosure, Id, Loop, Op, Primary, Target, TargetExpr, TargetListItem,
+    Atom, Branch, Error, ExprEnclosure, Id, Loop, Op, Primary, Target, TargetExpr, TargetListItem,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -60,7 +60,7 @@ impl TryFrom<&Node<&Expr>> for Node<Id> {
 }
 
 impl TryFrom<Expr> for VInstruction {
-    type Error = hlir::Error;
+    type Error = Error;
 
     fn try_from(val: Expr) -> Result<Self, Self::Error> {
         match val {

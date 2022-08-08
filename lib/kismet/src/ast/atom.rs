@@ -1,11 +1,11 @@
 use std::{fmt, ops::Deref};
 
 use crate::{
-    hlir::{self, Primitive, VBasicBlock, VInstruction, Value},
+    hlir::{Primitive, VBasicBlock, VInstruction, Value},
     types::{fmt_float, Float, Integer, Node},
 };
 
-use super::{CompIter, DictItem, DictItemComp, Expr, ListItem};
+use super::{CompIter, DictItem, DictItemComp, Error, Expr, ListItem};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Atom {
@@ -83,7 +83,7 @@ impl fmt::Display for Atom {
 }
 
 impl TryFrom<Atom> for VInstruction {
-    type Error = hlir::Error;
+    type Error = Error;
 
     fn try_from(val: Atom) -> Result<Self, Self::Error> {
         match val {

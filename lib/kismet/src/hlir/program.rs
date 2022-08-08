@@ -1,6 +1,9 @@
 use std::slice::Iter;
 
-use crate::{ast::Id, types::Node};
+use crate::{
+    ast::{self, Id},
+    types::Node,
+};
 
 use super::{Error, Exec, SymbolTable, SymbolTableResult};
 
@@ -61,15 +64,15 @@ where
 
 impl<N, T, U, V> TryFrom<Iter<'_, Node<N>>> for BasicBlock<T, U, V>
 where
-    Instruction<T, U, V>: TryFrom<N, Error = Error>,
+    Instruction<T, U, V>: TryFrom<N, Error = ast::Error>,
     N: Clone,
 {
-    type Error = Error;
+    type Error = ast::Error;
 
     fn try_from(val: Iter<Node<N>>) -> Result<Self, Self::Error> {
         match val
             .map(|x| Node::<Instruction<T, U, V>>::try_convert_from(x.clone()))
-            .collect::<Result<Vec<_>, Error>>()
+            .collect::<Result<_, _>>()
         {
             Ok(x) => Ok(BasicBlock(x)),
             Err(x) => Err(x),
