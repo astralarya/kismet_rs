@@ -1,18 +1,14 @@
-use clap::ArgEnum;
+use std::collections::HashSet;
+
 use kismet::exec;
 use kismet::parse;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-pub struct State {
-    pub print: PrintLevel,
-}
+use crate::Print;
 
-#[derive(Clone, Debug, ArgEnum)]
-pub enum PrintLevel {
-    None,
-    Output,
-    Debug,
+pub struct State {
+    pub print: HashSet<Print>,
 }
 
 pub fn run(state: &mut State) {
@@ -36,14 +32,23 @@ pub fn run(state: &mut State) {
                 } else {
                     match parse(&line) {
                         Ok(x) => {
-                            match state.print {
-                                PrintLevel::Debug => println!("{:#?}\n{}", x, x),
-                                PrintLevel::Output => println!("{}", x),
-                                PrintLevel::None => (),
+                            if state.print.contains(&Print::Ast) {
+                                println!("{:#?}", x)
+                            }
+                            if state.print.contains(&Print::Loopback) {
+                                println!("{}", x)
                             }
                             match exec(x) {
-                                Ok(x) => println!("{}", x),
-                                Err(x) => println!("ERROR: {:?}", x),
+                                Ok(x) => {
+                                    if state.print.contains(&Print::Output) {
+                                        println!("{}", x)
+                                    }
+                                }
+                                Err(x) => {
+                                    if state.print.contains(&Print::Error) {
+                                        println!("ERROR: {:?}", x)
+                                    }
+                                }
                             }
                         }
                         Err(e) => eprintln!("{:#?}", e),

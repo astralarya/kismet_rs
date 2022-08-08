@@ -1,21 +1,38 @@
-use clap::Parser;
+use std::collections::HashSet;
+
+use clap::{ArgEnum, Parser};
 
 mod cli;
-use cli::PrintLevel;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
 pub struct Args {
-    #[clap(arg_enum, default_value_t = PrintLevel::Output, long, action)]
-    print: PrintLevel,
+    #[clap(multiple = true, long, action, help = "Default: [output, error]\n ")]
+    print: Vec<Print>,
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq, ArgEnum)]
+pub enum Print {
+    Debug,
+    Ast,
+    Loopback,
+    Output,
+    Error,
 }
 
 fn main() {
     let args = Args::parse();
-    if let PrintLevel::Debug = args.print {
+    let mut print = HashSet::new();
+    print.insert(Print::Output);
+    print.insert(Print::Error);
+    args.print.clone().into_iter().for_each(|x| {
+        print.insert(x);
+    });
+
+    if print.contains(&Print::Debug) {
         println!("{:?}", args);
     }
 
-    let mut state = cli::State { print: args.print };
+    let mut state = cli::State { print };
     cli::run(&mut state);
 }
