@@ -7,6 +7,7 @@ use super::{
 #[derive(Clone, Debug, PartialEq)]
 pub enum ValueAction {
     ListDisplay(Vec<Node<(ListItemKind, VInstruction)>>),
+    Tuple(Vec<Node<(ListItemKind, VInstruction)>>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -17,32 +18,41 @@ pub enum ListItemKind {
 
 pub type VInstruction = Instruction<ValueAction, Value, Value>;
 pub type VBasicBlock = BasicBlock<ValueAction, Value, Value>;
+pub type VListItem = (ListItemKind, VInstruction);
 
 impl Exec<SymbolTable<Value>, (SymbolTable<Value>, Value), Error> for ValueAction {
     fn exec(&self, i: SymbolTable<Value>) -> SymbolTableResult<Value, Value> {
+        fn iter_list(
+            i: SymbolTable<Value>,
+            x: &[Node<(ListItemKind, VInstruction)>],
+        ) -> Result<(SymbolTable<Value>, Vec<Value>), Error> {
+            x.iter()
+                .fold::<Result<_, Error>, _>(Ok((i, vec![])), |acc, val| {
+                    let (kind, val) = &*val.data;
+                    let (i, mut vec) = acc?;
+                    let (i, val) = val.exec(i)?;
+                    match (kind, val) {
+                        (ListItemKind::Expr, val) => vec.push(val),
+                        (ListItemKind::Spread, Value::Collection(Collection::List(mut val))) => {
+                            vec.append(&mut val)
+                        }
+                        (ListItemKind::Spread, Value::Collection(Collection::Tuple(mut val))) => {
+                            vec.append(&mut val)
+                        }
+                        (ListItemKind::Spread, _) => return Err(Error::TypeMismatch),
+                    }
+                    Ok((i, vec))
+                })
+        }
+
         match self {
             ValueAction::ListDisplay(x) => {
-                let (i, val) =
-                    x.iter()
-                        .fold::<Result<_, Error>, _>(Ok((i, vec![])), |acc, val| {
-                            let (kind, val) = &*val.data;
-                            let (i, mut vec) = acc?;
-                            let (i, val) = val.exec(i)?;
-                            match (kind, val) {
-                                (ListItemKind::Expr, val) => vec.push(val),
-                                (
-                                    ListItemKind::Spread,
-                                    Value::Collection(Collection::List(mut val)),
-                                ) => vec.append(&mut val),
-                                (
-                                    ListItemKind::Spread,
-                                    Value::Collection(Collection::Tuple(mut val)),
-                                ) => vec.append(&mut val),
-                                (ListItemKind::Spread, _) => return Err(Error::TypeMismatch),
-                            }
-                            Ok((i, vec))
-                        })?;
+                let (i, val) = iter_list(i, x)?;
                 Ok((i, Value::Collection(Collection::List(val))))
+            }
+            ValueAction::Tuple(x) => {
+                let (i, val) = iter_list(i, x)?;
+                Ok((i, Value::Collection(Collection::Tuple(val))))
             }
         }
     }
