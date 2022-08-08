@@ -1,11 +1,16 @@
-use crate::types::Node;
+use std::collections::HashMap;
 
-use super::{Block, Collection, Error, Exec, Instruction, SymbolTable, SymbolTableResult, Value};
+use crate::{ast::Id, hlir::Primitive, types::Node};
+
+use super::{
+    Block, Collection, DictItem, Error, Exec, Instruction, SymbolTable, SymbolTableResult, Value,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ValueAction {
-    ListDisplay(Vec<Node<(ListItemKind, VInstruction)>>),
     Tuple(Vec<Node<(ListItemKind, VInstruction)>>),
+    ListDisplay(Vec<Node<(ListItemKind, VInstruction)>>),
+    DictDisplay(Vec<Node<VDictItem>>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -13,6 +18,8 @@ pub enum ListItemKind {
     Expr,
     Spread,
 }
+
+pub type VDictItem = DictItem<VInstruction>;
 
 pub type VInstruction = Instruction<ValueAction, Value, Value>;
 pub type VBasicBlock = Block<ValueAction, Value, Value>;
@@ -44,14 +51,60 @@ impl Exec<SymbolTable<Value>, (SymbolTable<Value>, Value), Error> for ValueActio
         }
 
         match self {
-            ValueAction::ListDisplay(x) => {
-                let (i, val) = iter_list(i, x)?;
-                Ok((i, Value::Collection(Collection::List(val))))
-            }
             ValueAction::Tuple(x) => {
                 let (i, val) = iter_list(i, x)?;
                 Ok((i, Value::Collection(Collection::Tuple(val))))
             }
+            ValueAction::ListDisplay(x) => {
+                let (i, val) = iter_list(i, x)?;
+                Ok((i, Value::Collection(Collection::List(val))))
+            }
+            ValueAction::DictDisplay(x) => x
+                .iter()
+                .fold::<Result<(_, HashMap<_, _>), Error>, _>(
+                    Ok((i, HashMap::new())),
+                    |acc, val| match acc {
+                        Ok((mut i, mut acc)) => match &*val.data {
+                            DictItem::KeyVal { key, val } => {
+                                let (i, val) = val.exec(i)?;
+                                acc.insert((*key.data).clone(), val);
+                                Ok((i, acc))
+                            }
+                            DictItem::DynKeyVal { key, val } => {
+                                let (i, key) = key.exec(i)?;
+                                if let Value::Primitive(Primitive::String(key)) = key {
+                                    let (i, val) = val.exec(i)?;
+                                    acc.insert(Id(key), val);
+                                    Ok((i, acc))
+                                } else {
+                                    Err(Error::TypeMismatch)
+                                }
+                            }
+                            DictItem::Shorthand(x) => {
+                                let key = x.clone();
+                                let val = i.get(x.clone());
+                                acc.insert(key, val);
+                                Ok((i, acc))
+                            }
+                            DictItem::Spread(x) => {
+                                let (i, val) = x.exec(i)?;
+                                if let Value::Collection(Collection::Dict(val)) = val {
+                                    Ok((
+                                        i,
+                                        val.into_iter().fold(acc, |mut acc, (id, val)| {
+                                            acc.insert(id, val);
+                                            acc
+                                        }),
+                                    ))
+                                } else {
+                                    Err(Error::TypeMismatch)
+                                }
+                            }
+                        },
+                        Err(x) => Err(x),
+                    },
+                )
+                .map(|(i, val)| (i, Value::Collection(Collection::Dict(val)))),
         }
     }
 }

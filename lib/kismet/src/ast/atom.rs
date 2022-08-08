@@ -1,14 +1,14 @@
-use std::{fmt, ops::Deref};
+use std::{collections::HashMap, fmt, ops::Deref};
 
 use crate::{
     hlir::{
-        Collection, ListItemKind, Primitive, VBasicBlock, VInstruction, VListItem, Value,
-        ValueAction,
+        Collection, DictItem, Instruction, ListItemKind, Primitive, VBasicBlock, VInstruction,
+        VListItem, Value, ValueAction,
     },
     types::{fmt_float, Float, Integer, Node},
 };
 
-use super::{CompIter, DictItem, DictItemComp, Error, Expr, ListItem};
+use super::{CompIter, DictItemComp, Error, Expr, ListItem};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Atom {
@@ -19,7 +19,7 @@ pub enum Atom {
     Paren(Node<Expr>),
     Tuple(Vec<Node<ListItem>>),
     ListDisplay(Vec<Node<ListItem>>),
-    DictDisplay(Vec<Node<DictItem>>),
+    DictDisplay(Vec<Node<DictItem<Expr>>>),
     Generator {
         val: Node<ListItem>,
         iter: Vec<Node<CompIter>>,
@@ -168,7 +168,114 @@ impl TryFrom<Atom> for VInstruction {
                 Ok(x) => Ok(VInstruction::Value(Value::Collection(Collection::List(x)))),
                 Err(x) => Ok(VInstruction::Action(ValueAction::ListDisplay(x))),
             },
-            Atom::DictDisplay(_) => todo!(),
+            Atom::DictDisplay(x) => {
+                let (x, err) = x
+                    .into_iter()
+                    .map(|x| {
+                        Node::try_convert(
+                            |x| match x {
+                                DictItem::KeyVal { key, val } => Ok(DictItem::KeyVal {
+                                    key,
+                                    val: Node::<VInstruction>::try_convert_from(val)?,
+                                }),
+                                DictItem::DynKeyVal { key, val } => Ok(DictItem::DynKeyVal {
+                                    key: Node::<VInstruction>::try_convert_from(key)?,
+                                    val: Node::<VInstruction>::try_convert_from(val)?,
+                                }),
+                                DictItem::Shorthand(x) => Ok(DictItem::Shorthand(x)),
+                                DictItem::Spread(x) => {
+                                    Ok(DictItem::Spread(Node::<VInstruction>::try_convert_from(x)?))
+                                }
+                            },
+                            x,
+                        )
+                    })
+                    .fold::<(Vec<_>, Vec<_>), _>((vec![], vec![]), |mut acc, val| match val {
+                        Ok(x) => {
+                            acc.0.push(x);
+                            acc
+                        }
+                        Err(x) => {
+                            acc.1.push(x);
+                            acc
+                        }
+                    });
+                if !err.is_empty() {
+                    return Err(Error::Vec(err));
+                }
+                let x = x.into_iter().fold::<Result<HashMap<_, _>, Vec<_>>, _>(
+                    Ok(HashMap::new()),
+                    |acc, val| {
+                        let span = val.span;
+                        match (acc, *val.data) {
+                            (Ok(mut acc), DictItem::KeyVal { key, val }) => match *val.data {
+                                Instruction::Value(val) => {
+                                    acc.insert(*key.data, val);
+                                    Ok(acc)
+                                }
+                                val => Err(vec![
+                                    Node::new(
+                                        span,
+                                        DictItem::Spread(Node::new(
+                                            span,
+                                            Instruction::Value(Value::Collection(
+                                                Collection::Dict(acc),
+                                            )),
+                                        )),
+                                    ),
+                                    Node::new(
+                                        span,
+                                        DictItem::KeyVal {
+                                            key,
+                                            val: Node::new(span, val),
+                                        },
+                                    ),
+                                ]),
+                            },
+                            (Ok(acc), DictItem::Spread(val)) => match *val.data {
+                                Instruction::Value(Value::Collection(Collection::Dict(val))) => {
+                                    Ok(val.into_iter().fold(acc, |mut acc, (id, val)| {
+                                        acc.insert(id, val);
+                                        acc
+                                    }))
+                                }
+                                val => Err(vec![
+                                    Node::new(
+                                        span,
+                                        DictItem::Spread(Node::new(
+                                            span,
+                                            Instruction::Value(Value::Collection(
+                                                Collection::Dict(acc),
+                                            )),
+                                        )),
+                                    ),
+                                    Node::new(span, DictItem::Spread(Node::new(span, val))),
+                                ]),
+                            },
+                            (Ok(acc), val) => Err(vec![
+                                Node::new(
+                                    span,
+                                    DictItem::Spread(Node::new(
+                                        span,
+                                        Instruction::Value(Value::Collection(Collection::Dict(
+                                            acc,
+                                        ))),
+                                    )),
+                                ),
+                                Node::new(span, val),
+                            ]),
+                            (Err(mut acc), val) => {
+                                acc.push(Node::new(span, val));
+                                Err(acc)
+                            }
+                        }
+                    },
+                );
+                match x {
+                    Ok(x) => Ok(VInstruction::Value(Value::Collection(Collection::Dict(x)))),
+                    Err(x) => Ok(VInstruction::Action(ValueAction::DictDisplay(x))),
+                }
+            }
             Atom::Generator { val: _, iter: _ } => todo!(),
             Atom::ListComprehension { val: _, iter: _ } => todo!(),
             Atom::DictComprehension { val: _, iter: _ } => todo!(),
