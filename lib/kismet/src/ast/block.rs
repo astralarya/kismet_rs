@@ -1,8 +1,8 @@
 use std::{fmt, ops::Deref};
 
-use crate::{ast, hlir::VBasicBlock, types::Node};
+use crate::{hlir::VBasicBlock, types::Node};
 
-use super::Expr;
+use super::{Error, Expr};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExprTop(pub Vec<Node<Expr>>);
@@ -39,7 +39,7 @@ impl fmt::Display for ExprEnclosure {
 }
 
 impl TryFrom<ExprTop> for VBasicBlock {
-    type Error = ast::Error;
+    type Error = Error;
 
     fn try_from(val: ExprTop) -> Result<Self, Self::Error> {
         VBasicBlock::try_from(val.iter())
@@ -47,7 +47,7 @@ impl TryFrom<ExprTop> for VBasicBlock {
 }
 
 impl TryFrom<ExprEnclosure> for VBasicBlock {
-    type Error = ast::Error;
+    type Error = Error;
 
     fn try_from(val: ExprEnclosure) -> Result<Self, Self::Error> {
         VBasicBlock::try_from(val.iter())
