@@ -12,27 +12,27 @@ use super::{CompIter, DictItem, DictItemComp, Error, Expr, ListItem};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Atom {
-    Block(Vec<Node<Expr>>),
+    Id(String),
+    Integer(Integer),
+    Float(Float),
+    String(String),
     Paren(Node<Expr>),
     ListDisplay(Vec<Node<ListItem>>),
+    DictDisplay(Vec<Node<DictItem>>),
+    Tuple(Vec<Node<ListItem>>),
     ListComprehension {
         val: Node<ListItem>,
         iter: Vec<Node<CompIter>>,
     },
-    DictDisplay(Vec<Node<DictItem>>),
     DictComprehension {
         val: Node<DictItemComp>,
         iter: Vec<Node<CompIter>>,
     },
-    Tuple(Vec<Node<ListItem>>),
     Generator {
         val: Node<ListItem>,
         iter: Vec<Node<CompIter>>,
     },
-    Id(String),
-    String(String),
-    Float(Float),
-    Integer(Integer),
+    Block(Vec<Node<Expr>>),
 }
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
@@ -55,32 +55,32 @@ impl fmt::Display for Id {
 impl fmt::Display for Atom {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &*self {
-            Self::Block(val) => match val.len() {
-                1 => write!(f, "{{{};}}", Node::join(val, "; ")),
-                _ => write!(f, "{{{}}}", Node::join(val, "; ")),
-            },
+            Self::Id(val) => write!(f, "{}", val),
+            Self::Integer(val) => write!(f, "{}", val),
+            Self::Float(val) => fmt_float(f, val),
+            Self::String(val) => write!(f, r#""{}""#, val),
             Self::Paren(val) => {
                 write!(f, "({})", val)
             }
             Self::ListDisplay(val) => write!(f, "[{}]", Node::join(val, ", ")),
-            Self::ListComprehension { val, iter } => {
-                write!(f, "[{} {}]", val, Node::join(iter, " "))
-            }
             Self::DictDisplay(val) => write!(f, "{{{}}}", Node::join(val, ", ")),
-            Self::DictComprehension { val, iter } => {
-                write!(f, "{{{} {}}}", val, Node::join(iter, " "))
-            }
             Self::Tuple(val) => match val.len() {
                 1 => write!(f, "({},)", val[0]),
                 _ => write!(f, "({})", Node::join(val, ", ")),
             },
+            Self::ListComprehension { val, iter } => {
+                write!(f, "[{} {}]", val, Node::join(iter, " "))
+            }
+            Self::DictComprehension { val, iter } => {
+                write!(f, "{{{} {}}}", val, Node::join(iter, " "))
+            }
             Self::Generator { val, iter } => {
                 write!(f, "({} {})", val, Node::join(iter, " "))
             }
-            Self::String(val) => write!(f, r#""{}""#, val),
-            Self::Float(val) => fmt_float(f, val),
-            Self::Integer(val) => write!(f, "{}", val),
-            Self::Id(val) => write!(f, "{}", val),
+            Self::Block(val) => match val.len() {
+                1 => write!(f, "{{{};}}", Node::join(val, "; ")),
+                _ => write!(f, "{{{}}}", Node::join(val, "; ")),
+            },
         }
     }
 }
@@ -155,24 +155,24 @@ impl TryFrom<Atom> for VInstruction {
         }
 
         match val {
-            Atom::Block(x) => Ok(VInstruction::Block(VBasicBlock::try_from(x.iter())?)),
+            Atom::Id(x) => Ok(VInstruction::Variable(Id(x))),
+            Atom::Integer(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::Integer(x)))),
+            Atom::Float(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::Float(x)))),
+            Atom::String(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::String(x)))),
             Atom::Paren(x) => VInstruction::try_from(*x.data),
             Atom::ListDisplay(x) => match list_value(x)? {
                 Ok(x) => Ok(VInstruction::Value(Value::Collection(Collection::List(x)))),
                 Err(x) => Ok(VInstruction::Action(ValueAction::ListDisplay(x))),
             },
-            Atom::ListComprehension { val: _, iter: _ } => todo!(),
             Atom::DictDisplay(_) => todo!(),
-            Atom::DictComprehension { val: _, iter: _ } => todo!(),
             Atom::Tuple(x) => match list_value(x)? {
                 Ok(x) => Ok(VInstruction::Value(Value::Collection(Collection::Tuple(x)))),
                 Err(x) => Ok(VInstruction::Action(ValueAction::Tuple(x))),
             },
+            Atom::ListComprehension { val: _, iter: _ } => todo!(),
+            Atom::DictComprehension { val: _, iter: _ } => todo!(),
             Atom::Generator { val: _, iter: _ } => todo!(),
-            Atom::Id(x) => Ok(VInstruction::Variable(Id(x))),
-            Atom::String(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::String(x)))),
-            Atom::Float(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::Float(x)))),
-            Atom::Integer(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::Integer(x)))),
+            Atom::Block(x) => Ok(VInstruction::Block(VBasicBlock::try_from(x.iter())?)),
         }
     }
 }
