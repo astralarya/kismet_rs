@@ -1,4 +1,6 @@
-use std::{collections::HashMap, fmt};
+use std::fmt;
+
+use indexmap::IndexMap;
 
 use crate::ast::Id;
 
@@ -8,7 +10,7 @@ use super::Value;
 pub enum Collection {
     Tuple(Vec<Value>),
     List(Vec<Value>),
-    Dict(HashMap<Id, Value>),
+    Dict(IndexMap<Id, Value>),
 }
 
 impl fmt::Display for Collection {

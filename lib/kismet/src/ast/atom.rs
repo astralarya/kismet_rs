@@ -1,4 +1,6 @@
-use std::{collections::HashMap, fmt, ops::Deref};
+use std::{fmt, ops::Deref};
+
+use indexmap::IndexMap;
 
 use crate::{
     hlir::{
@@ -203,8 +205,8 @@ impl TryFrom<Atom> for VInstruction {
                 if !err.is_empty() {
                     return Err(Error::Vec(err));
                 }
-                let x = x.into_iter().fold::<Result<HashMap<_, _>, Vec<_>>, _>(
-                    Ok(HashMap::new()),
+                let x = x.into_iter().fold::<Result<IndexMap<_, _>, Vec<_>>, _>(
+                    Ok(IndexMap::new()),
                     |acc, val| {
                         let span = val.span;
                         match (acc, *val.data) {

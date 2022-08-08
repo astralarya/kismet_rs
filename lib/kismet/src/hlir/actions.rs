@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 
 use crate::{ast::Id, hlir::Primitive, types::Node};
 
@@ -61,8 +61,8 @@ impl Exec<SymbolTable<Value>, (SymbolTable<Value>, Value), Error> for ValueActio
             }
             ValueAction::DictDisplay(x) => x
                 .iter()
-                .fold::<Result<(_, HashMap<_, _>), Error>, _>(
-                    Ok((i, HashMap::new())),
+                .fold::<Result<(_, IndexMap<_, _>), Error>, _>(
+                    Ok((i, IndexMap::new())),
                     |acc, val| match acc {
                         Ok((mut i, mut acc)) => match &*val.data {
                             DictItem::KeyVal { key, val } => {
