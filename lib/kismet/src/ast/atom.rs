@@ -89,7 +89,7 @@ impl TryFrom<Atom> for VInstruction {
     type Error = Error;
 
     fn try_from(val: Atom) -> Result<Self, Self::Error> {
-        fn as_value(
+        fn list_value(
             x: Vec<Node<ListItem>>,
         ) -> Result<Result<Vec<Value>, Vec<Node<VListItem>>>, Error> {
             let (x, err) = x
@@ -157,14 +157,14 @@ impl TryFrom<Atom> for VInstruction {
         match val {
             Atom::Block(x) => Ok(VInstruction::Block(VBasicBlock::try_from(x.iter())?)),
             Atom::Paren(x) => VInstruction::try_from(*x.data),
-            Atom::ListDisplay(x) => match as_value(x)? {
+            Atom::ListDisplay(x) => match list_value(x)? {
                 Ok(x) => Ok(VInstruction::Value(Value::Collection(Collection::List(x)))),
                 Err(x) => Ok(VInstruction::Action(ValueAction::ListDisplay(x))),
             },
             Atom::ListComprehension { val: _, iter: _ } => todo!(),
             Atom::DictDisplay(_) => todo!(),
             Atom::DictComprehension { val: _, iter: _ } => todo!(),
-            Atom::Tuple(x) => match as_value(x)? {
+            Atom::Tuple(x) => match list_value(x)? {
                 Ok(x) => Ok(VInstruction::Value(Value::Collection(Collection::Tuple(x)))),
                 Err(x) => Ok(VInstruction::Action(ValueAction::Tuple(x))),
             },
