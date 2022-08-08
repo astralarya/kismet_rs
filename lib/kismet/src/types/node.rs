@@ -58,15 +58,35 @@ impl<S, T> BaseNode<S, T> {
     pub fn try_convert<U, E>(
         fun: impl Fn(U) -> Result<T, E>,
         val: BaseNode<S, U>,
-    ) -> Result<Self, E> {
-        Ok(BaseNode::new(val.span, fun(*val.data)?))
+    ) -> Result<Self, BaseNode<S, E>>
+    where
+        S: Clone,
+        E: Clone,
+        BaseNode<S, E>: TryFrom<E>,
+    {
+        Ok(BaseNode::new(
+            val.span.clone(),
+            fun(*val.data).map_err(|x| match BaseNode::<S, E>::try_from(x.clone()) {
+                Ok(x) => x,
+                Err(_) => BaseNode::new(val.span, x),
+            })?,
+        ))
     }
 
-    pub fn try_convert_from<U, E>(val: BaseNode<S, U>) -> Result<Self, E>
+    pub fn try_convert_from<U, E>(val: BaseNode<S, U>) -> Result<Self, BaseNode<S, E>>
     where
+        S: Clone,
+        E: Clone,
+        BaseNode<S, E>: TryFrom<E>,
         T: TryFrom<U, Error = E>,
     {
-        Ok(BaseNode::new(val.span, T::try_from(*val.data)?))
+        Ok(BaseNode::new(
+            val.span.clone(),
+            T::try_from(*val.data).map_err(|x| match BaseNode::<S, E>::try_from(x.clone()) {
+                Ok(x) => x,
+                Err(_) => BaseNode::new(val.span, x),
+            })?,
+        ))
     }
 }
 

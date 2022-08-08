@@ -22,7 +22,7 @@ impl fmt::Display for ListItem {
 }
 
 impl TryFrom<Node<ListItem>> for Node<(ListItemKind, VInstruction)> {
-    type Error = Error;
+    type Error = Node<Error>;
 
     fn try_from(val: Node<ListItem>) -> Result<Self, Self::Error> {
         Node::try_convert(

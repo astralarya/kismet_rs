@@ -75,7 +75,7 @@ where
             .collect::<Result<_, _>>()
         {
             Ok(x) => Ok(BasicBlock(x)),
-            Err(x) => Err(x),
+            Err(x) => Err(ast::Error::Node(x)),
         }
     }
 }
