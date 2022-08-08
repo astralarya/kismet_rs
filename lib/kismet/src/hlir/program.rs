@@ -8,14 +8,14 @@ use crate::{
 use super::{Error, Exec, SymbolTable, SymbolTableResult};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct BasicBlock<T, U, V>(pub Vec<Node<Instruction<T, U, V>>>);
+pub struct Block<T, U, V>(pub Vec<Node<Instruction<T, U, V>>>);
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Instruction<T, U, V> {
     Value(V),
     Variable(Id),
     Action(T),
-    Block(BasicBlock<T, U, V>),
+    Block(Block<T, U, V>),
     Assign(Id, Node<Instruction<T, U, V>>),
     Symbol(U),
 }
@@ -47,7 +47,7 @@ where
     }
 }
 
-impl<T, U, V, E> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for BasicBlock<T, U, V>
+impl<T, U, V, E> Exec<SymbolTable<U>, (SymbolTable<U>, V), Error> for Block<T, U, V>
 where
     T: Exec<SymbolTable<U>, (SymbolTable<U>, V), Error>,
     U: TryFrom<V, Error = E> + Clone + Default,
@@ -62,7 +62,7 @@ where
     }
 }
 
-impl<N, T, U, V> TryFrom<Iter<'_, Node<N>>> for BasicBlock<T, U, V>
+impl<N, T, U, V> TryFrom<Iter<'_, Node<N>>> for Block<T, U, V>
 where
     Instruction<T, U, V>: TryFrom<N, Error = ast::Error>,
     N: Clone,
@@ -74,7 +74,7 @@ where
             .map(|x| Node::<Instruction<T, U, V>>::try_convert_from(x.clone()))
             .collect::<Result<_, _>>()
         {
-            Ok(x) => Ok(BasicBlock(x)),
+            Ok(x) => Ok(Block(x)),
             Err(x) => Err(ast::Error::Node(x)),
         }
     }

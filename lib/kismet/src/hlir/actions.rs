@@ -1,8 +1,6 @@
 use crate::types::Node;
 
-use super::{
-    BasicBlock, Collection, Error, Exec, Instruction, SymbolTable, SymbolTableResult, Value,
-};
+use super::{Block, Collection, Error, Exec, Instruction, SymbolTable, SymbolTableResult, Value};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ValueAction {
@@ -17,7 +15,7 @@ pub enum ListItemKind {
 }
 
 pub type VInstruction = Instruction<ValueAction, Value, Value>;
-pub type VBasicBlock = BasicBlock<ValueAction, Value, Value>;
+pub type VBasicBlock = Block<ValueAction, Value, Value>;
 pub type VListItem = (ListItemKind, VInstruction);
 
 impl Exec<SymbolTable<Value>, (SymbolTable<Value>, Value), Error> for ValueAction {
