@@ -22,7 +22,8 @@ pub fn exec<T>(input: Node<T>) -> Result<Value, Error>
 where
     VBasicBlock: TryFrom<T, Error = ast::Error>,
 {
-    let program = Node::<VBasicBlock>::try_convert_from(input)?;
+    let program =
+        Node::<VBasicBlock>::try_convert_from(input).map_err(Node::<Error>::convert_from)?;
     let (_, val) = program.exec(SymbolTable::<Value>::default())?;
     Ok(val)
 }

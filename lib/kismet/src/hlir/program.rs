@@ -57,7 +57,7 @@ where
     fn exec(&self, i: SymbolTable<U>) -> SymbolTableResult<U, V> {
         self.0.iter().fold(Ok((i, V::default())), move |acc, val| {
             let (i, _) = acc?;
-            val.exec(i)
+            Ok(val.exec(i)?)
         })
     }
 }
