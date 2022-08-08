@@ -215,6 +215,15 @@ impl TryFrom<Op> for VInstruction {
                             ))),
                             _ => arith_float(lhs, *op, rhs as Float),
                         },
+                        (
+                            Value::Primitive(Primitive::String(lhs)),
+                            Value::Primitive(Primitive::String(rhs)),
+                        ) => match *op {
+                            OpArith::ADD => Ok(Instruction::Value(Value::Primitive(
+                                Primitive::String(lhs + &rhs),
+                            ))),
+                            _ => Err(Error::InvalidOp),
+                        },
                         _ => Err(Error::TypeMismatch),
                     },
                     _ => todo!(),
