@@ -15,8 +15,8 @@ use crate::{
 };
 
 use super::{
-    expr, expr_block0, or_test, target, target_dict_item, target_expr, target_list_item, token_tag,
-    ConvertKind, Error, ErrorKind, Input, KResult, Token,
+    assignment_expr, expr, expr_block0, or_test, target, target_dict_item, target_expr,
+    target_list_item, token_tag, ConvertKind, Error, ErrorKind, Input, KResult, Token,
 };
 
 pub fn enclosure(i: Input) -> KResult<Node<Atom>> {
@@ -143,7 +143,7 @@ pub fn brackets(i: Input) -> KResult<Node<Atom>> {
 pub fn list_item(i: Input) -> KResult<Node<ListItem>> {
     let (i, lhs) = opt(token_tag(Token::SPREAD))(i)?;
 
-    let (i, val) = match expr(i) {
+    let (i, val) = match assignment_expr(i) {
         Ok(x) => x,
         Err(Err::Failure(val)) => {
             let span = val.span;
@@ -431,10 +431,10 @@ pub fn brace(i: Input) -> KResult<Node<Atom>> {
 pub fn dict_item(i: Input) -> KResult<Node<DictItem>> {
     let (i, lhs) = opt(token_tag(Token::LBRACKET))(i)?;
     if let Some(lhs) = lhs {
-        let (i, key) = expr(i)?;
+        let (i, key) = assignment_expr(i)?;
         let (i, _) = token_tag(Token::RBRACE)(i)?;
         let (i, _) = token_tag(Token::COLON)(i)?;
-        let (i, val) = expr(i)?;
+        let (i, val) = assignment_expr(i)?;
         return Ok((
             i,
             Node::new(lhs.span + val.span, DictItem::DynKeyVal { key, val }),
@@ -442,7 +442,7 @@ pub fn dict_item(i: Input) -> KResult<Node<DictItem>> {
     }
     let (i, lhs) = opt(token_tag(Token::SPREAD))(i)?;
 
-    let (i, key) = match expr(i) {
+    let (i, key) = match assignment_expr(i) {
         Ok(x) => x,
         Err(Err::Failure(val)) => {
             let span = val.span;

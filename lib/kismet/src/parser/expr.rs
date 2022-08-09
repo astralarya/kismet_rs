@@ -71,17 +71,13 @@ pub fn expr_enclosure(i: Input) -> KResult<Node<ExprEnclosure>> {
     }
 }
 
-pub fn expr(i: Input) -> KResult<Node<Expr>> {
-    assignment_expr(i)
-}
-
 pub fn assignment_expr(i: Input) -> KResult<Node<Expr>> {
-    let (i, lhs) = branch_expr(i)?;
+    let (i, lhs) = expr(i)?;
     let (i, op) = opt(token_tag(Token::ASSIGNE))(i)?;
     match op {
         Some(op) => match Node::<Target>::try_from(lhs) {
             Ok(lhs) => {
-                let (i, rhs) = branch_expr(i)?;
+                let (i, rhs) = expr(i)?;
                 Ok((i, Node::new(lhs.span + rhs.span, Expr::Assign(lhs, rhs))))
             }
             Err(_) => Err(Err::Failure(ONode::new(
@@ -91,6 +87,10 @@ pub fn assignment_expr(i: Input) -> KResult<Node<Expr>> {
         },
         None => Ok((i, lhs)),
     }
+}
+
+pub fn expr(i: Input) -> KResult<Node<Expr>> {
+    branch_expr(i)
 }
 
 pub fn branch_expr(i: Input) -> KResult<Node<Expr>> {
@@ -104,7 +104,7 @@ pub fn branch_expr(i: Input) -> KResult<Node<Expr>> {
 
 pub fn if_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = token_tag(Token::IF)(i)?;
-    let (i, val) = expr(i)?;
+    let (i, val) = assignment_expr(i)?;
     let (i, t_block) = expr_enclosure(i)?;
     let (i, f_block) = opt(preceded(token_tag(Token::ELSE), expr_enclosure))(i)?;
     match f_block {
@@ -138,7 +138,7 @@ pub fn if_expr(i: Input) -> KResult<Node<Expr>> {
 
 pub fn match_expr(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = token_tag(Token::MATCH)(i)?;
-    let (i, val) = expr(i)?;
+    let (i, val) = assignment_expr(i)?;
     let (i, _) = token_tag(Token::LBRACE)(i)?;
 
     let mut arms: Vec<Node<MatchArm>> = vec![];
@@ -216,7 +216,7 @@ pub fn for_expr(i: Input) -> KResult<Node<LoopKind>> {
     let (i, lhs) = token_tag(Token::FOR)(i)?;
     let (i, tar) = target(i)?;
     let (i, _) = token_tag(Token::IN)(i)?;
-    let (i, val) = expr(i)?;
+    let (i, val) = assignment_expr(i)?;
     let (i, block) = expr_enclosure(i)?;
     Ok((
         i,
@@ -226,7 +226,7 @@ pub fn for_expr(i: Input) -> KResult<Node<LoopKind>> {
 
 pub fn while_expr(i: Input) -> KResult<Node<LoopKind>> {
     let (i, lhs) = token_tag(Token::WHILE)(i)?;
-    let (i, val) = expr(i)?;
+    let (i, val) = assignment_expr(i)?;
     let (i, block) = expr_enclosure(i)?;
     Ok((
         i,
