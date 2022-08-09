@@ -11,7 +11,7 @@ pub fn stmt_block0(i: Input) -> KResult<Option<Node<Vec<Node<Expr>>>>> {
         None => return Ok((i, None)),
     };
     let (i, _lhs) = many0(token_tag(Token::DELIM))(i)?;
-    let (i, val) = separated_list0(many1(token_tag(Token::DELIM)), expr)(i)?;
+    let (i, val) = separated_list0(many1(token_tag(Token::DELIM)), stmt)(i)?;
     let (i, _rhs) = many0(token_tag(Token::DELIM))(i)?;
     Ok((
         i,
@@ -29,9 +29,9 @@ pub fn stmt_block0(i: Input) -> KResult<Option<Node<Vec<Node<Expr>>>>> {
 
 pub fn stmt_block1(i: Input) -> KResult<Node<Vec<Node<Expr>>>> {
     let (i, lhs) = many0(token_tag(Token::DELIM))(i)?;
-    let (i, head) = expr(i)?;
+    let (i, head) = stmt(i)?;
     let (i, _sep) = many1(token_tag(Token::DELIM))(i)?;
-    let (i, mut val) = separated_list0(many1(token_tag(Token::DELIM)), expr)(i)?;
+    let (i, mut val) = separated_list0(many1(token_tag(Token::DELIM)), stmt)(i)?;
     let (i, rhs) = many0(token_tag(Token::DELIM))(i)?;
     let head_span = head.span;
     val.insert(0, head);
@@ -52,4 +52,8 @@ pub fn stmt_enclosure(i: Input) -> KResult<Node<ExprEnclosure>> {
         Some(val) => Ok((i, Node::new(lhs.span + rhs.span, ExprEnclosure(*val.data)))),
         None => Ok((i, Node::new(lhs.span + rhs.span, ExprEnclosure(vec![])))),
     }
+}
+
+pub fn stmt(i: Input) -> KResult<Node<Expr>> {
+    expr(i)
 }
