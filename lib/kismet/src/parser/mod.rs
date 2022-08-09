@@ -12,6 +12,7 @@ mod expr;
 mod op;
 mod primary;
 mod start;
+mod stmt;
 mod target;
 mod token;
 
@@ -22,6 +23,7 @@ pub use expr::*;
 pub use op::*;
 pub use primary::*;
 pub use start::*;
+pub use stmt::*;
 pub use target::*;
 pub use token::*;
 

@@ -15,7 +15,7 @@ use crate::{
 };
 
 use super::{
-    assignment_expr, expr, expr_block0, or_test, target, target_dict_item, target_expr,
+    assignment_expr, expr, or_test, stmt_block0, target, target_dict_item, target_expr,
     target_list_item, token_tag, ConvertKind, Error, ErrorKind, Input, KResult, Token,
 };
 
@@ -490,7 +490,7 @@ pub fn dict_item(i: Input) -> KResult<Node<DictItem>> {
     let (i, delim) = opt(token_tag(Token::DELIM))(i)?;
     match delim {
         Some(delim) => {
-            let (i, vals) = expr_block0(i)?;
+            let (i, vals) = stmt_block0(i)?;
             let mut vals = match vals {
                 Some(val) => *val.data,
                 None => vec![],
