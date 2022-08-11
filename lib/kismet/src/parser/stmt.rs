@@ -1,13 +1,14 @@
 use nom::{
+    branch::alt,
     combinator::opt,
     multi::{many0, many1, separated_list0},
     Err,
 };
 
-use crate::ast::{Expr, ExprEnclosure, Target};
+use crate::ast::{Expr, ExprEnclosure, Stmt, Target};
 use crate::types::{Node, ONode, Span};
 
-use super::{expr, token_tag, Error, ErrorKind, Input, KResult, Token};
+use super::{expr, loop_label, token_tag, Error, ErrorKind, Input, KResult, Token};
 
 pub fn stmt_block0(i: Input) -> KResult<Option<Node<Vec<Node<Expr>>>>> {
     let i_span = match Span::get0(i) {
@@ -58,6 +59,10 @@ pub fn stmt_enclosure(i: Input) -> KResult<Node<ExprEnclosure>> {
     }
 }
 
+pub fn stmt(i: Input) -> KResult<Node<Expr>> {
+    alt((break_stmt, assignment_stmt))(i)
+}
+
 pub fn assignment_stmt(i: Input) -> KResult<Node<Expr>> {
     let (i, lhs) = expr(i)?;
     let (i, op) = opt(token_tag(Token::ASSIGN))(i)?;
@@ -76,6 +81,12 @@ pub fn assignment_stmt(i: Input) -> KResult<Node<Expr>> {
     }
 }
 
-pub fn stmt(i: Input) -> KResult<Node<Expr>> {
-    expr(i)
+pub fn break_stmt(i: Input) -> KResult<Node<Expr>> {
+    let (i, op) = token_tag(Token::BREAK)(i)?;
+    let (i, id) = opt(loop_label)(i)?;
+    let (i, val) = expr(i)?;
+    Ok((
+        i,
+        Node::new(op.span + val.span, Expr::Stmt(Stmt::Break { id, val })),
+    ))
 }

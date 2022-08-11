@@ -137,6 +137,12 @@ pub enum Token {
     #[token("...")]
     SPREAD,
 
+    #[regex(r"(?i)return")]
+    RETURN,
+
+    #[regex(r"(?i)break")]
+    BREAK,
+
     #[regex(r"(?i)for")]
     FOR,
 
@@ -457,6 +463,8 @@ impl fmt::Display for Token {
             Self::ASSIGNE => write!(f, ":="),
             Self::ARROW => write!(f, "=>"),
             Self::SPREAD => write!(f, "..."),
+            Self::RETURN => write!(f, "return"),
+            Self::BREAK => write!(f, "break"),
             Self::FOR => write!(f, "for"),
             Self::IN => write!(f, "in"),
             Self::IF => write!(f, "if"),
