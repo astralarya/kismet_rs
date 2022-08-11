@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::ast::Expr;
-use crate::hlir::{ListItemKind, VInstruction};
+use crate::hir::{ListItemKind, VInstruction};
 use crate::types::Node;
 
 use super::Error;

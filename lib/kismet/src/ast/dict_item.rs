@@ -1,5 +1,5 @@
 use super::Expr;
-use crate::hlir;
+use crate::hir;
 
-pub type DictItem = hlir::DictItem<Expr>;
-pub type DictItemComp = hlir::DictItemComp<Expr>;
+pub type DictItem = hir::DictItem<Expr>;
+pub type DictItemComp = hir::DictItemComp<Expr>;

@@ -3,7 +3,7 @@ use std::{fmt, ops::Deref};
 use indexmap::IndexMap;
 
 use crate::{
-    hlir::{
+    hir::{
         Collection, DictItem, Instruction, ListItemKind, Primitive, VBasicBlock, VInstruction,
         VListItem, Value, ValueAction,
     },
@@ -114,7 +114,7 @@ impl TryFrom<Atom> for VInstruction {
                 .map(|x| {
                     Node::convert(
                         |x| match x {
-                            (ListItemKind::Expr, crate::hlir::Instruction::Value(x)) => Ok(x),
+                            (ListItemKind::Expr, crate::hir::Instruction::Value(x)) => Ok(x),
                             x => Err(x),
                         },
                         x,

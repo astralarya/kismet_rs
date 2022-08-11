@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use kismet::compile;
-use kismet::hlir::{Exec, SymbolTable, Value};
+use kismet::hir::{Exec, SymbolTable, Value};
 use kismet::parse;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;

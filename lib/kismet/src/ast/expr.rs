@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    hlir::VInstruction,
+    hir::VInstruction,
     types::{CommaList, Node},
 };
 

@@ -1,6 +1,6 @@
 use std::{fmt, ops::Deref};
 
-use crate::{hlir::VBasicBlock, types::Node};
+use crate::{hir::VBasicBlock, types::Node};
 
 use super::{Error, Expr};
 

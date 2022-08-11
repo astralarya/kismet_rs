@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 
-use crate::{ast::Id, hlir::Primitive, types::Node};
+use crate::{ast::Id, hir::Primitive, types::Node};
 
 use super::{
     Block, Collection, DictItem, Error, Exec, Instruction, SymbolTable, SymbolTableResult, Value,

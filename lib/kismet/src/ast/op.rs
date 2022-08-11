@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    hlir::{Instruction, Primitive, VInstruction, Value},
+    hir::{Instruction, Primitive, VInstruction, Value},
     types::{Float, Integer, Node, UInteger},
 };
 
