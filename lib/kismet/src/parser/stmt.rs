@@ -60,7 +60,26 @@ pub fn stmt_enclosure(i: Input) -> KResult<Node<ExprEnclosure>> {
 }
 
 pub fn stmt(i: Input) -> KResult<Node<Expr>> {
-    alt((break_stmt, assignment_stmt))(i)
+    alt((return_stmt, break_stmt, assignment_stmt))(i)
+}
+
+pub fn return_stmt(i: Input) -> KResult<Node<Expr>> {
+    let (i, op) = token_tag(Token::RETURN)(i)?;
+    let (i, val) = expr(i)?;
+    Ok((
+        i,
+        Node::new(op.span + val.span, Expr::Stmt(Stmt::Return(val))),
+    ))
+}
+
+pub fn break_stmt(i: Input) -> KResult<Node<Expr>> {
+    let (i, op) = token_tag(Token::BREAK)(i)?;
+    let (i, id) = opt(loop_label)(i)?;
+    let (i, val) = expr(i)?;
+    Ok((
+        i,
+        Node::new(op.span + val.span, Expr::Stmt(Stmt::Break { id, val })),
+    ))
 }
 
 pub fn assignment_stmt(i: Input) -> KResult<Node<Expr>> {
@@ -79,14 +98,4 @@ pub fn assignment_stmt(i: Input) -> KResult<Node<Expr>> {
         },
         None => Ok((i, lhs)),
     }
-}
-
-pub fn break_stmt(i: Input) -> KResult<Node<Expr>> {
-    let (i, op) = token_tag(Token::BREAK)(i)?;
-    let (i, id) = opt(loop_label)(i)?;
-    let (i, val) = expr(i)?;
-    Ok((
-        i,
-        Node::new(op.span + val.span, Expr::Stmt(Stmt::Break { id, val })),
-    ))
 }
