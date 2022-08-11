@@ -1,20 +1,22 @@
 mod actions;
+mod block;
 mod collection;
 mod error;
 mod exec;
+mod instruction;
 mod item;
 mod primitive;
-mod program;
 mod symbol;
 mod value;
 
 pub use actions::*;
+pub use block::*;
 pub use collection::*;
 pub use error::*;
 pub use exec::*;
+pub use instruction::*;
 pub use item::*;
 pub use primitive::*;
-pub use program::*;
 pub use symbol::*;
 pub use value::*;
 
