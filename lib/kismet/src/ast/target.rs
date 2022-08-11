@@ -222,7 +222,7 @@ impl TryFrom<Node<Atom>> for Node<Target> {
                 ListItem::Expr(y) => (Node::new(val.span, y), &|x: Node<Target>| {
                     Node::new(x.span, TargetListItem::Target(*x.data))
                 }),
-                ListItem::Spread(x) => (x, &|x: Node<Target>| {
+                ListItem::Spread(x) => (Node::new(val.span, x), &|x: Node<Target>| {
                     Node::new(x.span, TargetListItem::Spread(x))
                 }),
             };
@@ -316,7 +316,7 @@ where
                 )),
                 Err(_) => Err(()),
             },
-            ListItem::Spread(x) => match Node::<Id>::try_from(x) {
+            ListItem::Spread(x) => match Node::<Id>::try_from(&Node::new(span, x)) {
                 Ok(x) => Ok(Node::new(
                     span,
                     TargetListItem::Spread(Node::convert(|x| T::from(TargetKind::Id(x)), x)),

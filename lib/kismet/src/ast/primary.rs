@@ -1,7 +1,7 @@
 use std::fmt;
 
 use super::{Args, Atom, Error, Expr, Id};
-use crate::{hir::VInstruction, types::Node};
+use crate::{hir::Instruction, types::Node};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Primary {
@@ -26,7 +26,7 @@ impl fmt::Display for Primary {
     }
 }
 
-impl TryFrom<Primary> for VInstruction {
+impl TryFrom<Primary> for Instruction {
     type Error = Error;
 
     fn try_from(val: Primary) -> Result<Self, Self::Error> {
@@ -35,7 +35,7 @@ impl TryFrom<Primary> for VInstruction {
             Primary::Index(_, _) => todo!(),
             Primary::Subscription(_, _) => todo!(),
             Primary::Call(_, _) => todo!(),
-            Primary::Atom(x) => VInstruction::try_from(x),
+            Primary::Atom(x) => Instruction::try_from(x),
         }
     }
 }

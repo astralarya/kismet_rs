@@ -3,63 +3,54 @@ use indexmap::IndexMap;
 use crate::{ast::Id, hir::Primitive, types::Node};
 
 use super::{
-    Block, Collection, DictItem, Error, Exec, Instruction, SymbolTable, SymbolTableResult, Value,
+    Collection, DictItem, Error, Exec, Instruction, ListItem, SymbolTable, SymbolTableResult, Value,
 };
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum ValueAction {
-    Tuple(Vec<Node<(ListItemKind, VInstruction)>>),
-    ListDisplay(Vec<Node<(ListItemKind, VInstruction)>>),
-    DictDisplay(Vec<Node<VDictItem>>),
+pub enum Action {
+    Tuple(Vec<Node<ListItem<Instruction>>>),
+    ListDisplay(Vec<Node<ListItem<Instruction>>>),
+    DictDisplay(Vec<Node<DictItem<Instruction>>>),
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum ListItemKind {
-    Expr,
-    Spread,
-}
-
-pub type VDictItem = DictItem<VInstruction>;
-
-pub type VInstruction = Instruction<ValueAction, Value, Value>;
-pub type VBasicBlock = Block<ValueAction, Value, Value>;
-pub type VListItem = (ListItemKind, VInstruction);
-
-impl Exec<SymbolTable<Value>, (SymbolTable<Value>, Value), Error> for ValueAction {
-    fn exec(&self, i: SymbolTable<Value>) -> SymbolTableResult<Value, Value> {
+impl Exec<SymbolTable, (SymbolTable, Value), Error> for Action {
+    fn exec(&self, i: SymbolTable) -> SymbolTableResult {
         fn iter_list(
-            i: SymbolTable<Value>,
-            x: &[Node<(ListItemKind, VInstruction)>],
-        ) -> Result<(SymbolTable<Value>, Vec<Value>), Error> {
+            i: SymbolTable,
+            x: &[Node<ListItem<Instruction>>],
+        ) -> Result<(SymbolTable, Vec<Value>), Error> {
             x.iter()
                 .fold::<Result<_, Error>, _>(Ok((i, vec![])), |acc, val| {
-                    let (kind, val) = &*val.data;
                     let (i, mut vec) = acc?;
+                    let (val, spread) = match &*val.data {
+                        ListItem::Expr(x) => (x, false),
+                        ListItem::Spread(x) => (x, true),
+                    };
                     let (i, val) = val.exec(i)?;
-                    match (kind, val) {
-                        (ListItemKind::Expr, val) => vec.push(val),
-                        (ListItemKind::Spread, Value::Collection(Collection::List(mut val))) => {
+                    match (spread, val) {
+                        (false, val) => vec.push(val),
+                        (true, Value::Collection(Collection::List(mut val))) => {
                             vec.append(&mut val)
                         }
-                        (ListItemKind::Spread, Value::Collection(Collection::Tuple(mut val))) => {
+                        (true, Value::Collection(Collection::Tuple(mut val))) => {
                             vec.append(&mut val)
                         }
-                        (ListItemKind::Spread, _) => return Err(Error::TypeMismatch),
+                        (true, _) => return Err(Error::TypeMismatch),
                     }
                     Ok((i, vec))
                 })
         }
 
         match self {
-            ValueAction::Tuple(x) => {
+            Action::Tuple(x) => {
                 let (i, val) = iter_list(i, x)?;
                 Ok((i, Value::Collection(Collection::Tuple(val))))
             }
-            ValueAction::ListDisplay(x) => {
+            Action::ListDisplay(x) => {
                 let (i, val) = iter_list(i, x)?;
                 Ok((i, Value::Collection(Collection::List(val))))
             }
-            ValueAction::DictDisplay(x) => x
+            Action::DictDisplay(x) => x
                 .iter()
                 .fold::<Result<(_, IndexMap<_, _>), Error>, _>(
                     Ok((i, IndexMap::new())),
@@ -110,16 +101,10 @@ impl Exec<SymbolTable<Value>, (SymbolTable<Value>, Value), Error> for ValueActio
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Args<T, U, V>(pub Vec<Node<Instruction<T, U, V>>>);
+pub struct Args(pub Vec<Node<Instruction>>);
 
-impl<T, U, V, E> Exec<SymbolTable<U>, (SymbolTable<U>, Vec<V>), Error> for Args<T, U, V>
-where
-    T: Exec<SymbolTable<U>, (SymbolTable<U>, V), Error>,
-    U: TryFrom<V, Error = E> + Clone + Default,
-    V: From<U> + Clone + Default,
-    Error: From<E>,
-{
-    fn exec(&self, i: SymbolTable<U>) -> SymbolTableResult<U, Vec<V>> {
+impl Exec<SymbolTable, (SymbolTable, Vec<Value>), Error> for Args {
+    fn exec(&self, i: SymbolTable) -> Result<(SymbolTable, Vec<Value>), Error> {
         self.0
             .iter()
             .fold::<Result<_, Error>, _>(Ok((i, vec![])), |acc, val| {

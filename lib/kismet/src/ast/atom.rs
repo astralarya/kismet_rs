@@ -3,10 +3,7 @@ use std::{fmt, ops::Deref};
 use indexmap::IndexMap;
 
 use crate::{
-    hir::{
-        Collection, DictItem, Instruction, ListItemKind, Primitive, VBasicBlock, VInstruction,
-        VListItem, Value, ValueAction,
-    },
+    hir::{self, Action, Block, Collection, DictItem, Instruction, Primitive, Value},
     types::{fmt_float, Float, Integer, Node},
 };
 
@@ -87,16 +84,16 @@ impl fmt::Display for Atom {
     }
 }
 
-impl TryFrom<Atom> for VInstruction {
+impl TryFrom<Atom> for Instruction {
     type Error = Error;
 
     fn try_from(val: Atom) -> Result<Self, Self::Error> {
-        fn list_value(
-            x: Vec<Node<ListItem>>,
-        ) -> Result<Result<Vec<Value>, Vec<Node<VListItem>>>, Error> {
+        type ListValueResult =
+            Result<Result<Vec<Value>, Vec<Node<hir::ListItem<Instruction>>>>, Error>;
+        fn list_value(x: Vec<Node<ListItem>>) -> ListValueResult {
             let (x, err) = x
                 .into_iter()
-                .map(Node::<(ListItemKind, VInstruction)>::try_from)
+                .map(Node::<hir::ListItem<Instruction>>::try_from)
                 .fold::<(Vec<_>, Vec<_>), _>((vec![], vec![]), |mut acc, val| match val {
                     Ok(x) => {
                         acc.0.push(x);
@@ -114,7 +111,7 @@ impl TryFrom<Atom> for VInstruction {
                 .map(|x| {
                     Node::convert(
                         |x| match x {
-                            (ListItemKind::Expr, crate::hir::Instruction::Value(x)) => Ok(x),
+                            hir::ListItem::Expr(Instruction::Value(x)) => Ok(x),
                             x => Err(x),
                         },
                         x,
@@ -131,10 +128,7 @@ impl TryFrom<Atom> for VInstruction {
                             let mut acc = acc
                                 .into_iter()
                                 .map(|x| {
-                                    Node::convert(
-                                        |x| (ListItemKind::Expr, VInstruction::Value(x)),
-                                        x,
-                                    )
+                                    Node::convert(|x| hir::ListItem::Expr(Instruction::Value(x)), x)
                                 })
                                 .collect::<Vec<_>>();
                             acc.push(Node::new(span, val));
@@ -143,7 +137,7 @@ impl TryFrom<Atom> for VInstruction {
                         (Err(mut acc), Ok(val)) => {
                             acc.push(Node::new(
                                 span,
-                                (ListItemKind::Expr, VInstruction::Value(val)),
+                                hir::ListItem::Expr(Instruction::Value(val)),
                             ));
                             Err(acc)
                         }
@@ -157,18 +151,18 @@ impl TryFrom<Atom> for VInstruction {
         }
 
         match val {
-            Atom::Id(x) => Ok(VInstruction::Variable(Id(x))),
-            Atom::Integer(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::Integer(x)))),
-            Atom::Float(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::Float(x)))),
-            Atom::String(x) => Ok(VInstruction::Value(Value::Primitive(Primitive::String(x)))),
-            Atom::Paren(x) => VInstruction::try_from(*x.data),
+            Atom::Id(x) => Ok(Instruction::Variable(Id(x))),
+            Atom::Integer(x) => Ok(Instruction::Value(Value::Primitive(Primitive::Integer(x)))),
+            Atom::Float(x) => Ok(Instruction::Value(Value::Primitive(Primitive::Float(x)))),
+            Atom::String(x) => Ok(Instruction::Value(Value::Primitive(Primitive::String(x)))),
+            Atom::Paren(x) => Instruction::try_from(*x.data),
             Atom::Tuple(x) => match list_value(x)? {
-                Ok(x) => Ok(VInstruction::Value(Value::Collection(Collection::Tuple(x)))),
-                Err(x) => Ok(VInstruction::Action(ValueAction::Tuple(x))),
+                Ok(x) => Ok(Instruction::Value(Value::Collection(Collection::Tuple(x)))),
+                Err(x) => Ok(Instruction::Action(Action::Tuple(x))),
             },
             Atom::ListDisplay(x) => match list_value(x)? {
-                Ok(x) => Ok(VInstruction::Value(Value::Collection(Collection::List(x)))),
-                Err(x) => Ok(VInstruction::Action(ValueAction::ListDisplay(x))),
+                Ok(x) => Ok(Instruction::Value(Value::Collection(Collection::List(x)))),
+                Err(x) => Ok(Instruction::Action(Action::ListDisplay(x))),
             },
             Atom::DictDisplay(x) => {
                 let (x, err) = x
@@ -178,15 +172,15 @@ impl TryFrom<Atom> for VInstruction {
                             |x| match x {
                                 DictItem::KeyVal { key, val } => Ok(DictItem::KeyVal {
                                     key,
-                                    val: Node::<VInstruction>::try_convert_from(val)?,
+                                    val: Node::<Instruction>::try_convert_from(val)?,
                                 }),
                                 DictItem::DynKeyVal { key, val } => Ok(DictItem::DynKeyVal {
-                                    key: Node::<VInstruction>::try_convert_from(key)?,
-                                    val: Node::<VInstruction>::try_convert_from(val)?,
+                                    key: Node::<Instruction>::try_convert_from(key)?,
+                                    val: Node::<Instruction>::try_convert_from(val)?,
                                 }),
                                 DictItem::Shorthand(x) => Ok(DictItem::Shorthand(x)),
                                 DictItem::Spread(x) => {
-                                    Ok(DictItem::Spread(Node::<VInstruction>::try_convert_from(x)?))
+                                    Ok(DictItem::Spread(Node::<Instruction>::try_convert_from(x)?))
                                 }
                             },
                             x,
@@ -274,14 +268,14 @@ impl TryFrom<Atom> for VInstruction {
                     },
                 );
                 match x {
-                    Ok(x) => Ok(VInstruction::Value(Value::Collection(Collection::Dict(x)))),
-                    Err(x) => Ok(VInstruction::Action(ValueAction::DictDisplay(x))),
+                    Ok(x) => Ok(Instruction::Value(Value::Collection(Collection::Dict(x)))),
+                    Err(x) => Ok(Instruction::Action(Action::DictDisplay(x))),
                 }
             }
             Atom::Generator { val: _, iter: _ } => todo!(),
             Atom::ListComprehension { val: _, iter: _ } => todo!(),
             Atom::DictComprehension { val: _, iter: _ } => todo!(),
-            Atom::Block(x) => Ok(VInstruction::Block(VBasicBlock::try_from(x.iter())?)),
+            Atom::Block(x) => Ok(Instruction::Block(Block::try_from(x.iter())?)),
         }
     }
 }

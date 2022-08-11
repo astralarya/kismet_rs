@@ -1,6 +1,6 @@
 use std::{fmt, ops::Deref};
 
-use crate::{hir::VBasicBlock, types::Node};
+use crate::{hir::Block, types::Node};
 
 use super::{Error, Expr};
 
@@ -38,18 +38,18 @@ impl fmt::Display for ExprEnclosure {
     }
 }
 
-impl TryFrom<ExprTop> for VBasicBlock {
+impl TryFrom<ExprTop> for Block {
     type Error = Error;
 
     fn try_from(val: ExprTop) -> Result<Self, Self::Error> {
-        VBasicBlock::try_from(val.iter())
+        Block::try_from(val.iter())
     }
 }
 
-impl TryFrom<ExprEnclosure> for VBasicBlock {
+impl TryFrom<ExprEnclosure> for Block {
     type Error = Error;
 
     fn try_from(val: ExprEnclosure) -> Result<Self, Self::Error> {
-        VBasicBlock::try_from(val.iter())
+        Block::try_from(val.iter())
     }
 }

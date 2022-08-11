@@ -214,7 +214,10 @@ pub fn list_item(i: Input) -> KResult<Node<ListItem>> {
     }
 
     match lhs {
-        Some(lhs) => Ok((i, Node::new(lhs.span + val.span, ListItem::Spread(val)))),
+        Some(lhs) => Ok((
+            i,
+            Node::new(lhs.span + val.span, ListItem::Spread(*val.data)),
+        )),
         None => Ok((i, Node::convert(ListItem::Expr, val))),
     }
 }

@@ -21,19 +21,16 @@ impl SymbolIdx {
 }
 
 #[derive(Clone, Default, Debug, PartialEq)]
-pub struct SymbolTable<V>(HashMap<Id, V>);
+pub struct SymbolTable(HashMap<Id, Value>);
 
-pub type SymbolTableResult<U, V> = Result<(SymbolTable<U>, V), Error>;
+pub type SymbolTableResult = Result<(SymbolTable, Value), Error>;
 
-impl<V> SymbolTable<V>
-where
-    V: Clone + Default,
-{
-    pub fn get(&mut self, key: Id) -> V {
+impl SymbolTable {
+    pub fn get(&mut self, key: Id) -> Value {
         self.0.entry(key).or_default().clone()
     }
 
-    pub fn set(&mut self, key: Id, val: V) -> Option<V> {
+    pub fn set(&mut self, key: Id, val: Value) -> Option<Value> {
         self.0.insert(key, val)
     }
 }

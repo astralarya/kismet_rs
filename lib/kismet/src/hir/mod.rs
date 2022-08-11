@@ -22,9 +22,9 @@ pub use value::*;
 
 use crate::{ast, types::Node};
 
-pub fn compile<T>(input: Node<T>) -> Result<Node<VBasicBlock>, Node<Error>>
+pub fn compile<T>(input: Node<T>) -> Result<Node<Block>, Node<Error>>
 where
-    VBasicBlock: TryFrom<T, Error = ast::Error>,
+    Block: TryFrom<T, Error = ast::Error>,
 {
-    Node::<VBasicBlock>::try_convert_from(input).map_err(Node::<Error>::convert_from)
+    Node::<Block>::try_convert_from(input).map_err(Node::<Error>::convert_from)
 }

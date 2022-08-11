@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    hir::{Instruction, Primitive, VInstruction, Value},
+    hir::{Instruction, Primitive, Value},
     types::{Float, Integer, Node, UInteger},
 };
 
@@ -135,11 +135,11 @@ impl fmt::Display for OpArith {
     }
 }
 
-impl TryFrom<Op> for VInstruction {
+impl TryFrom<Op> for Instruction {
     type Error = Error;
 
     fn try_from(val: Op) -> Result<Self, Self::Error> {
-        fn arith_float(lhs: Float, op: OpArith, rhs: Float) -> Result<VInstruction, Error> {
+        fn arith_float(lhs: Float, op: OpArith, rhs: Float) -> Result<Instruction, Error> {
             Ok(Instruction::Value(Value::Primitive(Primitive::Float(
                 match op {
                     OpArith::ADD => lhs + rhs,
@@ -153,7 +153,7 @@ impl TryFrom<Op> for VInstruction {
             ))))
         }
 
-        fn arith_int(lhs: Integer, op: OpArith, rhs: Integer) -> Result<VInstruction, Error> {
+        fn arith_int(lhs: Integer, op: OpArith, rhs: Integer) -> Result<Instruction, Error> {
             match match op {
                 OpArith::ADD => lhs.checked_add(rhs),
                 OpArith::SUB => lhs.checked_sub(rhs),
@@ -185,8 +185,8 @@ impl TryFrom<Op> for VInstruction {
             Op::Compare(_, _, _) => todo!(),
             Op::Range(_) => todo!(),
             Op::Arith(lhs, op, rhs) => {
-                let lhs = Node::<VInstruction>::try_convert_from(lhs)?;
-                let rhs = Node::<VInstruction>::try_convert_from(rhs)?;
+                let lhs = Node::<Instruction>::try_convert_from(lhs)?;
+                let rhs = Node::<Instruction>::try_convert_from(rhs)?;
                 match (*lhs.data, *rhs.data) {
                     (Instruction::Value(lhs), Instruction::Value(rhs)) => match (lhs, rhs) {
                         (
@@ -230,7 +230,7 @@ impl TryFrom<Op> for VInstruction {
                 }
             }
             Op::Unary(op, rhs) => {
-                let rhs = Node::<VInstruction>::try_convert_from(rhs)?;
+                let rhs = Node::<Instruction>::try_convert_from(rhs)?;
                 match *rhs.data {
                     Instruction::Value(rhs) => Ok(Instruction::Value(match rhs {
                         Value::Primitive(Primitive::Integer(val)) => match *op {

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use kismet::compile;
-use kismet::hir::{Exec, SymbolTable, Value};
+use kismet::hir::{Exec, SymbolTable};
 use kismet::parse;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -22,7 +22,7 @@ pub fn run(state: &mut State) {
     );
 
     let mut rl = Editor::<()>::new();
-    let mut i = SymbolTable::<Value>::default();
+    let mut i = SymbolTable::default();
     loop {
         let readline = rl.readline("> ");
         match readline {

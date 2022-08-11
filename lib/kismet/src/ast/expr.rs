@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    hir::VInstruction,
+    hir::Instruction,
     types::{CommaList, Node},
 };
 
@@ -62,7 +62,7 @@ impl TryFrom<&Node<&Expr>> for Node<Id> {
     }
 }
 
-impl TryFrom<Expr> for VInstruction {
+impl TryFrom<Expr> for Instruction {
     type Error = Error;
 
     fn try_from(val: Expr) -> Result<Self, Self::Error> {
@@ -72,8 +72,8 @@ impl TryFrom<Expr> for VInstruction {
             Expr::Function { args: _, block: _ } => todo!(),
             Expr::Branch(_) => todo!(),
             Expr::Loop(_) => todo!(),
-            Expr::Op(x) => VInstruction::try_from(x),
-            Expr::Primary(x) => VInstruction::try_from(x),
+            Expr::Op(x) => Instruction::try_from(x),
+            Expr::Primary(x) => Instruction::try_from(x),
         }
     }
 }
