@@ -10,6 +10,7 @@ mod list_item;
 mod op;
 mod primary;
 mod range;
+mod stmt;
 mod target;
 
 pub use args::*;
@@ -24,4 +25,5 @@ pub use list_item::*;
 pub use op::*;
 pub use primary::*;
 pub use range::*;
+pub use stmt::*;
 pub use target::*;

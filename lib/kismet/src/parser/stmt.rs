@@ -1,9 +1,13 @@
-use nom::multi::{many0, many1, separated_list0};
+use nom::{
+    combinator::opt,
+    multi::{many0, many1, separated_list0},
+    Err,
+};
 
-use crate::ast::{Expr, ExprEnclosure};
-use crate::types::{Node, Span};
+use crate::ast::{Expr, ExprEnclosure, Target};
+use crate::types::{Node, ONode, Span};
 
-use super::{expr, token_tag, Input, KResult, Token};
+use super::{expr, token_tag, Error, ErrorKind, Input, KResult, Token};
 
 pub fn stmt_block0(i: Input) -> KResult<Option<Node<Vec<Node<Expr>>>>> {
     let i_span = match Span::get0(i) {
@@ -51,6 +55,24 @@ pub fn stmt_enclosure(i: Input) -> KResult<Node<ExprEnclosure>> {
     match val {
         Some(val) => Ok((i, Node::new(lhs.span + rhs.span, ExprEnclosure(*val.data)))),
         None => Ok((i, Node::new(lhs.span + rhs.span, ExprEnclosure(vec![])))),
+    }
+}
+
+pub fn assignment_stmt(i: Input) -> KResult<Node<Expr>> {
+    let (i, lhs) = expr(i)?;
+    let (i, op) = opt(token_tag(Token::ASSIGN))(i)?;
+    match op {
+        Some(op) => match Node::<Target>::try_from(lhs) {
+            Ok(lhs) => {
+                let (i, rhs) = expr(i)?;
+                Ok((i, Node::new(lhs.span + rhs.span, Expr::Assign(lhs, rhs))))
+            }
+            Err(_) => Err(Err::Failure(ONode::new(
+                op.span,
+                Error::Error(ErrorKind::Grammar),
+            ))),
+        },
+        None => Ok((i, lhs)),
     }
 }
 

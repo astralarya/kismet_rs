@@ -6,11 +6,13 @@ use crate::{
 };
 
 use super::{
-    Atom, Branch, Error, ExprEnclosure, Id, Loop, Op, Primary, Target, TargetExpr, TargetListItem,
+    Atom, Branch, Error, ExprEnclosure, Id, Loop, Op, Primary, Stmt, Target, TargetExpr,
+    TargetListItem,
 };
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
+    Stmt(Stmt),
     Assign(Node<Target>, Node<Expr>),
     Function {
         args: Node<CommaList<TargetListItem<TargetExpr>>>,
@@ -25,6 +27,7 @@ pub enum Expr {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Stmt(x) => write!(f, "{}", x),
             Self::Assign(lhs, rhs) => write!(f, "{} := {}", lhs, rhs),
             Self::Branch(val) => write!(f, "{}", val),
             Self::Loop(val) => write!(f, "{}", val),
@@ -64,6 +67,7 @@ impl TryFrom<Expr> for VInstruction {
 
     fn try_from(val: Expr) -> Result<Self, Self::Error> {
         match val {
+            Expr::Stmt(_) => todo!(),
             Expr::Assign(_, _) => todo!(),
             Expr::Function { args: _, block: _ } => todo!(),
             Expr::Branch(_) => todo!(),
